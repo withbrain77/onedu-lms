@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ lesson.title }} | Onedu LMS{% endblock %}
 
@@ -13,28 +14,105 @@
 {% endblock %}
 
 {% block content %}
-<div class="row g-4">
-  <div class="col-12 col-lg-8">
-    <div class="learning-placeholder">
-      <div>
-        <span class="badge text-bg-primary mb-3">접근 가능</span>
-        <h2>차시 학습 화면</h2>
-        <p>영상 재생과 진도 저장은 다음 MVP 단계에서 연결됩니다.</p>
+<div class="row g-4 lesson-watch-layout">
+  <div class="col-12 col-xl-8">
+    <div class="card shadow-sm video-card">
+      <div class="card-body p-0">
+        {% if lesson.video_file %}
+          <div class="video-player-shell">
+            <video
+              id="lessonVideo"
+              class="lesson-video"
+              controls
+              playsinline
+              preload="metadata"
+              data-progress-url="{% url 'progress:save_lesson' lesson.id %}"
+              data-start-position="{% if progress %}{{ progress.last_position_seconds }}{% else %}0{% endif %}"
+              data-save-interval="12000"
+            >
+              <source src="{{ lesson.get_video_url }}">
+              현재 브라우저에서 HTML5 video를 지원하지 않습니다.
+            </video>
+          </div>
+        {% else %}
+          <div class="empty-state video-empty">
+            <h2>등록된 영상이 없습니다.</h2>
+            <p>관리자가 이 차시에 영상 파일을 등록하면 학습할 수 있습니다.</p>
+            <a class="btn btn-outline-secondary" href="{% url 'enrollments:course_detail' course.id %}">강의로 돌아가기</a>
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>
-  <div class="col-12 col-lg-4">
-    <div class="card shadow-sm">
+
+  <div class="col-12 col-xl-4">
+    <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <h2 class="h5 mb-3">차시 정보</h2>
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <h2 class="h5 mb-1">학습 현황</h2>
+            <p class="small text-muted mb-0" id="progressSaveStatus">진도 저장 대기 중</p>
+          </div>
+          {% if progress and progress.is_completed %}
+            <span class="badge text-bg-success">완료</span>
+          {% else %}
+            <span class="badge text-bg-light">학습 중</span>
+          {% endif %}
+        </div>
         <p class="text-muted">{{ lesson.description|default:"차시 설명이 없습니다." }}</p>
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>진도율</span>
+          <span id="progressPercentText">{% if progress %}{{ progress.progress_percent }}{% else %}0{% endif %}%</span>
+        </div>
+        <div class="progress mb-3">
+          <div
+            id="lessonProgressBar"
+            class="progress-bar"
+            style="width: {% if progress %}{{ progress.progress_percent }}{% else %}0{% endif %}%"
+          ></div>
+        </div>
         <dl class="detail-meta">
           <div><dt>순서</dt><dd>{{ lesson.order }}</dd></div>
-          <div><dt>예상 길이</dt><dd>{{ lesson.duration_seconds }}초</dd></div>
-          <div><dt>진도</dt><dd>{% if progress %}{{ progress.progress_percent }}%{% else %}0%{% endif %}</dd></div>
+          <div><dt>영상 길이</dt><dd>{% if progress and progress.duration_seconds %}{{ progress.duration_seconds }}초{% else %}{{ lesson.duration_seconds }}초{% endif %}</dd></div>
+          <div><dt>마지막 위치</dt><dd>{% if progress %}{{ progress.last_position_seconds }}초{% else %}0초{% endif %}</dd></div>
+          <div><dt>총 시청 시간</dt><dd>{% if progress %}{{ progress.total_watched_seconds }}초{% else %}0초{% endif %}</dd></div>
         </dl>
+        <div class="d-grid gap-2 mt-3">
+          {% if next_lesson %}
+            <a class="btn btn-primary" href="{{ next_lesson.get_absolute_url }}">다음 차시</a>
+          {% else %}
+            <button class="btn btn-outline-secondary" type="button" disabled>마지막 차시</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">차시 목록</h2>
+        <div class="list-group lesson-side-list">
+          {% for item in course_lesson_items %}
+            <a
+              class="list-group-item list-group-item-action d-flex justify-content-between gap-2 {% if item.is_current %}active{% endif %}"
+              href="{{ item.lesson.get_absolute_url }}"
+            >
+              <span>{{ item.lesson.order }}. {{ item.lesson.title }}</span>
+              {% if item.progress and item.progress.is_completed %}
+                <span class="badge text-bg-success">완료</span>
+              {% elif item.progress and item.progress.progress_percent %}
+                <span class="badge text-bg-light">{{ item.progress.progress_percent }}%</span>
+              {% else %}
+                <span class="badge text-bg-light">0%</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/video_progress.js' %}"></script>
 {% endblock %}

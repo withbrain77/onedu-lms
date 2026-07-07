@@ -24,6 +24,7 @@ class WatchProgress(models.Model):
         related_name='watch_progresses',
     )
     last_position_seconds = models.PositiveIntegerField('마지막 시청 위치(초)', default=0)
+    total_watched_seconds = models.PositiveIntegerField('총 시청 시간(초)', default=0)
     duration_seconds = models.PositiveIntegerField('전체 길이(초)', default=0)
     progress_percent = models.PositiveSmallIntegerField('진도율', default=0)
     is_completed = models.BooleanField('시청 완료', default=False)
@@ -50,15 +51,26 @@ class WatchProgress(models.Model):
             if self.user_id != self.enrollment.user_id:
                 raise ValidationError('진도 사용자와 수강생이 일치해야 합니다.')
 
-    def mark_position(self, position_seconds, duration_seconds=None):
+    def mark_position(
+        self,
+        position_seconds,
+        duration_seconds=None,
+        watched_increment_seconds=0,
+        completed=False,
+    ):
         self.last_position_seconds = max(int(position_seconds), 0)
         if duration_seconds is not None:
             self.duration_seconds = max(int(duration_seconds), 0)
+        self.total_watched_seconds += max(int(watched_increment_seconds), 0)
         if self.duration_seconds:
             self.progress_percent = min(
                 int((self.last_position_seconds / self.duration_seconds) * 100),
                 100,
             )
-        if self.progress_percent >= 90 and not self.is_completed:
+        if completed:
+            self.progress_percent = 100
+            if self.duration_seconds:
+                self.last_position_seconds = max(self.last_position_seconds, self.duration_seconds)
+        if (self.progress_percent >= 90 or completed) and not self.is_completed:
             self.is_completed = True
             self.completed_at = timezone.now()

@@ -9,7 +9,7 @@ from .models import Course
 class LessonInline(admin.TabularInline):
     model = Lesson
     extra = 0
-    fields = ('order', 'title', 'duration_seconds', 'is_public')
+    fields = ('order', 'title', 'video_file', 'duration_seconds', 'is_public')
     ordering = ('order',)
     show_change_link = True
 

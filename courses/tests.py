@@ -80,7 +80,7 @@ class MVPFlowViewTests(TestCase):
         self.login_student()
         response = self.client.get(self.lesson.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '접근 가능')
+        self.assertTemplateUsed(response, 'lessons/detail.html')
 
     def test_future_start_date_cannot_access_classroom_course(self):
         Enrollment.objects.create(

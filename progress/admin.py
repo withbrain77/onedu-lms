@@ -10,6 +10,8 @@ class WatchProgressAdmin(admin.ModelAdmin):
         'lesson',
         'enrollment',
         'progress_percent',
+        'total_watched_seconds',
+        'last_position_seconds',
         'is_completed',
         'last_watched_at',
     )

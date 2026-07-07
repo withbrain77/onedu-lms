@@ -11,6 +11,7 @@ class Lesson(models.Model):
     )
     title = models.CharField('차시명', max_length=200)
     description = models.TextField('차시 설명', blank=True)
+    video_file = models.FileField('영상 파일', upload_to='lesson_videos/', blank=True)
     order = models.PositiveIntegerField('순서', default=1)
     duration_seconds = models.PositiveIntegerField('영상 길이(초)', default=0)
     is_public = models.BooleanField('공개 여부', default=True)
@@ -30,3 +31,6 @@ class Lesson(models.Model):
 
     def get_absolute_url(self):
         return reverse('lessons:detail', kwargs={'pk': self.pk})
+
+    def get_video_url(self):
+        return reverse('lessons:video', kwargs={'pk': self.pk})

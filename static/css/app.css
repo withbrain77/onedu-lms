@@ -169,6 +169,45 @@ body {
   margin-bottom: 0;
 }
 
+.video-card {
+  overflow: hidden;
+}
+
+.video-player-shell {
+  background: #0f172a;
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.lesson-video {
+  aspect-ratio: 16 / 9;
+  background: #0f172a;
+  display: block;
+  max-height: calc(100vh - 10rem);
+  width: 100%;
+}
+
+.video-empty {
+  border: 0;
+  border-radius: 0;
+  min-height: 22rem;
+}
+
+.lesson-side-list .list-group-item {
+  align-items: center;
+  min-width: 0;
+}
+
+.lesson-side-list .list-group-item span:first-child {
+  overflow-wrap: anywhere;
+}
+
+.lesson-side-list .list-group-item.active .badge {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #fff !important;
+}
+
 @media (max-width: 575.98px) {
   .btn {
     white-space: normal;
@@ -187,5 +226,9 @@ body {
 
   .empty-state {
     padding: 2rem 1rem;
+  }
+
+  .lesson-video {
+    max-height: none;
   }
 }
