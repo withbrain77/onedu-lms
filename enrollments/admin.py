@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Enrollment
+from .models import Enrollment, ReEnrollmentRequest
 
 
 @admin.register(Enrollment)
@@ -49,4 +49,59 @@ class EnrollmentAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if obj.status == Enrollment.Status.APPROVED and not obj.approved_by_id:
             obj.approved_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(ReEnrollmentRequest)
+class ReEnrollmentRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'student_username',
+        'student_name',
+        'course_title',
+        'status',
+        'requested_at',
+        'processed_at',
+        'processed_by',
+        'extension_start_date',
+        'extension_end_date',
+    )
+    list_filter = ('status', 'course', 'requested_at', 'processed_at', 'extension_start_date', 'extension_end_date')
+    search_fields = (
+        'user__username',
+        'user__name',
+        'user__email',
+        'course__title',
+        'reason',
+        'admin_note',
+    )
+    list_editable = ('status', 'extension_start_date', 'extension_end_date')
+    autocomplete_fields = ('user', 'course', 'enrollment', 'processed_by')
+    readonly_fields = ('requested_at', 'processed_at')
+    date_hierarchy = 'requested_at'
+    ordering = ('-requested_at',)
+    list_select_related = ('user', 'course', 'enrollment', 'processed_by')
+    list_per_page = 50
+    fieldsets = (
+        ('신청 정보', {'fields': ('user', 'course', 'enrollment', 'reason', 'status')}),
+        ('연장 기간', {'fields': ('extension_start_date', 'extension_end_date')}),
+        ('처리 정보', {'fields': ('processed_by', 'processed_at', 'admin_note')}),
+        ('기록', {'fields': ('requested_at',)}),
+    )
+
+    @admin.display(description='아이디', ordering='user__username')
+    def student_username(self, obj):
+        return obj.user.username
+
+    @admin.display(description='수강생', ordering='user__name')
+    def student_name(self, obj):
+        return obj.user.display_name
+
+    @admin.display(description='강의', ordering='course__title')
+    def course_title(self, obj):
+        return obj.course.title
+
+    def save_model(self, request, obj, form, change):
+        if obj.status in (ReEnrollmentRequest.Status.APPROVED, ReEnrollmentRequest.Status.REJECTED):
+            if not obj.processed_by_id:
+                obj.processed_by = request.user
         super().save_model(request, obj, form, change)

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}재수강 신청 | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+  <div>
+    <h1>재수강 신청</h1>
+    <p>수강 기간이 종료된 강의의 기간 연장을 관리자에게 요청합니다.</p>
+  </div>
+  <a class="btn btn-outline-secondary align-self-lg-start" href="{% url 'enrollments:classroom' %}">내 강의실</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mb-3">
+          <div>
+            <h2 class="h5 mb-1">{{ course.title }}</h2>
+            <p class="text-muted mb-0">기존 수강 기간: {{ enrollment.start_date }} ~ {{ enrollment.end_date }}</p>
+          </div>
+          <span class="badge text-bg-secondary align-self-start">기간 만료</span>
+        </div>
+        {% if latest_request and latest_request.status == 'rejected' %}
+          <div class="alert alert-warning small mb-0">
+            이전 재수강 신청이 반려되었습니다.
+            {% if latest_request.admin_note %}<div class="mt-1">{{ latest_request.admin_note }}</div>{% endif %}
+          </div>
+        {% else %}
+          <div class="alert alert-info small mb-0">승인 시 기존 진도, 시험 결과, 수료 상태는 유지되고 수강 기간만 연장됩니다.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+            {{ form.reason }}
+            {% if form.reason.errors %}
+              <div class="invalid-feedback d-block">{{ form.reason.errors|striptags }}</div>
+            {% endif %}
+          </div>
+          <div class="d-grid d-sm-flex justify-content-sm-end gap-2">
+            <a class="btn btn-outline-secondary" href="{% url 'enrollments:classroom' %}">취소</a>
+            <button class="btn btn-primary" type="submit">재수강 신청</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

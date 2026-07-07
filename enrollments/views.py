@@ -1,5 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from core.services.access import can_access_course
 from core.services.completion import evaluate_enrollment_completion
@@ -8,11 +9,17 @@ from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
 from quizzes.services import get_course_quiz_items
 
-from .models import Enrollment
+from .forms import ReEnrollmentRequestForm
+from .models import Enrollment, ReEnrollmentRequest
+
+
+def _latest_reenrollment_request(enrollment):
+    return enrollment.reenrollment_requests.order_by('-requested_at').first()
 
 
 def _enrollment_card(enrollment, request):
     access_result = can_access_course(request.user, enrollment.course)
+    reenrollment_request = _latest_reenrollment_request(enrollment)
     if access_result.code == 'allowed':
         status_label = '수강 중'
         status_class = 'text-bg-primary'
@@ -58,6 +65,10 @@ def _enrollment_card(enrollment, request):
         'period_text': period_text,
         'remaining_text': remaining_text,
         'progress_percent': get_course_progress_percent(enrollment),
+        'reenrollment_request': reenrollment_request,
+        'has_pending_reenrollment': bool(
+            reenrollment_request and reenrollment_request.status == ReEnrollmentRequest.Status.PENDING
+        ),
     }
 
 
@@ -104,10 +115,16 @@ def classroom_course_detail(request, course_id):
     course = get_object_or_404(Course.objects.prefetch_related('lessons'), pk=course_id, is_public=True)
     access_result = can_access_course(request.user, course)
     if not access_result.allowed:
+        reenrollment_request = access_result.enrollment and _latest_reenrollment_request(access_result.enrollment)
         return render(
             request,
             'classroom/access_denied.html',
-            {'course': course, 'access': access_result},
+            {
+                'course': course,
+                'access': access_result,
+                'enrollment': access_result.enrollment,
+                'reenrollment_request': reenrollment_request,
+            },
             status=403,
         )
 
@@ -140,5 +157,47 @@ def classroom_course_detail(request, course_id):
             'progress_percent': completion_status['progress_percent'] if completion_status else 0,
             'quiz_items': get_course_quiz_items(request.user, course),
             'completion_status': completion_status,
+        },
+    )
+
+
+@login_required
+def request_reenrollment(request, enrollment_id):
+    enrollment = get_object_or_404(
+        Enrollment.objects.select_related('course', 'user'),
+        pk=enrollment_id,
+        user=request.user,
+        status=Enrollment.Status.APPROVED,
+    )
+    if not enrollment.has_ended:
+        messages.warning(request, '수강 기간이 종료된 강의만 재수강을 신청할 수 있습니다.')
+        return redirect('enrollments:classroom')
+
+    pending_request = enrollment.reenrollment_requests.filter(status=ReEnrollmentRequest.Status.PENDING).first()
+    if pending_request:
+        messages.info(request, '이미 재수강 신청이 접수되어 관리자 승인을 기다리고 있습니다.')
+        return redirect('enrollments:classroom')
+
+    if request.method == 'POST':
+        form = ReEnrollmentRequestForm(request.POST)
+        if form.is_valid():
+            reenrollment_request = form.save(commit=False)
+            reenrollment_request.user = request.user
+            reenrollment_request.course = enrollment.course
+            reenrollment_request.enrollment = enrollment
+            reenrollment_request.save()
+            messages.success(request, '재수강 신청이 접수되었습니다. 관리자가 승인하면 수강 기간이 연장됩니다.')
+            return redirect('enrollments:classroom')
+    else:
+        form = ReEnrollmentRequestForm()
+
+    return render(
+        request,
+        'classroom/reenrollment_form.html',
+        {
+            'form': form,
+            'enrollment': enrollment,
+            'course': enrollment.course,
+            'latest_request': _latest_reenrollment_request(enrollment),
         },
     )

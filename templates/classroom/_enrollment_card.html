@@ -22,18 +22,37 @@
           <div class="progress-bar" style="width: {{ item.progress_percent }}%"></div>
         </div>
       </div>
+      {% if item.reenrollment_request %}
+        <div class="mb-3 small">
+          {% if item.reenrollment_request.status == 'pending' %}
+            <span class="badge text-bg-warning">재수강 승인 대기</span>
+          {% elif item.reenrollment_request.status == 'approved' %}
+            <span class="badge text-bg-success">재수강 승인됨</span>
+          {% elif item.reenrollment_request.status == 'rejected' %}
+            <span class="badge text-bg-danger">재수강 반려</span>
+            {% if item.reenrollment_request.admin_note %}
+              <div class="text-muted mt-1">{{ item.reenrollment_request.admin_note }}</div>
+            {% endif %}
+          {% endif %}
+        </div>
+      {% endif %}
       <div class="mt-auto d-grid gap-2">
         {% if item.enrollment.is_completed and item.enrollment.certificate %}
           <a class="btn btn-success" href="{% url 'certificates:download' item.enrollment.certificate.id %}">수료증 다운로드</a>
-          <a class="btn btn-outline-primary" href="{% url 'enrollments:course_detail' item.course.id %}">강의 보기</a>
-        {% elif item.access.allowed %}
+        {% endif %}
+
+        {% if item.access.allowed %}
           <a class="btn btn-primary" href="{% url 'enrollments:course_detail' item.course.id %}">이어보기</a>
         {% elif item.access.code == 'not_started' %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
           <button class="btn btn-outline-secondary" type="button" disabled>수강 시작 전</button>
         {% elif item.access.code == 'ended' %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
-          <button class="btn btn-outline-secondary" type="button" disabled>기간 만료</button>
+          {% if item.has_pending_reenrollment %}
+            <button class="btn btn-outline-secondary" type="button" disabled>재수강 승인 대기</button>
+          {% else %}
+            <a class="btn btn-primary" href="{% url 'enrollments:request_reenrollment' item.enrollment.id %}">재수강 신청</a>
+          {% endif %}
         {% elif item.access.code == 'waiting_approval' %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
           <button class="btn btn-outline-secondary" type="button" disabled>관리자 승인 대기</button>
