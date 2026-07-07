@@ -7,6 +7,7 @@ from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_http_methods
 
 from core.services.access import can_access_course
+from core.services.completion import evaluate_enrollment_completion
 
 from .models import Quiz, QuizAttempt
 from .services import build_quiz_status, grade_quiz_attempt
@@ -53,6 +54,7 @@ def take_quiz(request, pk):
             payload=request.POST,
             started_at=started_at,
         )
+        evaluate_enrollment_completion(access_result.enrollment)
         messages.success(request, '시험이 제출되었습니다.')
         return redirect('quizzes:result', pk=attempt.pk)
 

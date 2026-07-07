@@ -14,6 +14,7 @@ urlpatterns = [
     path('lessons/', include('lessons.urls')),
     path('progress/', include('progress.urls')),
     path('quizzes/', include('quizzes.urls')),
+    path('certificates/', include('certificates.urls')),
 ]
 
 if settings.DEBUG:

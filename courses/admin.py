@@ -16,12 +16,27 @@ class LessonInline(admin.TabularInline):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('title', 'is_public', 'lesson_count', 'enrollment_count', 'created_at', 'updated_at')
-    list_filter = ('is_public', 'created_at')
+    list_display = (
+        'title',
+        'is_public',
+        'required_progress_percent',
+        'require_quiz_pass',
+        'certificate_enabled',
+        'lesson_count',
+        'enrollment_count',
+        'created_at',
+        'updated_at',
+    )
+    list_filter = ('is_public', 'require_quiz_pass', 'certificate_enabled', 'created_at')
     search_fields = ('title', 'description')
     prepopulated_fields = {'slug': ('title',)}
     inlines = [LessonInline]
     list_per_page = 30
+    fieldsets = (
+        ('기본 정보', {'fields': ('title', 'slug', 'description', 'thumbnail', 'is_public')}),
+        ('수료 정책', {'fields': ('required_progress_percent', 'require_quiz_pass', 'certificate_enabled')}),
+        ('기록', {'fields': ('created_by',)}),
+    )
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)

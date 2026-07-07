@@ -10,6 +10,9 @@ class Course(models.Model):
     description = models.TextField('강의 설명', blank=True)
     thumbnail = models.FileField('썸네일', upload_to='course_thumbnails/', blank=True)
     is_public = models.BooleanField('공개 여부', default=True)
+    required_progress_percent = models.PositiveSmallIntegerField('수료 진도 기준(%)', default=90)
+    require_quiz_pass = models.BooleanField('시험 합격 필요', default=True)
+    certificate_enabled = models.BooleanField('수료증 발급 사용', default=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name='생성자',

@@ -41,6 +41,10 @@ class Enrollment(models.Model):
     )
     approved_at = models.DateTimeField('승인일시', null=True, blank=True)
     rejected_reason = models.TextField('반려 사유', blank=True)
+    is_completed = models.BooleanField('수료 여부', default=False)
+    completed_at = models.DateTimeField('수료일시', null=True, blank=True)
+    completion_progress_percent = models.PositiveSmallIntegerField('수료 판정 진도율', default=0)
+    completion_note = models.TextField('수료 메모', blank=True)
     created_at = models.DateTimeField('신청일시', auto_now_add=True)
     updated_at = models.DateTimeField('수정일시', auto_now=True)
 

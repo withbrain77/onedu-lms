@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
 from core.services.access import can_access_lesson
+from core.services.completion import evaluate_enrollment_completion
 from lessons.models import Lesson
 
 from .models import WatchProgress
@@ -72,6 +73,8 @@ def save_lesson_progress(request, lesson_id):
     if duration_seconds and lesson.duration_seconds != duration_seconds:
         Lesson.objects.filter(pk=lesson.pk).update(duration_seconds=duration_seconds)
 
+    completion_status = evaluate_enrollment_completion(access_result.enrollment)
+
     return JsonResponse(
         {
             'ok': True,
@@ -81,5 +84,6 @@ def save_lesson_progress(request, lesson_id):
             'progress_percent': progress.progress_percent,
             'is_completed': progress.is_completed,
             'last_watched_at': progress.last_watched_at.isoformat(),
+            'course_completed': completion_status['enrollment'].is_completed,
         }
     )

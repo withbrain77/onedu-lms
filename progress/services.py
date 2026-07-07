@@ -10,9 +10,10 @@ def get_course_progress_percent(enrollment):
     if total_count == 0:
         return 0
 
-    completed_count = WatchProgress.objects.filter(
+    progresses = WatchProgress.objects.filter(
         enrollment=enrollment,
         lesson__in=lessons,
-        is_completed=True,
-    ).count()
-    return int((completed_count / total_count) * 100)
+    ).values_list('lesson_id', 'progress_percent')
+    progress_map = {lesson_id: progress_percent for lesson_id, progress_percent in progresses}
+    total_percent = sum(progress_map.get(lesson.pk, 0) for lesson in lessons)
+    return int(total_percent / total_count)

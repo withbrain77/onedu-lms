@@ -99,7 +99,7 @@
       <div class="card-body">
         <h2 class="h5 mb-3">수강 정보</h2>
         <dl class="detail-meta">
-          <div><dt>상태</dt><dd><span class="badge {{ status_class }}">{{ status_label }}</span></dd></div>
+          <div><dt>상태</dt><dd>{% if enrollment and enrollment.is_completed %}<span class="badge text-bg-success">수료 완료</span>{% else %}<span class="badge {{ status_class }}">{{ status_label }}</span>{% endif %}</dd></div>
           <div><dt>수강 기간</dt><dd>{{ period_text }}</dd></div>
           <div><dt>남은 기간</dt><dd>{{ remaining_text }}</dd></div>
           <div><dt>진도율</dt><dd>{{ progress_percent }}%</dd></div>
@@ -108,6 +108,9 @@
           <div class="progress-bar" style="width: {{ progress_percent }}%"></div>
         </div>
         {% if access and access.allowed %}
+          {% if enrollment and enrollment.is_completed and enrollment.certificate %}
+            <a class="btn btn-success w-100 mb-2" href="{% url 'certificates:download' enrollment.certificate.id %}">수료증 다운로드</a>
+          {% endif %}
           <a class="btn btn-primary w-100" href="{% url 'enrollments:course_detail' course.id %}">내 강의실에서 보기</a>
         {% elif user.is_authenticated %}
           {% if enrollment and enrollment.status == 'requested' %}
@@ -127,6 +130,30 @@
         {% endif %}
       </div>
     </div>
+
+    {% if completion_status %}
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h2 class="h5 mb-3">수료 조건</h2>
+          <dl class="detail-meta">
+            <div><dt>필요 진도</dt><dd>{{ completion_status.required_progress_percent }}%</dd></div>
+            <div><dt>현재 진도</dt><dd>{{ completion_status.progress_percent }}%</dd></div>
+            <div><dt>시험 조건</dt><dd>{% if completion_status.requires_quiz %}필요{% else %}없음{% endif %}</dd></div>
+          </dl>
+          {% if enrollment.is_completed %}
+            <div class="alert alert-success small mt-3 mb-0">수료 조건을 충족했습니다.</div>
+          {% else %}
+            <div class="alert alert-warning small mt-3 mb-0">
+              {% for item in completion_status.missing %}
+                <div>{{ item }}</div>
+              {% empty %}
+                <div>수료 조건 확인 중입니다.</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

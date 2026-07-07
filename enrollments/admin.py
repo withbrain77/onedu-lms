@@ -13,13 +13,15 @@ class EnrollmentAdmin(admin.ModelAdmin):
         'start_date',
         'end_date',
         'days_remaining',
+        'is_completed',
+        'completed_at',
         'created_at',
     )
-    list_filter = ('status', 'course', 'start_date', 'end_date', 'created_at')
+    list_filter = ('status', 'is_completed', 'course', 'start_date', 'end_date', 'created_at')
     search_fields = ('user__username', 'user__name', 'user__email', 'course__title')
     list_editable = ('status', 'start_date', 'end_date')
     autocomplete_fields = ('user', 'course', 'approved_by')
-    readonly_fields = ('approved_at', 'created_at', 'updated_at')
+    readonly_fields = ('approved_at', 'created_at', 'updated_at', 'completed_at')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     list_select_related = ('user', 'course', 'approved_by')
@@ -28,6 +30,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         ('신청 정보', {'fields': ('user', 'course', 'status')}),
         ('수강 기간', {'fields': ('start_date', 'end_date')}),
         ('승인/반려', {'fields': ('approved_by', 'approved_at', 'rejected_reason')}),
+        ('수료', {'fields': ('is_completed', 'completed_at', 'completion_progress_percent', 'completion_note')}),
         ('기록', {'fields': ('created_at', 'updated_at')}),
     )
 

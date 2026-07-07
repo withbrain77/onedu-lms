@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from core.services.access import can_access_course, get_latest_enrollment
+from core.services.completion import evaluate_enrollment_completion
 from enrollments.models import Enrollment
 from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
@@ -112,10 +113,14 @@ def course_detail(request, slug):
     progress_by_lesson = {}
 
     if access_result and access_result.allowed and enrollment:
+        completion_status = evaluate_enrollment_completion(enrollment)
+        progress_percent = completion_status['progress_percent']
         progress_by_lesson = {
             progress.lesson_id: progress
             for progress in WatchProgress.objects.filter(enrollment=enrollment, lesson__in=lessons)
         }
+    else:
+        completion_status = None
 
     lesson_items = [
         {
@@ -140,6 +145,7 @@ def course_detail(request, slug):
             'period_text': _period_text(enrollment),
             'remaining_text': _remaining_text(enrollment, access_result),
             'quiz_items': get_course_quiz_items(request.user, course) if access_result and access_result.allowed else [],
+            'completion_status': completion_status,
         },
     )
 

@@ -3,7 +3,11 @@
     <div class="card-body d-flex flex-column">
       <div class="d-flex justify-content-between gap-2 mb-2">
         <h3 class="h5 card-title mb-0">{{ item.course.title }}</h3>
-        <span class="badge {{ item.status_class }} flex-shrink-0">{{ item.status_label }}</span>
+        {% if item.enrollment.is_completed %}
+          <span class="badge text-bg-success flex-shrink-0">수료 완료</span>
+        {% else %}
+          <span class="badge {{ item.status_class }} flex-shrink-0">{{ item.status_label }}</span>
+        {% endif %}
       </div>
       <dl class="course-meta small mb-3">
         <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
@@ -19,7 +23,10 @@
         </div>
       </div>
       <div class="mt-auto d-grid gap-2">
-        {% if item.access.allowed %}
+        {% if item.enrollment.is_completed and item.enrollment.certificate %}
+          <a class="btn btn-success" href="{% url 'certificates:download' item.enrollment.certificate.id %}">수료증 다운로드</a>
+          <a class="btn btn-outline-primary" href="{% url 'enrollments:course_detail' item.course.id %}">강의 보기</a>
+        {% elif item.access.allowed %}
           <a class="btn btn-primary" href="{% url 'enrollments:course_detail' item.course.id %}">이어보기</a>
         {% elif item.access.code == 'not_started' %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>

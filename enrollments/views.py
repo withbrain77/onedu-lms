@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
 from core.services.access import can_access_course
+from core.services.completion import evaluate_enrollment_completion
 from courses.models import Course
 from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
@@ -74,6 +75,8 @@ def classroom(request):
     other_cards = []
 
     for enrollment in enrollments:
+        if enrollment.status == Enrollment.Status.APPROVED:
+            evaluate_enrollment_completion(enrollment)
         card = _enrollment_card(enrollment, request)
         if enrollment.status == Enrollment.Status.REQUESTED:
             waiting_cards.append(card)
@@ -109,6 +112,7 @@ def classroom_course_detail(request, course_id):
         )
 
     enrollment = access_result.enrollment
+    completion_status = evaluate_enrollment_completion(enrollment)
     lessons = list(course.lessons.filter(is_public=True).order_by('order'))
     progress_by_lesson = {}
     if enrollment:
@@ -133,7 +137,8 @@ def classroom_course_detail(request, course_id):
             'enrollment': enrollment,
             'access': access_result,
             'lesson_items': lesson_items,
-            'progress_percent': get_course_progress_percent(enrollment) if enrollment else 0,
+            'progress_percent': completion_status['progress_percent'] if completion_status else 0,
             'quiz_items': get_course_quiz_items(request.user, course),
+            'completion_status': completion_status,
         },
     )

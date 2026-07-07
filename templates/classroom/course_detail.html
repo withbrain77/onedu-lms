@@ -89,6 +89,11 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <h2 class="h5 mb-3">학습 현황</h2>
+        {% if enrollment.is_completed %}
+          <span class="badge text-bg-success mb-3">수료 완료</span>
+        {% else %}
+          <span class="badge text-bg-warning mb-3">조건 미충족</span>
+        {% endif %}
         <div class="d-flex justify-content-between small text-muted mb-1">
           <span>전체 진도율</span>
           <span>{{ progress_percent }}%</span>
@@ -103,6 +108,33 @@
         </dl>
       </div>
     </div>
+
+    {% if completion_status %}
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h2 class="h5 mb-3">수료 조건</h2>
+          <dl class="detail-meta">
+            <div><dt>필요 진도</dt><dd>{{ completion_status.required_progress_percent }}%</dd></div>
+            <div><dt>현재 진도</dt><dd>{{ completion_status.progress_percent }}%</dd></div>
+            <div><dt>시험 조건</dt><dd>{% if completion_status.requires_quiz %}필요{% else %}없음{% endif %}</dd></div>
+          </dl>
+          {% if enrollment.is_completed %}
+            <div class="alert alert-success small mt-3">수료 조건을 충족했습니다.</div>
+            {% if enrollment.certificate %}
+              <a class="btn btn-success w-100" href="{% url 'certificates:download' enrollment.certificate.id %}">수료증 다운로드</a>
+            {% endif %}
+          {% else %}
+            <div class="alert alert-warning small mt-3 mb-0">
+              {% for item in completion_status.missing %}
+                <div>{{ item }}</div>
+              {% empty %}
+                <div>수료 조건 확인 중입니다.</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

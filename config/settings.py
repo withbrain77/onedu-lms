@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'enrollments',
     'progress',
     'quizzes',
+    'certificates',
     'core',
 ]
 
@@ -127,6 +128,8 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 PRIVATE_MEDIA_ROOT = Path(os.getenv('PRIVATE_MEDIA_ROOT', BASE_DIR / 'private_media'))
+CERTIFICATE_ISSUER_NAME = os.getenv('CERTIFICATE_ISSUER_NAME', 'Onedu LMS')
+CERTIFICATE_FONT_PATH = os.getenv('CERTIFICATE_FONT_PATH', '')
 
 AUTH_USER_MODEL = 'accounts.User'
 
