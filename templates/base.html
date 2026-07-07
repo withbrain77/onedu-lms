@@ -28,6 +28,7 @@
           {% else %}
             <li class="nav-item"><a class="nav-link" href="{% url 'courses:list' %}">강의 목록</a></li>
           {% endif %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'certificates:verify' %}">수료증 검증</a></li>
         </ul>
         <div class="d-flex align-items-lg-center gap-2 flex-column flex-lg-row">
           {% if user.is_authenticated %}

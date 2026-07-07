@@ -350,6 +350,10 @@ body {
   white-space: pre-wrap;
 }
 
+.certificate-verify-meta dd {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 575.98px) {
   .btn {
     white-space: normal;

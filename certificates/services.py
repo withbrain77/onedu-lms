@@ -55,7 +55,7 @@ def get_or_create_certificate(enrollment):
     return certificate
 
 
-def render_certificate_pdf(certificate):
+def render_certificate_pdf(certificate, verify_url=''):
     font_name = _register_certificate_font()
     buffer = BytesIO()
     page_size = landscape(A4)
@@ -92,6 +92,10 @@ def render_certificate_pdf(certificate):
 
     pdf.setFont(font_name, 10)
     pdf.setFillColor(colors.HexColor('#64748b'))
+    if verify_url:
+        pdf.drawCentredString(width / 2, 90, f'수료증 검증: {verify_url}')
+    else:
+        pdf.drawCentredString(width / 2, 90, '수료증 검증 페이지에서 아래 검증 코드를 입력해 진위 여부를 확인할 수 있습니다.')
     pdf.drawCentredString(width / 2, 72, f'검증 코드: {certificate.verification_code}')
 
     pdf.showPage()

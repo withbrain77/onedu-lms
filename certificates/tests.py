@@ -182,6 +182,59 @@ class CompletionAndCertificateTests(TestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
         response.close()
 
+    def test_anonymous_user_can_open_certificate_verification_page(self):
+        response = self.client.get(reverse('certificates:verify'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '수료증 검증')
+
+    def test_valid_verification_code_shows_certificate_information(self):
+        enrollment = self.enrollment()
+        self.set_progress(enrollment, 100)
+        self.submit_quiz(enrollment, self.correct_choice)
+        evaluate_enrollment_completion(enrollment)
+        certificate = Certificate.objects.get(enrollment=enrollment)
+
+        response = self.client.get(
+            reverse('certificates:verify'),
+            {'code': certificate.verification_code},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '유효한 수료증입니다.')
+        self.assertContains(response, self.student.display_name)
+        self.assertContains(response, self.course.title)
+        self.assertContains(response, certificate.certificate_no)
+
+    def test_invalid_verification_code_shows_failure_message(self):
+        response = self.client.post(
+            reverse('certificates:verify'),
+            {'verification_code': 'wrong-code'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '수료증을 확인할 수 없습니다.')
+        self.assertNotContains(response, self.course.title)
+
+    def test_revoked_certificate_verification_is_invalid(self):
+        enrollment = self.enrollment()
+        self.set_progress(enrollment, 100)
+        self.submit_quiz(enrollment, self.correct_choice)
+        evaluate_enrollment_completion(enrollment)
+        certificate = Certificate.objects.get(enrollment=enrollment)
+        certificate.is_active = False
+        certificate.revoked_at = timezone.now()
+        certificate.save(update_fields=['is_active', 'revoked_at'])
+
+        response = self.client.get(
+            reverse('certificates:verify'),
+            {'code': certificate.verification_code},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '수료증을 확인할 수 없습니다.')
+        self.assertNotContains(response, self.course.title)
+
     def test_other_user_cannot_download_certificate(self):
         enrollment = self.enrollment()
         self.set_progress(enrollment, 100)
