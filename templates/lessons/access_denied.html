@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}차시 접근 제한 | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <h1>{{ lesson.title }}</h1>
+  <p>{{ course.title }}</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="empty-state">
+  <h2>{{ access.message }}</h2>
+  <p>차시는 승인된 수강 기간 안에서만 볼 수 있습니다. 필요하면 관리자에게 문의해 주세요.</p>
+  <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+    <a class="btn btn-primary" href="{% url 'enrollments:classroom' %}">내 강의실</a>
+    <a class="btn btn-outline-secondary" href="{{ course.get_absolute_url }}">강의 상세</a>
+  </div>
+</div>
+{% endblock %}

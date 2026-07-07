@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}내 강의실 | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
+  <div>
+    <h1>내 강의실</h1>
+    <p>승인된 강의, 승인 대기 강의, 종료된 강의를 한곳에서 확인합니다.</p>
+  </div>
+  <a class="btn btn-outline-primary" href="{% url 'courses:list' %}">강의 목록 보기</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="mb-5">
+  <div class="section-title">
+    <h2>수강 중인 강의</h2>
+  </div>
+  {% if active_cards %}
+    <div class="row g-3">
+      {% for card in active_cards %}
+        {% include "classroom/_enrollment_card.html" with item=card %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state compact">
+      <h3>수강 중인 강의가 없습니다.</h3>
+      <p>필요한 강의를 신청하면 관리자 승인 후 이곳에 표시됩니다.</p>
+      <a class="btn btn-primary" href="{% url 'courses:list' %}">강의 신청하기</a>
+    </div>
+  {% endif %}
+</section>
+
+<section class="mb-5">
+  <div class="section-title">
+    <h2>승인 대기</h2>
+  </div>
+  {% if waiting_cards %}
+    <div class="row g-3">
+      {% for card in waiting_cards %}
+        {% include "classroom/_enrollment_card.html" with item=card %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state compact">
+      <h3>승인 대기 중인 강의가 없습니다.</h3>
+      <p>새 강의를 신청하면 승인 상태를 여기서 확인할 수 있습니다.</p>
+      <a class="btn btn-outline-primary" href="{% url 'courses:list' %}">신청 가능한 강의 보기</a>
+    </div>
+  {% endif %}
+</section>
+
+<section>
+  <div class="section-title">
+    <h2>종료된 강의</h2>
+  </div>
+  {% if ended_cards %}
+    <div class="row g-3">
+      {% for card in ended_cards %}
+        {% include "classroom/_enrollment_card.html" with item=card %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state compact">
+      <h3>종료된 강의가 없습니다.</h3>
+      <p>수강 기간이 끝난 강의가 이곳에 표시됩니다.</p>
+      <a class="btn btn-outline-secondary" href="{% url 'courses:list' %}">강의 목록 보기</a>
+    </div>
+  {% endif %}
+</section>
+
+{% if other_cards %}
+  <section class="mt-5">
+    <div class="section-title">
+      <h2>기타 신청</h2>
+    </div>
+    <div class="row g-3">
+      {% for card in other_cards %}
+        {% include "classroom/_enrollment_card.html" with item=card %}
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

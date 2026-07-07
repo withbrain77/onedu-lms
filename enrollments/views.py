@@ -1,0 +1,137 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render
+
+from core.services.access import can_access_course
+from courses.models import Course
+from progress.models import WatchProgress
+from progress.services import get_course_progress_percent
+
+from .models import Enrollment
+
+
+def _enrollment_card(enrollment, request):
+    access_result = can_access_course(request.user, enrollment.course)
+    if access_result.code == 'allowed':
+        status_label = '수강 중'
+        status_class = 'text-bg-primary'
+    elif access_result.code == 'not_started':
+        status_label = '수강 전'
+        status_class = 'text-bg-info'
+    elif access_result.code == 'ended':
+        status_label = '기간 만료'
+        status_class = 'text-bg-secondary'
+    elif access_result.code == 'period_missing':
+        status_label = '승인됨'
+        status_class = 'text-bg-success'
+    elif enrollment.status == Enrollment.Status.REQUESTED:
+        status_label = '신청 대기'
+        status_class = 'text-bg-warning'
+    elif enrollment.status == Enrollment.Status.REJECTED:
+        status_label = '반려됨'
+        status_class = 'text-bg-danger'
+    else:
+        status_label = enrollment.get_status_display()
+        status_class = 'text-bg-secondary'
+
+    if enrollment.start_date and enrollment.end_date:
+        period_text = f'{enrollment.start_date} ~ {enrollment.end_date}'
+    else:
+        period_text = '기간 미설정'
+
+    if access_result.code == 'not_started':
+        remaining_text = f'{enrollment.start_date} 시작 예정'
+    elif access_result.code == 'ended':
+        remaining_text = '기간 만료'
+    elif enrollment.days_remaining is not None:
+        remaining_text = '오늘 종료' if enrollment.days_remaining == 0 else f'{enrollment.days_remaining}일 남음'
+    else:
+        remaining_text = '-'
+
+    return {
+        'enrollment': enrollment,
+        'course': enrollment.course,
+        'access': access_result,
+        'status_label': status_label,
+        'status_class': status_class,
+        'period_text': period_text,
+        'remaining_text': remaining_text,
+        'progress_percent': get_course_progress_percent(enrollment),
+    }
+
+
+@login_required
+def classroom(request):
+    enrollments = (
+        Enrollment.objects
+        .filter(user=request.user)
+        .select_related('course')
+        .order_by('-created_at')
+    )
+    active_cards = []
+    waiting_cards = []
+    ended_cards = []
+    other_cards = []
+
+    for enrollment in enrollments:
+        card = _enrollment_card(enrollment, request)
+        if enrollment.status == Enrollment.Status.REQUESTED:
+            waiting_cards.append(card)
+        elif enrollment.status == Enrollment.Status.APPROVED and enrollment.has_ended:
+            ended_cards.append(card)
+        elif enrollment.status == Enrollment.Status.APPROVED:
+            active_cards.append(card)
+        else:
+            other_cards.append(card)
+
+    return render(
+        request,
+        'classroom/index.html',
+        {
+            'active_cards': active_cards,
+            'waiting_cards': waiting_cards,
+            'ended_cards': ended_cards,
+            'other_cards': other_cards,
+        },
+    )
+
+
+@login_required
+def classroom_course_detail(request, course_id):
+    course = get_object_or_404(Course.objects.prefetch_related('lessons'), pk=course_id, is_public=True)
+    access_result = can_access_course(request.user, course)
+    if not access_result.allowed:
+        return render(
+            request,
+            'classroom/access_denied.html',
+            {'course': course, 'access': access_result},
+            status=403,
+        )
+
+    enrollment = access_result.enrollment
+    lessons = list(course.lessons.filter(is_public=True).order_by('order'))
+    progress_by_lesson = {}
+    if enrollment:
+        progress_by_lesson = {
+            progress.lesson_id: progress
+            for progress in WatchProgress.objects.filter(enrollment=enrollment, lesson__in=lessons)
+        }
+
+    lesson_items = [
+        {
+            'lesson': lesson,
+            'progress': progress_by_lesson.get(lesson.pk),
+        }
+        for lesson in lessons
+    ]
+
+    return render(
+        request,
+        'classroom/course_detail.html',
+        {
+            'course': course,
+            'enrollment': enrollment,
+            'access': access_result,
+            'lesson_items': lesson_items,
+            'progress_percent': get_course_progress_percent(enrollment) if enrollment else 0,
+        },
+    )

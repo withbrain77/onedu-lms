@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+    <div>
+      <h1>{{ course.title }}</h1>
+      <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
+    </div>
+    <div class="text-lg-end">
+      <span class="badge {{ status_class }}">{{ status_label }}</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">차시 목록</h2>
+        {% if lesson_items %}
+          <div class="list-group lesson-list">
+            {% for item in lesson_items %}
+              <div class="list-group-item d-flex flex-column flex-md-row justify-content-between gap-2">
+                <div>
+                  <div class="fw-semibold">{{ item.lesson.order }}. {{ item.lesson.title }}</div>
+                  <div class="small text-muted">{{ item.lesson.description|default:"차시 설명이 없습니다." }}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  {% if item.progress and item.progress.is_completed %}
+                    <span class="badge text-bg-success">완료</span>
+                  {% else %}
+                    <span class="badge text-bg-light">미완료</span>
+                  {% endif %}
+                  {% if access and access.allowed %}
+                    <a class="btn btn-sm btn-outline-primary" href="{{ item.lesson.get_absolute_url }}">차시 보기</a>
+                  {% else %}
+                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>승인 후 이용</button>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state compact">
+            <h3>등록된 차시가 없습니다.</h3>
+            <p>관리자가 차시를 등록하면 학습을 시작할 수 있습니다.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm sticky-lg-top detail-side-card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">수강 정보</h2>
+        <dl class="detail-meta">
+          <div><dt>상태</dt><dd><span class="badge {{ status_class }}">{{ status_label }}</span></dd></div>
+          <div><dt>수강 기간</dt><dd>{{ period_text }}</dd></div>
+          <div><dt>남은 기간</dt><dd>{{ remaining_text }}</dd></div>
+          <div><dt>진도율</dt><dd>{{ progress_percent }}%</dd></div>
+        </dl>
+        <div class="progress mb-3">
+          <div class="progress-bar" style="width: {{ progress_percent }}%"></div>
+        </div>
+        {% if access and access.allowed %}
+          <a class="btn btn-primary w-100" href="{% url 'enrollments:course_detail' course.id %}">내 강의실에서 보기</a>
+        {% elif user.is_authenticated %}
+          {% if enrollment and enrollment.status == 'requested' %}
+            <div class="alert alert-info small mb-3">관리자 승인 후 수강 기간이 배정됩니다.</div>
+            <button class="btn btn-outline-secondary w-100" type="button" disabled>신청 대기 중</button>
+          {% elif enrollment and access %}
+            <div class="alert alert-warning small">{{ access.message }}</div>
+          {% endif %}
+          {% if not enrollment or enrollment.status == 'rejected' or enrollment.status == 'cancelled' %}
+            <form method="post" action="{% url 'courses:apply' course.slug %}">
+              {% csrf_token %}
+              <button class="btn btn-primary w-100" type="submit">수강 신청</button>
+            </form>
+          {% endif %}
+        {% else %}
+          <a class="btn btn-primary w-100" href="{% url 'accounts:login' %}">로그인 후 신청</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

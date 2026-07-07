@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}접근 제한 | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <h1>{{ course.title }}</h1>
+  <p>현재 이 강의에 접근할 수 없습니다.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="empty-state">
+  <h2>{{ access.message }}</h2>
+  <p>승인 상태나 수강 기간 변경이 필요하면 관리자에게 문의해 주세요.</p>
+  <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+    <a class="btn btn-primary" href="{% url 'enrollments:classroom' %}">내 강의실</a>
+    <a class="btn btn-outline-secondary" href="{% url 'courses:list' %}">강의 목록</a>
+  </div>
+</div>
+{% endblock %}

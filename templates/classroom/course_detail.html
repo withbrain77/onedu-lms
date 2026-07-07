@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} | 내 강의실{% endblock %}
+
+{% block page_header %}
+<div class="page-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+  <div>
+    <h1>{{ course.title }}</h1>
+    <p>차시별 학습 상태를 확인하고 이어서 학습하세요.</p>
+  </div>
+  <a class="btn btn-outline-secondary align-self-lg-start" href="{% url 'enrollments:classroom' %}">내 강의실</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">차시 목록</h2>
+        {% if lesson_items %}
+          <div class="list-group lesson-list">
+            {% for item in lesson_items %}
+              <a class="list-group-item list-group-item-action d-flex flex-column flex-md-row justify-content-between gap-2" href="{{ item.lesson.get_absolute_url }}">
+                <div>
+                  <div class="fw-semibold">{{ item.lesson.order }}. {{ item.lesson.title }}</div>
+                  <div class="small text-muted">{{ item.lesson.description|default:"차시 설명이 없습니다." }}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  {% if item.progress and item.progress.is_completed %}
+                    <span class="badge text-bg-success">완료</span>
+                  {% else %}
+                    <span class="badge text-bg-light">미완료</span>
+                  {% endif %}
+                  <span class="btn btn-sm btn-outline-primary">차시 보기</span>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state compact">
+            <h3>등록된 차시가 없습니다.</h3>
+            <p>관리자가 차시를 등록하면 학습을 시작할 수 있습니다.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">학습 현황</h2>
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>전체 진도율</span>
+          <span>{{ progress_percent }}%</span>
+        </div>
+        <div class="progress mb-3">
+          <div class="progress-bar" style="width: {{ progress_percent }}%"></div>
+        </div>
+        <dl class="detail-meta">
+          <div><dt>수강 시작일</dt><dd>{{ enrollment.start_date }}</dd></div>
+          <div><dt>수강 종료일</dt><dd>{{ enrollment.end_date }}</dd></div>
+          <div><dt>남은 기간</dt><dd>{{ enrollment.days_remaining }}일</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+<div class="col-12 col-md-6 col-xl-4">
+  <div class="card course-card h-100 shadow-sm">
+    <div class="card-body d-flex flex-column">
+      <div class="d-flex justify-content-between gap-2 mb-2">
+        <h3 class="h5 card-title mb-0">{{ item.course.title }}</h3>
+        <span class="badge {{ item.status_class }} flex-shrink-0">{{ item.status_label }}</span>
+      </div>
+      <dl class="course-meta small mb-3">
+        <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
+        <div><dt>남은 기간</dt><dd>{{ item.remaining_text }}</dd></div>
+      </dl>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between small text-muted mb-1">
+          <span>진도율</span>
+          <span>{{ item.progress_percent }}%</span>
+        </div>
+        <div class="progress">
+          <div class="progress-bar" style="width: {{ item.progress_percent }}%"></div>
+        </div>
+      </div>
+      <div class="mt-auto d-grid gap-2">
+        {% if item.access.allowed %}
+          <a class="btn btn-primary" href="{% url 'enrollments:course_detail' item.course.id %}">이어보기</a>
+        {% elif item.access.code == 'not_started' %}
+          <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
+          <button class="btn btn-outline-secondary" type="button" disabled>수강 시작 전</button>
+        {% elif item.access.code == 'ended' %}
+          <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
+          <button class="btn btn-outline-secondary" type="button" disabled>기간 만료</button>
+        {% elif item.access.code == 'waiting_approval' %}
+          <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
+          <button class="btn btn-outline-secondary" type="button" disabled>관리자 승인 대기</button>
+        {% else %}
+          <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

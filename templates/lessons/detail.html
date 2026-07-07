@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ lesson.title }} | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+  <div>
+    <h1>{{ lesson.title }}</h1>
+    <p>{{ course.title }}</p>
+  </div>
+  <a class="btn btn-outline-secondary align-self-lg-start" href="{% url 'enrollments:course_detail' course.id %}">강의로 돌아가기</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="learning-placeholder">
+      <div>
+        <span class="badge text-bg-primary mb-3">접근 가능</span>
+        <h2>차시 학습 화면</h2>
+        <p>영상 재생과 진도 저장은 다음 MVP 단계에서 연결됩니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">차시 정보</h2>
+        <p class="text-muted">{{ lesson.description|default:"차시 설명이 없습니다." }}</p>
+        <dl class="detail-meta">
+          <div><dt>순서</dt><dd>{{ lesson.order }}</dd></div>
+          <div><dt>예상 길이</dt><dd>{{ lesson.duration_seconds }}초</dd></div>
+          <div><dt>진도</dt><dd>{% if progress %}{{ progress.progress_percent }}%{% else %}0%{% endif %}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
