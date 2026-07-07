@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -100,6 +100,19 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertEqual(file_response.status_code, 200)
         self.assertContains(page_response, self.video_url)
         file_response.close()
+
+    @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')
+    def test_x_accel_redirect_header_can_be_used_for_private_video(self):
+        self.approve()
+        self.client.force_login(self.student)
+
+        response = self.client.get(self.video_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['X-Accel-Redirect'].startswith('/protected-media/lesson_videos/'))
+        self.assertTrue(response['X-Accel-Redirect'].endswith('.mp4'))
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+        self.assertEqual(response.content, b'')
 
     def test_watermark_uses_logged_in_student_identity(self):
         self.approve(user=self.student)

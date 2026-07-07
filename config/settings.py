@@ -4,27 +4,57 @@ Django settings for the approval-based LMS MVP.
 
 import os
 from pathlib import Path
+
+import dj_database_url
 from django.contrib.messages import constants as messages
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def env_int(name, default=0):
+    value = os.getenv(name)
+    if value is None or value == '':
+        return default
+    return int(value)
+
+
+def env_list(*names):
+    for name in names:
+        raw_value = os.getenv(name)
+        if raw_value:
+            return [item.strip() for item in raw_value.split(',') if item.strip()]
+    return []
+
+
+def env_path(name, default):
+    return Path(os.getenv(name, str(default)))
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-SECRET_KEY = os.getenv(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-local-mvp-change-me-before-production',
-)
+DEBUG = env_bool('DJANGO_DEBUG', True)
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '')
+if not SECRET_KEY and DEBUG:
+    SECRET_KEY = 'django-insecure-local-mvp-change-me-before-production'
+if not SECRET_KEY:
+    raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG=False.')
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
-    if host.strip()
-]
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'ALLOWED_HOSTS')
+if DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+
+CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS', 'CSRF_TRUSTED_ORIGINS')
 
 
 # Application definition
@@ -80,12 +110,34 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=env_int('DB_CONN_MAX_AGE', 600),
+            ssl_require=env_bool('DB_SSL_REQUIRE', False),
+        )
     }
-}
+elif os.getenv('POSTGRES_DB'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB'),
+            'USER': os.getenv('POSTGRES_USER', 'postgres'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'HOST': os.getenv('POSTGRES_HOST', 'db'),
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            'CONN_MAX_AGE': env_int('DB_CONN_MAX_AGE', 600),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': env_path('SQLITE_PATH', BASE_DIR / 'db.sqlite3'),
+        }
+    }
 
 
 # Password validation
@@ -122,14 +174,25 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = os.getenv('STATIC_URL', 'static/')
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = env_path('STATIC_ROOT', BASE_DIR / 'staticfiles')
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-PRIVATE_MEDIA_ROOT = Path(os.getenv('PRIVATE_MEDIA_ROOT', BASE_DIR / 'private_media'))
+MEDIA_URL = os.getenv('MEDIA_URL', 'media/')
+MEDIA_ROOT = env_path('MEDIA_ROOT', BASE_DIR / 'media')
+PRIVATE_MEDIA_ROOT = env_path('PRIVATE_MEDIA_ROOT', BASE_DIR / 'private_media')
 CERTIFICATE_ISSUER_NAME = os.getenv('CERTIFICATE_ISSUER_NAME', 'Onedu LMS')
 CERTIFICATE_FONT_PATH = os.getenv('CERTIFICATE_FONT_PATH', '')
+USE_X_ACCEL_REDIRECT = env_bool('USE_X_ACCEL_REDIRECT', False)
+X_ACCEL_REDIRECT_PREFIX = os.getenv('X_ACCEL_REDIRECT_PREFIX', '/protected-media/')
+
+SESSION_COOKIE_SECURE = env_bool('DJANGO_SESSION_COOKIE_SECURE', not DEBUG)
+CSRF_COOKIE_SECURE = env_bool('DJANGO_CSRF_COOKIE_SECURE', not DEBUG)
+SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', not DEBUG)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_HSTS_SECONDS = env_int('DJANGO_SECURE_HSTS_SECONDS', 0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
+SECURE_HSTS_PRELOAD = env_bool('DJANGO_SECURE_HSTS_PRELOAD', False)
 
 AUTH_USER_MODEL = 'accounts.User'
 

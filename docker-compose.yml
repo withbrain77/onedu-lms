@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-onedu}
+      POSTGRES_USER: ${POSTGRES_USER:-onedu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - ${ONEDU_DB_DIR:-./data/postgres}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-onedu} -d ${POSTGRES_DB:-onedu}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-this-to-a-long-random-secret-key-before-production-000000}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8080}
+      DJANGO_SECURE_SSL_REDIRECT: ${DJANGO_SECURE_SSL_REDIRECT:-False}
+      DJANGO_SESSION_COOKIE_SECURE: ${DJANGO_SESSION_COOKIE_SECURE:-False}
+      DJANGO_CSRF_COOKIE_SECURE: ${DJANGO_CSRF_COOKIE_SECURE:-False}
+      DJANGO_SECURE_HSTS_SECONDS: ${DJANGO_SECURE_HSTS_SECONDS:-0}
+      POSTGRES_DB: ${POSTGRES_DB:-onedu}
+      POSTGRES_USER: ${POSTGRES_USER:-onedu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DB_CONN_MAX_AGE: ${DB_CONN_MAX_AGE:-600}
+      STATIC_ROOT: /vol/web/static
+      MEDIA_ROOT: /vol/web/media
+      PRIVATE_MEDIA_ROOT: /vol/web/private_media
+      CERTIFICATE_ISSUER_NAME: ${CERTIFICATE_ISSUER_NAME:-Onedu LMS}
+      CERTIFICATE_FONT_PATH: ${CERTIFICATE_FONT_PATH:-/usr/share/fonts/truetype/nanum/NanumGothic.ttf}
+      USE_X_ACCEL_REDIRECT: ${USE_X_ACCEL_REDIRECT:-True}
+      X_ACCEL_REDIRECT_PREFIX: ${X_ACCEL_REDIRECT_PREFIX:-/protected-media/}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ${ONEDU_STATIC_DIR:-./data/static}:/vol/web/static
+      - ${ONEDU_MEDIA_DIR:-./data/media}:/vol/web/media
+      - ${ONEDU_PRIVATE_MEDIA_DIR:-./data/private_media}:/vol/web/private_media
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "${NGINX_HTTP_PORT:-8080}:80"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${ONEDU_STATIC_DIR:-./data/static}:/vol/web/static:ro
+      - ${ONEDU_MEDIA_DIR:-./data/media}:/vol/web/media:ro
+      - ${ONEDU_PRIVATE_MEDIA_DIR:-./data/private_media}:/vol/web/private_media:ro

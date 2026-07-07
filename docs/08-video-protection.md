@@ -62,29 +62,37 @@ MVP 2.5에서는 영상 파일을 템플릿에 직접 노출하지 않는다.
 
 운영에서는 Django가 직접 대용량 파일을 전송하지 않는 것이 좋다. Nginx protected media와 `X-Accel-Redirect`를 사용한다.
 
+MVP 6부터 다음 환경변수로 운영 분기를 켤 수 있다.
+
+```env
+USE_X_ACCEL_REDIRECT=True
+X_ACCEL_REDIRECT_PREFIX=/protected-media/
+PRIVATE_MEDIA_ROOT=/vol/web/private_media
+```
+
 권장 흐름:
 
 ```text
 Browser
   -> /lessons/<lesson_id>/video/
   -> Django 권한 검사
-  -> X-Accel-Redirect: /protected-videos/<internal-path>
+  -> X-Accel-Redirect: /protected-media/<internal-path>
   -> Nginx internal location에서 파일 전송
 ```
 
 Nginx 예시:
 
 ```nginx
-location /protected-videos/ {
+location /protected-media/ {
     internal;
-    alias /srv/onedu/private_media/lesson_videos/;
+    alias /vol/web/private_media/;
 }
 ```
 
 Django 응답 예시:
 
 ```text
-X-Accel-Redirect: /protected-videos/example.mp4
+X-Accel-Redirect: /protected-media/lesson_videos/example.mp4
 Content-Type: video/mp4
 Cache-Control: private, no-store
 ```

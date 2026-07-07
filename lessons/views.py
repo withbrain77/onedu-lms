@@ -1,9 +1,10 @@
 import mimetypes
 from pathlib import Path
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -107,7 +108,13 @@ def lesson_video(request, pk):
         raise Http404('Video file not found')
 
     content_type = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
-    response = FileResponse(file_path.open('rb'), content_type=content_type)
+    if settings.USE_X_ACCEL_REDIRECT:
+        relative_path = file_path.resolve().relative_to(Path(settings.PRIVATE_MEDIA_ROOT).resolve())
+        internal_prefix = settings.X_ACCEL_REDIRECT_PREFIX.rstrip('/')
+        response = HttpResponse(content_type=content_type)
+        response['X-Accel-Redirect'] = f'{internal_prefix}/{quote(relative_path.as_posix())}'
+    else:
+        response = FileResponse(file_path.open('rb'), content_type=content_type)
     response['Content-Disposition'] = f'inline; filename="lesson-{lesson.pk}{file_path.suffix}"'
     response['Cache-Control'] = 'private, no-store'
     response['X-Content-Type-Options'] = 'nosniff'
