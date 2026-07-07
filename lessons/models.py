@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
 
+from .storage import private_video_storage
+
 
 class Lesson(models.Model):
     course = models.ForeignKey(
@@ -11,7 +13,12 @@ class Lesson(models.Model):
     )
     title = models.CharField('차시명', max_length=200)
     description = models.TextField('차시 설명', blank=True)
-    video_file = models.FileField('영상 파일', upload_to='lesson_videos/', blank=True)
+    video_file = models.FileField(
+        '영상 파일',
+        upload_to='lesson_videos/',
+        storage=private_video_storage,
+        blank=True,
+    )
     order = models.PositiveIntegerField('순서', default=1)
     duration_seconds = models.PositiveIntegerField('영상 길이(초)', default=0)
     is_public = models.BooleanField('공개 여부', default=True)

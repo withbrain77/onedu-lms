@@ -7,12 +7,24 @@
   const progressUrl = video.dataset.progressUrl;
   const saveInterval = Number(video.dataset.saveInterval || 12000);
   const startPosition = Number(video.dataset.startPosition || 0);
+  const playerShell = document.getElementById('videoPlayerShell');
+  const watermark = document.getElementById('videoWatermark');
+  const fullscreenButton = document.getElementById('videoFullscreenButton');
   const statusEl = document.getElementById('progressSaveStatus');
   const percentEl = document.getElementById('progressPercentText');
   const progressBar = document.getElementById('lessonProgressBar');
   let lastSaveAt = 0;
   let hasRestoredPosition = false;
   let saving = false;
+  const watermarkPositions = [
+    'wm-pos-center',
+    'wm-pos-top-left',
+    'wm-pos-top-right',
+    'wm-pos-mid-left',
+    'wm-pos-mid-right',
+    'wm-pos-bottom-left',
+    'wm-pos-bottom-right',
+  ];
 
   function csrfToken() {
     const token = document.cookie
@@ -35,6 +47,61 @@
     if (progressBar) {
       progressBar.style.width = `${safePercent}%`;
     }
+  }
+
+  function randomWatermarkDelay() {
+    return 10000 + Math.floor(Math.random() * 10000);
+  }
+
+  function moveWatermark() {
+    if (!watermark) {
+      return;
+    }
+    const currentPosition = watermarkPositions.find((position) => watermark.classList.contains(position));
+    const candidates = watermarkPositions.filter((position) => position !== currentPosition);
+    const nextPosition = candidates[Math.floor(Math.random() * candidates.length)];
+    watermark.classList.remove(...watermarkPositions);
+    watermark.classList.add(nextPosition);
+  }
+
+  function scheduleWatermarkMove() {
+    if (!watermark) {
+      return;
+    }
+    window.setTimeout(function () {
+      moveWatermark();
+      scheduleWatermarkMove();
+    }, randomWatermarkDelay());
+  }
+
+  function currentFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  function requestPlayerFullscreen() {
+    if (!playerShell) {
+      return;
+    }
+    if (playerShell.requestFullscreen) {
+      playerShell.requestFullscreen();
+    } else if (playerShell.webkitRequestFullscreen) {
+      playerShell.webkitRequestFullscreen();
+    }
+  }
+
+  function exitFullscreen() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+
+  function updateFullscreenButton() {
+    if (!fullscreenButton) {
+      return;
+    }
+    fullscreenButton.textContent = currentFullscreenElement() ? '전체화면 종료' : '전체화면';
   }
 
   async function saveProgress(options) {
@@ -112,4 +179,19 @@
       saveProgress();
     }
   });
+
+  if (fullscreenButton && playerShell) {
+    fullscreenButton.addEventListener('click', function () {
+      if (currentFullscreenElement()) {
+        exitFullscreen();
+      } else {
+        requestPlayerFullscreen();
+      }
+    });
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+  }
+
+  moveWatermark();
+  scheduleWatermarkMove();
 })();

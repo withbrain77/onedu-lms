@@ -19,11 +19,13 @@
     <div class="card shadow-sm video-card">
       <div class="card-body p-0">
         {% if lesson.video_file %}
-          <div class="video-player-shell">
+          <div id="videoPlayerShell" class="video-player-shell">
             <video
               id="lessonVideo"
               class="lesson-video"
               controls
+              controlsList="nodownload noremoteplayback"
+              disablepictureinpicture
               playsinline
               preload="metadata"
               data-progress-url="{% url 'progress:save_lesson' lesson.id %}"
@@ -33,6 +35,8 @@
               <source src="{{ lesson.get_video_url }}">
               현재 브라우저에서 HTML5 video를 지원하지 않습니다.
             </video>
+            <div id="videoWatermark" class="video-watermark wm-pos-center" aria-hidden="true">{{ watermark_text }}</div>
+            <button id="videoFullscreenButton" class="btn btn-light btn-sm video-fullscreen-button" type="button">전체화면</button>
           </div>
         {% else %}
           <div class="empty-state video-empty">

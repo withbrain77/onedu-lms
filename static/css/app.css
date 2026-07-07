@@ -177,6 +177,8 @@ body {
   background: #0f172a;
   display: grid;
   place-items: center;
+  overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
@@ -186,6 +188,98 @@ body {
   display: block;
   max-height: calc(100vh - 10rem);
   width: 100%;
+}
+
+.lesson-video::-webkit-media-controls-fullscreen-button {
+  display: none;
+}
+
+.video-watermark {
+  background: rgba(15, 23, 42, 0.16);
+  border-radius: 0.35rem;
+  color: #fff;
+  font-size: clamp(0.75rem, 1.3vw, 1.05rem);
+  font-weight: 600;
+  left: 50%;
+  line-height: 1.2;
+  max-width: min(72%, 34rem);
+  opacity: 0.22;
+  overflow: hidden;
+  padding: 0.28rem 0.48rem;
+  pointer-events: none;
+  position: absolute;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: top 420ms ease, left 420ms ease, transform 420ms ease;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 4;
+}
+
+.wm-pos-center {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.wm-pos-top-left {
+  left: 8%;
+  top: 12%;
+  transform: translate(0, 0);
+}
+
+.wm-pos-top-right {
+  left: 92%;
+  top: 12%;
+  transform: translate(-100%, 0);
+}
+
+.wm-pos-mid-left {
+  left: 7%;
+  top: 48%;
+  transform: translate(0, -50%);
+}
+
+.wm-pos-mid-right {
+  left: 93%;
+  top: 48%;
+  transform: translate(-100%, -50%);
+}
+
+.wm-pos-bottom-left {
+  left: 8%;
+  top: 78%;
+  transform: translate(0, -100%);
+}
+
+.wm-pos-bottom-right {
+  left: 92%;
+  top: 78%;
+  transform: translate(-100%, -100%);
+}
+
+.video-fullscreen-button {
+  opacity: 0.86;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  z-index: 5;
+}
+
+.video-player-shell:fullscreen,
+.video-player-shell:-webkit-full-screen {
+  background: #000;
+  height: 100vh;
+  width: 100vw;
+}
+
+.video-player-shell:fullscreen .lesson-video,
+.video-player-shell:-webkit-full-screen .lesson-video {
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
 }
 
 .video-empty {
@@ -230,5 +324,18 @@ body {
 
   .lesson-video {
     max-height: none;
+  }
+
+  .video-watermark {
+    font-size: 0.72rem;
+    max-width: 76%;
+    opacity: 0.2;
+    padding: 0.22rem 0.38rem;
+  }
+
+  .video-fullscreen-button {
+    font-size: 0.78rem;
+    right: 0.5rem;
+    top: 0.5rem;
   }
 }

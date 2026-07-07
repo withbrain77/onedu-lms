@@ -1,6 +1,7 @@
 import mimetypes
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, render
@@ -14,6 +15,13 @@ from .models import Lesson
 
 def _lesson_queryset():
     return Lesson.objects.select_related('course').filter(is_public=True, course__is_public=True)
+
+
+def _watermark_text(user):
+    username = user.get_username()
+    if user.is_staff:
+        return f'관리자 미리보기 / {username}'
+    return f'{user.display_name} / {username}'
 
 
 @login_required
@@ -75,6 +83,7 @@ def lesson_detail(request, pk):
             'progress': progress,
             'course_lesson_items': course_lesson_items,
             'next_lesson': next_lesson,
+            'watermark_text': _watermark_text(request.user),
         },
     )
 
@@ -91,6 +100,10 @@ def lesson_video(request, pk):
 
     file_path = Path(lesson.video_file.path)
     if not file_path.exists():
+        raise Http404('Video file not found')
+    try:
+        file_path.resolve().relative_to(Path(settings.PRIVATE_MEDIA_ROOT).resolve())
+    except ValueError:
         raise Http404('Video file not found')
 
     content_type = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
