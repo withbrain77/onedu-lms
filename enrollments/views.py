@@ -5,6 +5,7 @@ from core.services.access import can_access_course
 from courses.models import Course
 from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
+from quizzes.services import get_course_quiz_items
 
 from .models import Enrollment
 
@@ -133,5 +134,6 @@ def classroom_course_detail(request, course_id):
             'access': access_result,
             'lesson_items': lesson_items,
             'progress_percent': get_course_progress_percent(enrollment) if enrollment else 0,
+            'quiz_items': get_course_quiz_items(request.user, course),
         },
     )

@@ -7,6 +7,7 @@ from core.services.access import can_access_course, get_latest_enrollment
 from enrollments.models import Enrollment
 from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
+from quizzes.services import get_course_quiz_items
 
 from .models import Course
 
@@ -138,6 +139,7 @@ def course_detail(request, slug):
             'status_class': status_class,
             'period_text': _period_text(enrollment),
             'remaining_text': _remaining_text(enrollment, access_result),
+            'quiz_items': get_course_quiz_items(request.user, course) if access_result and access_result.allowed else [],
         },
     )
 
