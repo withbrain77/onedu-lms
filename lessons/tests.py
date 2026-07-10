@@ -1,5 +1,8 @@
 from datetime import timedelta
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
@@ -10,6 +13,7 @@ from accounts.models import User
 from courses.models import Course
 from enrollments.models import Enrollment
 
+from .forms import LessonAdminForm, list_server_video_files, validate_server_video_file
 from .models import Lesson
 
 
@@ -146,3 +150,73 @@ class VideoProtectionAndWatermarkTests(TestCase):
     def test_private_video_storage_has_no_public_url(self):
         with self.assertRaises(ValueError):
             _ = self.lesson.video_file.url
+
+
+class LessonAdminServerVideoFormTests(TestCase):
+    def setUp(self):
+        self.temp_dir = TemporaryDirectory()
+        self.private_root = Path(self.temp_dir.name)
+        self.course = Course.objects.create(title='Server File Course', is_public=True)
+        self.lesson = Lesson.objects.create(
+            course=self.course,
+            title='Server File Lesson',
+            order=1,
+            duration_seconds=0,
+            is_public=True,
+        )
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def write_private_file(self, relative_path, content=b'video'):
+        path = self.private_root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        return path
+
+    def test_server_video_choices_include_only_supported_lesson_videos(self):
+        self.write_private_file('lesson_videos/large-video.mp4')
+        self.write_private_file('lesson_videos/readme.txt')
+        self.write_private_file('other/private-video.mp4')
+
+        with override_settings(PRIVATE_MEDIA_ROOT=str(self.private_root)):
+            choices = dict(list_server_video_files())
+
+        self.assertIn('lesson_videos/large-video.mp4', choices)
+        self.assertNotIn('lesson_videos/readme.txt', choices)
+        self.assertNotIn('other/private-video.mp4', choices)
+
+    def test_server_video_selection_sets_lesson_video_file_name(self):
+        self.write_private_file('lesson_videos/large-video.mp4')
+        data = {
+            'course': self.course.pk,
+            'title': self.lesson.title,
+            'description': self.lesson.description,
+            'server_video_file': 'lesson_videos/large-video.mp4',
+            'order': self.lesson.order,
+            'duration_seconds': 300,
+            'is_public': 'on',
+        }
+
+        with override_settings(PRIVATE_MEDIA_ROOT=str(self.private_root)):
+            form = LessonAdminForm(data=data, instance=self.lesson)
+            self.assertTrue(form.is_valid(), form.errors.as_json())
+            saved_lesson = form.save()
+
+        self.assertEqual(saved_lesson.video_file.name, 'lesson_videos/large-video.mp4')
+
+    def test_server_video_selection_rejects_path_outside_lesson_video_folder(self):
+        outside_path = self.private_root.parent / 'outside.mp4'
+        outside_path.write_bytes(b'outside')
+        self.addCleanup(lambda: outside_path.unlink(missing_ok=True))
+
+        with override_settings(PRIVATE_MEDIA_ROOT=str(self.private_root)):
+            with self.assertRaises(ValidationError):
+                validate_server_video_file('../outside.mp4')
+
+    def test_server_video_selection_rejects_unsupported_extension(self):
+        self.write_private_file('lesson_videos/not-video.txt')
+
+        with override_settings(PRIVATE_MEDIA_ROOT=str(self.private_root)):
+            with self.assertRaises(ValidationError):
+                validate_server_video_file('lesson_videos/not-video.txt')

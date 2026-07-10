@@ -2,15 +2,75 @@
   --onedu-bg: #f5f7fb;
   --onedu-border: #e6eaf0;
   --onedu-muted: #667085;
+  --onedu-primary: #2563eb;
+  --onedu-primary-dark: #1d4ed8;
+  --onedu-surface: #ffffff;
+  --onedu-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
 }
 
 body {
   background: var(--onedu-bg);
   color: #1f2937;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
 .navbar {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 1px 10px rgba(15, 23, 42, 0.05);
+}
+
+.navbar-brand {
+  letter-spacing: 0;
+}
+
+.nav-link {
+  color: #475467;
+  font-weight: 500;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  color: var(--onedu-primary);
+}
+
+main.container {
+  max-width: 1180px;
+}
+
+.btn {
+  border-radius: 0.45rem;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background-color: var(--onedu-primary);
+  border-color: var(--onedu-primary);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.16);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--onedu-primary-dark);
+  border-color: var(--onedu-primary-dark);
+}
+
+.btn-outline-primary {
+  border-color: #b8cdfb;
+  color: var(--onedu-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--onedu-primary);
+  border-color: var(--onedu-primary);
+}
+
+.badge {
+  border-radius: 0.4rem;
+  font-weight: 700;
+  padding: 0.42em 0.62em;
 }
 
 .page-header {
@@ -19,7 +79,7 @@ body {
 }
 
 .page-header h1 {
-  font-size: clamp(1.55rem, 2vw, 2.1rem);
+  font-size: 2rem;
   font-weight: 700;
   margin-bottom: 0.35rem;
 }
@@ -32,9 +92,24 @@ body {
 }
 
 .card {
+  background: var(--onedu-surface);
   border-color: var(--onedu-border);
   border-radius: 0.5rem;
   min-width: 0;
+}
+
+.card.shadow-sm {
+  box-shadow: var(--onedu-shadow) !important;
+}
+
+.course-card {
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.course-card:hover {
+  border-color: #cbd8f7;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1) !important;
+  transform: translateY(-2px);
 }
 
 .course-thumb {
@@ -98,12 +173,19 @@ body {
 .progress {
   height: 0.65rem;
   background-color: #e9eef6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, var(--onedu-primary), #38bdf8);
 }
 
 .empty-state {
   border: 1px solid var(--onedu-border);
   border-radius: 0.5rem;
   background: #fff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
   padding: 3rem 1.25rem;
   text-align: center;
 }
@@ -143,6 +225,14 @@ body {
 .lesson-list .list-group-item {
   border-color: var(--onedu-border);
   min-width: 0;
+}
+
+.list-group-item {
+  border-color: var(--onedu-border);
+}
+
+.list-group-item-action {
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .detail-side-card {
@@ -198,7 +288,7 @@ body {
   background: rgba(15, 23, 42, 0.16);
   border-radius: 0.35rem;
   color: #fff;
-  font-size: clamp(0.75rem, 1.3vw, 1.05rem);
+  font-size: 0.95rem;
   font-weight: 600;
   left: 50%;
   line-height: 1.2;
@@ -355,6 +445,10 @@ body {
 }
 
 @media (max-width: 575.98px) {
+  .page-header h1 {
+    font-size: 1.55rem;
+  }
+
   .btn {
     white-space: normal;
   }

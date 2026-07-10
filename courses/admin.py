@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db.models import Count
 
+from lessons.forms import LessonAdminForm
 from lessons.models import Lesson
 
 from .models import Course
@@ -8,8 +9,9 @@ from .models import Course
 
 class LessonInline(admin.TabularInline):
     model = Lesson
+    form = LessonAdminForm
     extra = 0
-    fields = ('order', 'title', 'video_file', 'duration_seconds', 'is_public')
+    fields = ('order', 'title', 'video_file', 'server_video_file', 'duration_seconds', 'is_public')
     ordering = ('order',)
     show_change_link = True
 

@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from .forms import LessonAdminForm
 from .models import Lesson
 
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
+    form = LessonAdminForm
     list_display = (
         'title',
         'course',
@@ -22,10 +24,10 @@ class LessonAdmin(admin.ModelAdmin):
     list_per_page = 50
     fieldsets = (
         ('기본 정보', {'fields': ('course', 'title', 'description')}),
-        ('영상', {'fields': ('video_file', 'duration_seconds')}),
+        ('영상', {'fields': ('video_file', 'server_video_file', 'duration_seconds')}),
         ('운영', {'fields': ('order', 'is_public')}),
     )
 
     @admin.display(description='영상')
     def video_status(self, obj):
-        return '등록됨' if obj.video_file else '없음'
+        return obj.video_file.name if obj.video_file else '없음'
