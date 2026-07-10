@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
@@ -65,3 +66,20 @@ class CourseAccessTests(TestCase):
         result = can_access_course(self.user, self.course, today=self.today)
         self.assertTrue(result.allowed)
         self.assertEqual(result.code, 'allowed')
+
+
+class AdminThemeTests(TestCase):
+    def test_admin_index_loads_custom_theme(self):
+        admin_user = User.objects.create_superuser(
+            username='admin',
+            password='pass12345',
+            email='admin@example.com',
+            name='관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:index'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ONEDU LMS 관리자')
+        self.assertContains(response, 'css/admin.css')

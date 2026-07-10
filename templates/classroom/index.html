@@ -18,7 +18,7 @@
     <h2>수강 중인 강의</h2>
   </div>
   {% if active_cards %}
-    <div class="row g-3">
+    <div class="row g-4">
       {% for card in active_cards %}
         {% include "classroom/_enrollment_card.html" with item=card %}
       {% endfor %}
@@ -37,7 +37,7 @@
     <h2>승인 대기</h2>
   </div>
   {% if waiting_cards %}
-    <div class="row g-3">
+    <div class="row g-4">
       {% for card in waiting_cards %}
         {% include "classroom/_enrollment_card.html" with item=card %}
       {% endfor %}
@@ -56,7 +56,7 @@
     <h2>종료된 강의</h2>
   </div>
   {% if ended_cards %}
-    <div class="row g-3">
+    <div class="row g-4">
       {% for card in ended_cards %}
         {% include "classroom/_enrollment_card.html" with item=card %}
       {% endfor %}
@@ -75,7 +75,7 @@
     <div class="section-title">
       <h2>기타 신청</h2>
     </div>
-    <div class="row g-3">
+    <div class="row g-4">
       {% for card in other_cards %}
         {% include "classroom/_enrollment_card.html" with item=card %}
       {% endfor %}
