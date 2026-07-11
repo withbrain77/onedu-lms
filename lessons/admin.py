@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.urls import path, reverse
 
 from .forms import LessonAdminForm
-from .models import HLSConversionJob, Lesson
+from .models import HLSConversionJob, Lesson, LessonAttachment
 from .services.hls import refresh_lesson_duration_seconds
 from .tasks import convert_lesson_hls_task
 
@@ -16,10 +16,18 @@ ACTIVE_HLS_JOB_STATUSES = (
 )
 
 
+class LessonAttachmentInline(admin.TabularInline):
+    model = LessonAttachment
+    extra = 0
+    fields = ('order', 'title', 'file', 'description', 'is_public')
+    ordering = ('order', 'id')
+
+
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     form = LessonAdminForm
     change_form_template = 'admin/lessons/lesson/change_form.html'
+    inlines = (LessonAttachmentInline,)
     list_display = (
         'title',
         'course',
@@ -189,6 +197,21 @@ class LessonAdmin(admin.ModelAdmin):
         if emit_success:
             self.message_user(request, f'"{lesson}" HLS 변환 작업을 등록했습니다.', messages.SUCCESS)
         return True
+
+
+@admin.register(LessonAttachment)
+class LessonAttachmentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'lesson', 'course_title', 'order', 'is_public', 'updated_at')
+    list_filter = ('is_public', 'lesson__course')
+    search_fields = ('title', 'description', 'lesson__title', 'lesson__course__title')
+    list_editable = ('order', 'is_public')
+    list_select_related = ('lesson', 'lesson__course')
+    ordering = ('lesson__course', 'lesson__order', 'order')
+    list_per_page = 50
+
+    @admin.display(description='강의', ordering='lesson__course__title')
+    def course_title(self, obj):
+        return obj.lesson.course.title
 
 
 @admin.register(HLSConversionJob)

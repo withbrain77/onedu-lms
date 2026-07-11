@@ -18,7 +18,7 @@ from courses.models import Course
 from enrollments.models import Enrollment
 
 from .forms import LessonAdminForm, list_server_video_files, validate_server_video_file
-from .models import HLSConversionJob, Lesson
+from .models import HLSConversionJob, Lesson, LessonAttachment
 from .templatetags.lesson_time import duration_hms
 
 
@@ -66,6 +66,12 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.video_url = self.lesson.get_video_url()
 
     def tearDown(self):
+        for attachment in self.lesson.attachments.all():
+            if attachment.file:
+                try:
+                    attachment.file.delete(save=False)
+                except PermissionError:
+                    pass
         if self.lesson.video_file:
             try:
                 self.lesson.video_file.delete(save=False)
@@ -82,6 +88,16 @@ class VideoProtectionAndWatermarkTests(TestCase):
             start_date=self.today + timedelta(days=start_offset),
             end_date=self.today + timedelta(days=end_offset),
         )
+
+    def create_attachment(self, title='강의 슬라이드', filename='강의자료.pdf', content=b'lesson document'):
+        attachment = LessonAttachment.objects.create(
+            lesson=self.lesson,
+            title=title,
+            order=1,
+            is_public=True,
+        )
+        attachment.file.save(filename, ContentFile(content), save=True)
+        return attachment
 
     def test_anonymous_user_cannot_open_video_page(self):
         response = self.client.get(self.watch_url)
@@ -166,6 +182,75 @@ class VideoProtectionAndWatermarkTests(TestCase):
     def test_private_video_storage_has_no_public_url(self):
         with self.assertRaises(ValueError):
             _ = self.lesson.video_file.url
+
+    def test_approved_student_sees_lesson_attachment_download_link(self):
+        attachment = self.create_attachment()
+        self.approve()
+        self.client.force_login(self.student)
+
+        response = self.client.get(self.watch_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '학습 자료')
+        self.assertContains(response, attachment.title)
+        self.assertContains(response, attachment.get_download_url())
+        self.assertNotContains(response, f'{settings.MEDIA_URL}lesson_attachments/')
+
+    def test_approved_student_can_download_lesson_attachment(self):
+        attachment = self.create_attachment(filename='강의자료.pdf')
+        self.approve()
+        self.client.force_login(self.student)
+
+        response = self.client.get(attachment.get_download_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Disposition'].startswith('attachment;'))
+        self.assertIn("filename*=UTF-8''", response['Content-Disposition'])
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+        response.close()
+
+    @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')
+    def test_attachment_download_uses_x_accel_redirect_when_enabled(self):
+        attachment = self.create_attachment(filename='자료.pdf')
+        self.approve()
+        self.client.force_login(self.student)
+
+        response = self.client.get(attachment.get_download_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['X-Accel-Redirect'].startswith('/protected-media/lesson_attachments/'))
+        self.assertEqual(response.content, b'')
+
+    def test_requested_student_cannot_download_lesson_attachment(self):
+        attachment = self.create_attachment()
+        Enrollment.objects.create(user=self.student, course=self.course)
+        self.client.force_login(self.student)
+
+        response = self.client.get(attachment.get_download_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_other_student_cannot_download_lesson_attachment(self):
+        attachment = self.create_attachment()
+        self.approve(user=self.student)
+        self.client.force_login(self.other_student)
+
+        response = self.client.get(attachment.get_download_url())
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_hidden_attachment_is_not_listed_or_downloadable(self):
+        attachment = self.create_attachment(title='비공개 자료')
+        attachment.is_public = False
+        attachment.save(update_fields=['is_public'])
+        self.approve()
+        self.client.force_login(self.student)
+
+        page_response = self.client.get(self.watch_url)
+        download_response = self.client.get(attachment.get_download_url())
+
+        self.assertNotContains(page_response, '비공개 자료')
+        self.assertEqual(download_response.status_code, 404)
 
     def prepare_hls_files(self):
         private_root = Path(settings.PRIVATE_MEDIA_ROOT)

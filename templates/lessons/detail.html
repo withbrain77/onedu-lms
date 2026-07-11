@@ -114,6 +114,38 @@
       </div>
     </div>
 
+    <div class="card shadow-sm mb-3 lesson-attachments-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <div class="learning-card-label">DOWNLOADS</div>
+            <h2 class="h5 mb-1">학습 자료</h2>
+          </div>
+          <span class="badge text-bg-light">{{ attachments|length }}개</span>
+        </div>
+        {% if attachments %}
+          <div class="lesson-attachment-list">
+            {% for attachment in attachments %}
+              <div class="lesson-attachment-item">
+                <div class="lesson-attachment-copy">
+                  <strong>{{ attachment.title }}</strong>
+                  <span>{{ attachment.filename }}</span>
+                  {% if attachment.description %}
+                    <p>{{ attachment.description }}</p>
+                  {% endif %}
+                </div>
+                <a class="btn btn-outline-primary btn-sm" href="{{ attachment.get_download_url }}">다운로드</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="lesson-attachment-empty">
+            <p class="mb-0">등록된 강의자료가 없습니다.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
     <div class="card shadow-sm">
       <div class="card-body">
         <h2 class="h5 mb-3">차시 목록</h2>

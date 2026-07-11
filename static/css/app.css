@@ -1528,6 +1528,60 @@ body {
   border-bottom: 0;
 }
 
+.lesson-attachment-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.lesson-attachment-item {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--onedu-border);
+  border-radius: 8px;
+  display: flex;
+  gap: 0.85rem;
+  justify-content: space-between;
+  padding: 0.85rem;
+}
+
+.lesson-attachment-copy {
+  min-width: 0;
+}
+
+.lesson-attachment-copy strong,
+.lesson-attachment-copy span,
+.lesson-attachment-copy p {
+  display: block;
+}
+
+.lesson-attachment-copy strong {
+  color: var(--onedu-ink);
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.lesson-attachment-copy span {
+  color: var(--onedu-muted);
+  font-size: 0.82rem;
+  margin-top: 0.15rem;
+  overflow-wrap: anywhere;
+}
+
+.lesson-attachment-copy p {
+  color: var(--onedu-muted);
+  font-size: 0.86rem;
+  margin: 0.35rem 0 0;
+}
+
+.lesson-attachment-empty {
+  background: #f8fafc;
+  border: 1px dashed var(--onedu-border);
+  border-radius: 8px;
+  color: var(--onedu-muted);
+  padding: 1rem;
+  text-align: center;
+}
+
 .list-group-item.active {
   background-color: var(--onedu-primary);
   border-color: var(--onedu-primary);
@@ -1634,6 +1688,11 @@ body {
 
   .focus-player-dock {
     grid-template-columns: 1fr;
+  }
+
+  .lesson-attachment-item {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .timeline-step {

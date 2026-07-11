@@ -12,7 +12,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from core.services.access import can_access_lesson
 from progress.models import WatchProgress
 
-from .models import Lesson
+from .models import Lesson, LessonAttachment
 
 
 HLS_ALLOWED_SUFFIXES = {'.ts', '.m4s', '.mp4', '.aac', '.vtt'}
@@ -42,7 +42,14 @@ def _private_file_path(relative_path):
     return file_path
 
 
-def _protected_file_response(file_path, content_type, filename):
+def _content_disposition(disposition, filename):
+    ascii_filename = filename.encode('ascii', 'ignore').decode().strip() or 'download'
+    ascii_filename = ascii_filename.replace('\\', '\\\\').replace('"', '\\"')
+    encoded_filename = quote(filename, safe='')
+    return f'{disposition}; filename="{ascii_filename}"; filename*=UTF-8\'\'{encoded_filename}'
+
+
+def _protected_file_response(file_path, content_type, filename, disposition='inline'):
     if not file_path.exists() or not file_path.is_file():
         raise Http404('File not found')
 
@@ -57,7 +64,7 @@ def _protected_file_response(file_path, content_type, filename):
         response['X-Accel-Redirect'] = f'{internal_prefix}/{quote(relative_path.as_posix())}'
     else:
         response = FileResponse(file_path.open('rb'), content_type=content_type)
-    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    response['Content-Disposition'] = _content_disposition(disposition, filename)
     response['Cache-Control'] = 'private, no-store'
     response['X-Content-Type-Options'] = 'nosniff'
     return response
@@ -139,6 +146,7 @@ def lesson_detail(request, pk):
         }
         for course_lesson in course_lessons
     ]
+    attachments = list(lesson.attachments.filter(is_public=True).order_by('order', 'id'))
     next_lesson = None
     for index, course_lesson in enumerate(course_lessons):
         if course_lesson.pk == lesson.pk and index + 1 < len(course_lessons):
@@ -154,6 +162,7 @@ def lesson_detail(request, pk):
             'access': access_result,
             'progress': progress,
             'course_lesson_items': course_lesson_items,
+            'attachments': attachments,
             'next_lesson': next_lesson,
             'watermark_text': _watermark_text(request.user),
         },
@@ -206,3 +215,18 @@ def lesson_hls_file(request, pk, filename):
     elif file_path.suffix.lower() == '.m4s':
         content_type = 'video/iso.segment'
     return _protected_file_response(file_path, content_type, file_path.name)
+
+
+@login_required
+def lesson_attachment_download(request, pk, attachment_id):
+    lesson = _get_accessible_lesson_or_404(request.user, pk)
+    attachment = get_object_or_404(
+        LessonAttachment.objects.filter(lesson=lesson, is_public=True),
+        pk=attachment_id,
+    )
+    if not attachment.file:
+        raise Http404('Attachment file not found')
+
+    file_path = _private_file_path(attachment.file.name)
+    content_type = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
+    return _protected_file_response(file_path, content_type, attachment.filename, disposition='attachment')

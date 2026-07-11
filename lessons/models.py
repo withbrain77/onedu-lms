@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -52,6 +54,43 @@ class Lesson(models.Model):
     @property
     def has_hls(self):
         return self.hls_ready and bool(self.hls_playlist_path)
+
+
+class LessonAttachment(models.Model):
+    lesson = models.ForeignKey(
+        Lesson,
+        verbose_name='차시',
+        on_delete=models.CASCADE,
+        related_name='attachments',
+    )
+    title = models.CharField('자료명', max_length=200)
+    file = models.FileField(
+        '자료 파일',
+        upload_to='lesson_attachments/',
+        storage=private_video_storage,
+    )
+    description = models.TextField('자료 설명', blank=True)
+    order = models.PositiveIntegerField('순서', default=1)
+    is_public = models.BooleanField('공개 여부', default=True)
+    created_at = models.DateTimeField('생성일', auto_now_add=True)
+    updated_at = models.DateTimeField('수정일', auto_now=True)
+
+    class Meta:
+        verbose_name = '학습 자료'
+        verbose_name_plural = '학습 자료'
+        ordering = ['lesson', 'order', 'id']
+
+    def __str__(self):
+        return f'{self.lesson} - {self.title}'
+
+    def get_download_url(self):
+        return reverse('lessons:attachment_download', kwargs={'pk': self.lesson_id, 'attachment_id': self.pk})
+
+    @property
+    def filename(self):
+        if not self.file:
+            return ''
+        return Path(self.file.name).name
 
 
 class HLSConversionJob(models.Model):
