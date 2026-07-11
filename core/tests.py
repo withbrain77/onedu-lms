@@ -10,6 +10,50 @@ from courses.models import Course
 from enrollments.models import Enrollment
 
 
+class HomePageTests(TestCase):
+    def test_anonymous_user_sees_polished_home_page(self):
+        Course.objects.create(
+            title='IM 마스터스 세미나 2026',
+            description='대표 강의 설명',
+            is_public=True,
+        )
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '승인형 업무 교육을 한곳에서 관리합니다')
+        self.assertContains(response, 'IM 마스터스 세미나 2026')
+        self.assertContains(response, reverse('accounts:login'))
+        self.assertContains(response, reverse('accounts:signup'))
+
+    def test_student_home_redirects_to_classroom(self):
+        user = User.objects.create_user(
+            username='student_home',
+            password='pass12345',
+            name='수강생',
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('enrollments:classroom'))
+
+    def test_staff_home_redirects_to_admin(self):
+        admin_user = User.objects.create_superuser(
+            username='home_admin',
+            password='pass12345',
+            email='home-admin@example.com',
+            name='관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('admin:index'))
+
+
 class CourseAccessTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
