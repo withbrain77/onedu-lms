@@ -67,6 +67,23 @@ class AccountRecoveryTests(TestCase):
         self.assertIn('student01', mail.outbox[0].body)
         self.assertIn('/accounts/reset/', mail.outbox[0].body)
 
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        PUBLIC_SITE_URL='https://lms.example.com',
+        ALLOWED_HOSTS=['192.168.0.97'],
+    )
+    def test_password_reset_uses_public_site_url_when_configured(self):
+        response = self.client.post(
+            reverse('accounts:password_reset'),
+            {'email': 'student@example.com'},
+            HTTP_HOST='192.168.0.97:8080',
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('https://lms.example.com/accounts/reset/', mail.outbox[0].body)
+        self.assertNotIn('192.168.0.97:8080/accounts/reset/', mail.outbox[0].body)
+
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     def test_password_reset_unknown_email_still_shows_done_page(self):
         response = self.client.post(

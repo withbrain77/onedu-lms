@@ -1,5 +1,7 @@
 from smtplib import SMTPException
+from urllib.parse import urlparse
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -11,6 +13,7 @@ from django.contrib.auth.views import (
     PasswordResetView,
 )
 from django.core.mail import BadHeaderError
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
@@ -76,9 +79,30 @@ class LMSPasswordResetView(PasswordResetView):
     subject_template_name = 'accounts/password_reset_subject.txt'
     success_url = reverse_lazy('accounts:password_reset_done')
 
+    def get_password_reset_options(self):
+        options = {
+            'use_https': self.request.is_secure(),
+            'token_generator': self.token_generator,
+            'from_email': self.from_email,
+            'email_template_name': self.email_template_name,
+            'subject_template_name': self.subject_template_name,
+            'request': self.request,
+            'html_email_template_name': self.html_email_template_name,
+            'extra_email_context': self.extra_email_context,
+        }
+
+        if settings.PUBLIC_SITE_URL:
+            public_url = urlparse(settings.PUBLIC_SITE_URL)
+            if public_url.scheme and public_url.netloc:
+                options['domain_override'] = public_url.netloc
+                options['use_https'] = public_url.scheme == 'https'
+
+        return options
+
     def form_valid(self, form):
         try:
-            return super().form_valid(form)
+            form.save(**self.get_password_reset_options())
+            return HttpResponseRedirect(self.get_success_url())
         except (BadHeaderError, OSError, SMTPException):
             messages.error(
                 self.request,

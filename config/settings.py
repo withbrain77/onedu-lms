@@ -185,6 +185,7 @@ CERTIFICATE_ISSUER_NAME = os.getenv('CERTIFICATE_ISSUER_NAME', 'Onedu LMS')
 CERTIFICATE_FONT_PATH = os.getenv('CERTIFICATE_FONT_PATH', '')
 USE_X_ACCEL_REDIRECT = env_bool('USE_X_ACCEL_REDIRECT', False)
 X_ACCEL_REDIRECT_PREFIX = os.getenv('X_ACCEL_REDIRECT_PREFIX', '/protected-media/')
+PUBLIC_SITE_URL = os.getenv('DJANGO_PUBLIC_SITE_URL', '').strip().rstrip('/')
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
