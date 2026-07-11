@@ -3,10 +3,11 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from core.views import home
+from core.views import home, ui_preview
 
 urlpatterns = [
     path('', home, name='home'),
+    path('ui-preview/', ui_preview, name='ui_preview'),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('courses/', include('courses.urls')),

@@ -1,0 +1,125 @@
+<div class="structure-shell">
+  <div class="structure-heading">
+    <div>
+      <span>{{ number }}</span>
+      <h2>{{ name }}</h2>
+      <p>{{ note }}</p>
+    </div>
+    <button type="button">이 시안 선택</button>
+  </div>
+
+  {% if layout == "command" %}
+    <div class="command-layout">
+      <header class="command-header">
+        <div>
+          <strong>오늘의 운영 현황</strong>
+          <span>2026.07.11 / 관리자 워크스페이스</span>
+        </div>
+        <div class="command-header-actions">
+          <button type="button">수강 승인</button>
+          <button type="button">HLS 작업</button>
+        </div>
+      </header>
+      <div class="command-kpis">
+        <div><span>승인 대기</span><strong>12</strong><b>오늘 +3</b></div>
+        <div><span>진행 중 수강</span><strong>148</strong><b>정상</b></div>
+        <div><span>HLS 변환</span><strong>2</strong><b>대기 중</b></div>
+        <div><span>기간 만료 예정</span><strong>9</strong><b>7일 내</b></div>
+      </div>
+      <div class="command-body">
+        <section class="command-panel large">
+          <div class="panel-title"><strong>우선 처리 업무</strong><span>승인/반려/기간 설정</span></div>
+          <div class="task-row"><span class="priority high">긴급</span><b>IM Master's Seminar 수강 신청 4건</b><button type="button">처리</button></div>
+          <div class="task-row"><span class="priority">확인</span><b>260614 영상 HLS 변환 실패 1건</b><button type="button">로그</button></div>
+          <div class="task-row"><span class="priority low">안내</span><b>수료증 검증 문의 2건</b><button type="button">보기</button></div>
+        </section>
+        <section class="command-panel">
+          <div class="panel-title"><strong>강의별 상태</strong><span>진도/시험/수료</span></div>
+          <div class="mini-chart"><i style="height:72%"></i><i style="height:46%"></i><i style="height:88%"></i><i style="height:61%"></i></div>
+          <p>수강 진행률이 낮은 강의를 먼저 확인하는 운영형 첫 화면입니다.</p>
+        </section>
+      </div>
+    </div>
+  {% elif layout == "timeline" %}
+    <div class="timeline-layout">
+      <aside class="timeline-summary">
+        <span class="status approved">수강 중</span>
+        <h3>IM Master's Seminar</h3>
+        <p>2026.07.11 - 2026.08.10</p>
+        <div class="timeline-progress"><span style="width: 64%"></span></div>
+        <button type="button">현재 차시 이어보기</button>
+      </aside>
+      <section class="timeline-flow">
+        <div class="timeline-item done"><span>01</span><div><strong>오리엔테이션</strong><p>완료 / 18분 시청</p></div></div>
+        <div class="timeline-item active"><span>02</span><div><strong>핵심 전략 강의</strong><p>재생 중 / 32분부터 이어보기</p></div></div>
+        <div class="timeline-item"><span>03</span><div><strong>실전 사례 분석</strong><p>수강 전</p></div></div>
+        <div class="timeline-item"><span>04</span><div><strong>시험 응시</strong><p>진도 90% 이후 활성화</p></div></div>
+        <div class="timeline-item"><span>05</span><div><strong>수료증 다운로드</strong><p>조건 충족 후 발급</p></div></div>
+      </section>
+    </div>
+  {% elif layout == "kanban" %}
+    <div class="kanban-layout">
+      <div class="kanban-column">
+        <h3>승인 대기 <span>3</span></h3>
+        <article><b>업무 기본 교육</b><p>신청일 2026.07.11</p><button type="button">상세</button></article>
+        <article><b>신규 입문 과정</b><p>관리자 검토 필요</p><button type="button">상세</button></article>
+      </div>
+      <div class="kanban-column active">
+        <h3>수강 중 <span>5</span></h3>
+        <article><b>IM Master's Seminar</b><p>진도 74% / D-21</p><div class="timeline-progress"><span style="width:74%"></span></div><button type="button">이어보기</button></article>
+        <article><b>리더십 워크숍</b><p>시험 미응시</p><button type="button">시험</button></article>
+      </div>
+      <div class="kanban-column">
+        <h3>수료 완료 <span>8</span></h3>
+        <article><b>보안 교육</b><p>수료증 발급 완료</p><button type="button">다운로드</button></article>
+      </div>
+      <div class="kanban-column">
+        <h3>기간 만료 <span>2</span></h3>
+        <article><b>CS 기본 과정</b><p>재수강 신청 가능</p><button type="button">재신청</button></article>
+      </div>
+    </div>
+  {% elif layout == "player" %}
+    <div class="player-layout">
+      <section class="player-stage">
+        <div class="player-watermark">홍길동 / student123</div>
+        <div class="player-center">IM Master's Seminar 2강</div>
+      </section>
+      <section class="player-dock">
+        <div class="dock-tabs"><span class="active">차시</span><span>진도</span><span>자료</span><span>시험</span></div>
+        <div class="dock-content">
+          <div><strong>현재 차시</strong><p>2강 핵심 전략 / 32:18부터 이어보기</p></div>
+          <div><strong>전체 진도</strong><p>74% 완료 / 다음 차시 자동 추천</p></div>
+          <button type="button">다음 강의</button>
+        </div>
+      </section>
+    </div>
+  {% elif layout == "console" %}
+    <div class="console-layout">
+      <aside class="console-filter">
+        <strong>필터</strong>
+        <span class="active">승인 대기</span>
+        <span>수강 중</span>
+        <span>기간 만료</span>
+        <span>수료 완료</span>
+        <span>HLS 변환 실패</span>
+      </aside>
+      <section class="console-table">
+        <div class="console-toolbar"><b>수강 신청 관리</b><button type="button">선택 승인</button></div>
+        <table>
+          <thead><tr><th>수강생</th><th>강의</th><th>상태</th><th>기간</th><th>진도</th></tr></thead>
+          <tbody>
+            <tr class="selected"><td>김수강</td><td>IM Master's Seminar</td><td>승인 대기</td><td>미설정</td><td>0%</td></tr>
+            <tr><td>이학습</td><td>업무 기본 교육</td><td>수강 중</td><td>D-18</td><td>54%</td></tr>
+            <tr><td>박완료</td><td>보안 교육</td><td>수료 완료</td><td>완료</td><td>100%</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <aside class="console-detail">
+        <strong>김수강</strong>
+        <p>IM Master's Seminar 신청 검토</p>
+        <dl><dt>신청일</dt><dd>2026.07.11</dd><dt>최근 접속</dt><dd>없음</dd><dt>요청 메모</dt><dd>신규 수강</dd></dl>
+        <button type="button">승인 및 기간 설정</button>
+      </aside>
+    </div>
+  {% endif %}
+</div>

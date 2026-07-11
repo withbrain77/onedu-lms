@@ -4,6 +4,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
+LESSON_COMPLETION_THRESHOLD_PERCENT = 90
+
+
 class WatchProgress(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -61,16 +64,23 @@ class WatchProgress(models.Model):
         self.last_position_seconds = max(int(position_seconds), 0)
         if duration_seconds is not None:
             self.duration_seconds = max(int(duration_seconds), 0)
-        self.total_watched_seconds += max(int(watched_increment_seconds), 0)
+        watched_increment = max(int(watched_increment_seconds), 0)
+        self.total_watched_seconds += watched_increment
         if self.duration_seconds:
-            self.progress_percent = min(
-                int((self.last_position_seconds / self.duration_seconds) * 100),
-                100,
-            )
-        if completed:
+            self.total_watched_seconds = min(self.total_watched_seconds, self.duration_seconds)
+            if self.last_position_seconds > self.duration_seconds:
+                self.last_position_seconds = self.duration_seconds
+            watched_percent = int((self.total_watched_seconds / self.duration_seconds) * 100)
+        else:
+            watched_percent = 0
+        self.progress_percent = min(watched_percent, 100)
+        can_complete = self.progress_percent >= LESSON_COMPLETION_THRESHOLD_PERCENT
+        if self.duration_seconds:
+            can_complete = can_complete or completed and self.progress_percent >= LESSON_COMPLETION_THRESHOLD_PERCENT
+        if completed and can_complete:
             self.progress_percent = 100
             if self.duration_seconds:
                 self.last_position_seconds = max(self.last_position_seconds, self.duration_seconds)
-        if (self.progress_percent >= 90 or completed) and not self.is_completed:
+        if can_complete and not self.is_completed:
             self.is_completed = True
             self.completed_at = timezone.now()

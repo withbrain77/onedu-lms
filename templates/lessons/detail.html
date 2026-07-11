@@ -4,8 +4,9 @@
 {% block title %}{{ lesson.title }} | Onedu LMS{% endblock %}
 
 {% block page_header %}
-<div class="page-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+<div class="page-header player-page-header d-flex flex-column flex-lg-row justify-content-between gap-3">
   <div>
+    <div class="hero-kicker">FOCUS PLAYER</div>
     <h1>{{ lesson.title }}</h1>
     <p>{{ course.title }}</p>
   </div>
@@ -14,11 +15,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="row g-4 lesson-watch-layout">
-  <div class="col-12 col-xl-8">
-    <div class="card shadow-sm video-card">
-      <div class="card-body p-0">
-        {% if lesson.video_file %}
+<div class="focus-player-layout">
+  <section class="focus-player-stage">
+    <div class="video-card">
+        {% if lesson.has_hls or lesson.video_file %}
           <div id="videoPlayerShell" class="video-player-shell">
             <video
               id="lessonVideo"
@@ -28,11 +28,16 @@
               disablepictureinpicture
               playsinline
               preload="metadata"
+              {% if lesson.has_hls %}data-hls-url="{{ lesson.get_hls_playlist_url }}"{% endif %}
               data-progress-url="{% url 'progress:save_lesson' lesson.id %}"
               data-start-position="{% if progress %}{{ progress.last_position_seconds }}{% else %}0{% endif %}"
               data-save-interval="12000"
             >
-              <source src="{{ lesson.get_video_url }}">
+              {% if lesson.has_hls %}
+                <source src="{{ lesson.get_hls_playlist_url }}" type="application/vnd.apple.mpegurl">
+              {% elif lesson.video_file %}
+                <source src="{{ lesson.get_video_url }}">
+              {% endif %}
               현재 브라우저에서 HTML5 video를 지원하지 않습니다.
             </video>
             <div id="videoWatermark" class="video-watermark wm-pos-center" aria-hidden="true">{{ watermark_text }}</div>
@@ -45,15 +50,15 @@
             <a class="btn btn-outline-secondary" href="{% url 'enrollments:course_detail' course.id %}">강의로 돌아가기</a>
           </div>
         {% endif %}
-      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="col-12 col-xl-4">
-    <div class="card shadow-sm mb-3">
+  <section class="focus-player-dock">
+    <div class="card shadow-sm mb-3 lesson-progress-card">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
           <div>
+            <div class="learning-card-label">CURRENT LESSON</div>
             <h2 class="h5 mb-1">학습 현황</h2>
             <p class="small text-muted mb-0" id="progressSaveStatus">진도 저장 대기 중</p>
           </div>
@@ -76,6 +81,7 @@
           ></div>
         </div>
         <dl class="detail-meta">
+          <div><dt>재생 방식</dt><dd>{% if lesson.has_hls %}HLS 스트리밍{% else %}MP4 재생{% endif %}</dd></div>
           <div><dt>순서</dt><dd>{{ lesson.order }}</dd></div>
           <div><dt>영상 길이</dt><dd>{% if progress and progress.duration_seconds %}{{ progress.duration_seconds }}초{% else %}{{ lesson.duration_seconds }}초{% endif %}</dd></div>
           <div><dt>마지막 위치</dt><dd>{% if progress %}{{ progress.last_position_seconds }}초{% else %}0초{% endif %}</dd></div>
@@ -113,10 +119,13 @@
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}
 
 {% block scripts %}
+  {% if lesson.has_hls %}
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
+  {% endif %}
   <script src="{% static 'js/video_progress.js' %}"></script>
 {% endblock %}

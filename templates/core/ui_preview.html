@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}UI 시안 선택 | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header ui-preview-heading">
+  <div>
+    <h1>UI 시안 선택</h1>
+    <p>실제 화면에 적용하기 전에 5가지 업무용 LMS 화면 구성을 비교합니다.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<link href="{% static 'css/ui_preview.css' %}?v=20260711-structure-2" rel="stylesheet">
+
+<div class="ui-preview-page">
+  <div class="ui-preview-group-label">기본 카드형 시안</div>
+  <div class="ui-preview-toolbar" role="tablist" aria-label="UI 시안 선택">
+    <button class="ui-preview-tab active" type="button" data-preview-target="concept-clear" aria-selected="true">01 Clear Blue</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-saas" aria-selected="false">02 Modern SaaS</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-studio" aria-selected="false">03 Studio Light</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-compact" aria-selected="false">04 Compact Ops</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-calm" aria-selected="false">05 Calm Academy</button>
+  </div>
+  <div class="ui-preview-group-label">구조 변경 시안</div>
+  <div class="ui-preview-toolbar ui-preview-toolbar-alt" role="tablist" aria-label="구조형 UI 시안 선택">
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-command" aria-selected="false">06 Command Center</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-timeline" aria-selected="false">07 Timeline</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-kanban" aria-selected="false">08 Kanban Board</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-player" aria-selected="false">09 Focus Player</button>
+    <button class="ui-preview-tab" type="button" data-preview-target="concept-console" aria-selected="false">10 Admin Console</button>
+  </div>
+
+  <section id="concept-clear" class="ui-concept active" data-theme="clear">
+    {% include "core/ui_preview_concept.html" with number="01" name="Clear Blue" note="밝은 회색 배경, 선명한 파란 포인트, 가장 무난한 업무용 LMS 방향" %}
+  </section>
+
+  <section id="concept-saas" class="ui-concept" data-theme="saas">
+    {% include "core/ui_preview_concept.html" with number="02" name="Modern SaaS" note="넓은 여백과 부드러운 카드, 신청/진도/수료 상태가 잘 보이는 SaaS형 화면" %}
+  </section>
+
+  <section id="concept-studio" class="ui-concept" data-theme="studio">
+    {% include "core/ui_preview_concept.html" with number="03" name="Studio Light" note="콘텐츠와 영상 영역이 먼저 보이는 교육 스튜디오형 화면" %}
+  </section>
+
+  <section id="concept-compact" class="ui-concept" data-theme="compact">
+    {% include "core/ui_preview_concept.html" with number="04" name="Compact Ops" note="관리자가 많은 데이터를 빠르게 확인하기 좋은 밀도 높은 업무형 화면" %}
+  </section>
+
+  <section id="concept-calm" class="ui-concept" data-theme="calm">
+    {% include "core/ui_preview_concept.html" with number="05" name="Calm Academy" note="차분하고 밝은 학습 경험을 강조한 수강생 친화형 화면" %}
+  </section>
+
+  <section id="concept-command" class="ui-concept ui-structure-concept" data-layout="command">
+    {% include "core/ui_preview_structure_concept.html" with number="06" name="Command Center" note="첫 화면을 업무 지휘판처럼 구성해 오늘 처리할 신청, 진행 강의, 변환 작업을 바로 보여주는 구조" layout="command" %}
+  </section>
+
+  <section id="concept-timeline" class="ui-concept ui-structure-concept" data-layout="timeline">
+    {% include "core/ui_preview_structure_concept.html" with number="07" name="Learning Timeline" note="강의 상세와 내 강의실을 시간 순서형 학습 여정으로 보여주는 구조" layout="timeline" %}
+  </section>
+
+  <section id="concept-kanban" class="ui-concept ui-structure-concept" data-layout="kanban">
+    {% include "core/ui_preview_structure_concept.html" with number="08" name="Kanban Course Board" note="승인 대기, 수강 중, 완료, 기간 만료를 칸반 보드처럼 분리해 상태 전환이 명확한 구조" layout="kanban" %}
+  </section>
+
+  <section id="concept-player" class="ui-concept ui-structure-concept" data-layout="player">
+    {% include "core/ui_preview_structure_concept.html" with number="09" name="Focus Player" note="영상 시청 화면을 첫 번째 경험으로 두고 차시와 진도 정보를 하단 패널로 정리한 구조" layout="player" %}
+  </section>
+
+  <section id="concept-console" class="ui-concept ui-structure-concept" data-layout="console">
+    {% include "core/ui_preview_structure_concept.html" with number="10" name="Admin Console" note="관리자 업무를 우선해 테이블, 필터, 상세 패널을 한 화면에서 처리하는 구조" layout="console" %}
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  document.querySelectorAll('[data-preview-target]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const targetId = button.dataset.previewTarget;
+      document.querySelectorAll('[data-preview-target]').forEach(function (tab) {
+        tab.classList.toggle('active', tab === button);
+        tab.setAttribute('aria-selected', tab === button ? 'true' : 'false');
+      });
+      document.querySelectorAll('.ui-concept').forEach(function (panel) {
+        panel.classList.toggle('active', panel.id === targetId);
+      });
+    });
+  });
+</script>
+{% endblock %}

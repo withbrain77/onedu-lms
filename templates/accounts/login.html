@@ -11,7 +11,7 @@
 
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-12 col-md-7 col-lg-5">
+  <div class="col-12 col-md-9 col-lg-7 col-xl-6">
     <div class="card shadow-sm">
       <div class="card-body p-4">
         <form method="post" novalidate>
@@ -33,6 +33,17 @@
         </form>
         <div class="text-center mt-3 small">
           계정이 없나요? <a href="{% url 'accounts:signup' %}">회원가입</a>
+        </div>
+        <div class="login-support-info" aria-label="운영 회사 정보">
+          <div class="login-support-company">
+            <span>소프트웨어 개발 및 기술지원:</span>
+            <strong>위드브레인연구소(WITHBRAIN INSTITUTE)</strong>
+          </div>
+          <div class="login-support-links">
+            <span>전화: <a href="tel:025697308">02-569-7308</a></span>
+            <span>이메일: <a href="mailto:withbrain77@daum.net">withbrain77@daum.net</a></span>
+            <span>운영 문의: 평일 09:00-18:00</span>
+          </div>
         </div>
       </div>
     </div>

@@ -11,9 +11,27 @@ class LessonInline(admin.TabularInline):
     model = Lesson
     form = LessonAdminForm
     extra = 0
-    fields = ('order', 'title', 'video_file', 'server_video_file', 'duration_seconds', 'is_public')
+    fields = (
+        'order',
+        'title',
+        'video_file',
+        'server_video_file',
+        'duration_seconds',
+        'hls_ready',
+        'hls_job_status',
+        'hls_playlist_path',
+        'is_public',
+    )
+    readonly_fields = ('hls_ready', 'hls_job_status', 'hls_playlist_path')
     ordering = ('order',)
     show_change_link = True
+
+    @admin.display(description='HLS 작업')
+    def hls_job_status(self, obj):
+        if not obj.pk:
+            return '-'
+        job = obj.hls_jobs.order_by('-created_at').first()
+        return job.get_status_display() if job else '없음'
 
 
 @admin.register(Course)

@@ -6,12 +6,16 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from core.services.access import can_access_lesson
 from progress.models import WatchProgress
 
 from .models import Lesson
+
+
+HLS_ALLOWED_SUFFIXES = {'.ts', '.m4s', '.mp4', '.aac', '.vtt'}
 
 
 def _lesson_queryset():
@@ -23,6 +27,73 @@ def _watermark_text(user):
     if user.is_staff:
         return f'관리자 미리보기 / {username}'
     return f'{user.display_name} / {username}'
+
+
+def _private_media_root():
+    return Path(settings.PRIVATE_MEDIA_ROOT).resolve()
+
+
+def _private_file_path(relative_path):
+    file_path = (_private_media_root() / relative_path).resolve()
+    try:
+        file_path.relative_to(_private_media_root())
+    except ValueError:
+        raise Http404('File not found')
+    return file_path
+
+
+def _protected_file_response(file_path, content_type, filename):
+    if not file_path.exists() or not file_path.is_file():
+        raise Http404('File not found')
+
+    try:
+        relative_path = file_path.resolve().relative_to(_private_media_root())
+    except ValueError:
+        raise Http404('File not found')
+
+    if settings.USE_X_ACCEL_REDIRECT:
+        internal_prefix = settings.X_ACCEL_REDIRECT_PREFIX.rstrip('/')
+        response = HttpResponse(content_type=content_type)
+        response['X-Accel-Redirect'] = f'{internal_prefix}/{quote(relative_path.as_posix())}'
+    else:
+        response = FileResponse(file_path.open('rb'), content_type=content_type)
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    response['Cache-Control'] = 'private, no-store'
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+
+def _get_accessible_lesson_or_404(user, pk):
+    lesson = get_object_or_404(_lesson_queryset(), pk=pk)
+    access_result = can_access_lesson(user, lesson)
+    if not access_result.allowed:
+        raise Http404('Lesson not found')
+    return lesson
+
+
+def _hls_playlist_path(lesson):
+    if not lesson.has_hls:
+        raise Http404('HLS playlist not found')
+    playlist_path = _private_file_path(lesson.hls_playlist_path)
+    if playlist_path.suffix.lower() != '.m3u8':
+        raise Http404('HLS playlist not found')
+    if not playlist_path.exists():
+        raise Http404('HLS playlist not found')
+    return playlist_path
+
+
+def _rewrite_hls_playlist(lesson, playlist_text):
+    lines = []
+    for line in playlist_text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            lines.append(line)
+            continue
+        if '://' in stripped or stripped.startswith('/'):
+            lines.append(line)
+            continue
+        lines.append(reverse('lessons:hls_file', kwargs={'pk': lesson.pk, 'filename': stripped}))
+    return '\n'.join(lines) + '\n'
 
 
 @login_required
@@ -91,31 +162,47 @@ def lesson_detail(request, pk):
 
 @login_required
 def lesson_video(request, pk):
-    lesson = get_object_or_404(_lesson_queryset(), pk=pk)
-    access_result = can_access_lesson(request.user, lesson)
-    if not access_result.allowed:
-        raise Http404('Video not found')
+    lesson = _get_accessible_lesson_or_404(request.user, pk)
 
     if not lesson.video_file:
         raise Http404('Video file not found')
 
-    file_path = Path(lesson.video_file.path)
-    if not file_path.exists():
-        raise Http404('Video file not found')
-    try:
-        file_path.resolve().relative_to(Path(settings.PRIVATE_MEDIA_ROOT).resolve())
-    except ValueError:
-        raise Http404('Video file not found')
-
+    file_path = _private_file_path(lesson.video_file.name)
     content_type = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
-    if settings.USE_X_ACCEL_REDIRECT:
-        relative_path = file_path.resolve().relative_to(Path(settings.PRIVATE_MEDIA_ROOT).resolve())
-        internal_prefix = settings.X_ACCEL_REDIRECT_PREFIX.rstrip('/')
-        response = HttpResponse(content_type=content_type)
-        response['X-Accel-Redirect'] = f'{internal_prefix}/{quote(relative_path.as_posix())}'
-    else:
-        response = FileResponse(file_path.open('rb'), content_type=content_type)
-    response['Content-Disposition'] = f'inline; filename="lesson-{lesson.pk}{file_path.suffix}"'
+    return _protected_file_response(file_path, content_type, f'lesson-{lesson.pk}{file_path.suffix}')
+
+
+@login_required
+def lesson_hls_playlist(request, pk):
+    lesson = _get_accessible_lesson_or_404(request.user, pk)
+    playlist_path = _hls_playlist_path(lesson)
+    playlist_text = playlist_path.read_text(encoding='utf-8')
+    response = HttpResponse(
+        _rewrite_hls_playlist(lesson, playlist_text),
+        content_type='application/vnd.apple.mpegurl; charset=utf-8',
+    )
     response['Cache-Control'] = 'private, no-store'
     response['X-Content-Type-Options'] = 'nosniff'
     return response
+
+
+@login_required
+def lesson_hls_file(request, pk, filename):
+    lesson = _get_accessible_lesson_or_404(request.user, pk)
+    playlist_path = _hls_playlist_path(lesson)
+    base_dir = playlist_path.parent.resolve()
+    file_path = (base_dir / filename).resolve()
+    try:
+        file_path.relative_to(base_dir)
+    except ValueError:
+        raise Http404('HLS file not found')
+
+    if file_path.suffix.lower() not in HLS_ALLOWED_SUFFIXES:
+        raise Http404('HLS file not found')
+
+    content_type = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
+    if file_path.suffix.lower() == '.ts':
+        content_type = 'video/mp2t'
+    elif file_path.suffix.lower() == '.m4s':
+        content_type = 'video/iso.segment'
+    return _protected_file_response(file_path, content_type, file_path.name)

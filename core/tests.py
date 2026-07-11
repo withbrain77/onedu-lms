@@ -83,3 +83,33 @@ class AdminThemeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ONEDU LMS 관리자')
         self.assertContains(response, 'css/admin.css')
+
+
+class UIPreviewTests(TestCase):
+    def test_ui_preview_requires_staff_login(self):
+        response = self.client.get(reverse('ui_preview'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('admin:login'), response['Location'])
+
+    def test_staff_can_open_ui_preview(self):
+        admin_user = User.objects.create_superuser(
+            username='ui_admin',
+            password='pass12345',
+            email='ui-admin@example.com',
+            name='UI 관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('ui_preview'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'UI 시안 선택')
+        self.assertContains(response, 'Clear Blue')
+        self.assertContains(response, 'Modern SaaS')
+        self.assertContains(response, 'Calm Academy')
+        self.assertContains(response, 'Command Center')
+        self.assertContains(response, 'Learning Timeline')
+        self.assertContains(response, 'Kanban Course Board')
+        self.assertContains(response, 'Focus Player')
+        self.assertContains(response, 'Admin Console')

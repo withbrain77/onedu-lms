@@ -17,6 +17,7 @@
   - `/volume1/docker/onedu/data/static`
   - `/volume1/docker/onedu/data/media`
   - `/volume1/docker/onedu/data/private_media`
+  - `/volume1/docker/onedu/data/redis`
   - `/volume1/docker/onedu/backups`
 - [ ] `.env` 파일 준비
   - `.env.example`을 복사해 실제 값으로 수정
@@ -77,6 +78,16 @@ X_ACCEL_REDIRECT_PREFIX=/protected-media/
 
 - 운영에서는 Django가 직접 영상을 전송하지 않고 Nginx internal location을 사용하게 한다.
 
+```env
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/1
+CELERY_VIDEO_QUEUE=video
+CELERY_WORKER_CONCURRENCY=1
+```
+
+- HLS 변환 작업 큐 설정이다.
+- NAS 부하를 줄이기 위해 worker 동시 실행 수는 기본 `1`을 권장한다.
+
 ## 3. 배포 명령 순서
 
 프로젝트 폴더에서 실행한다.
@@ -111,6 +122,12 @@ docker compose up -d
 docker compose logs -f web
 ```
 
+HLS 변환 worker 로그 확인:
+
+```bash
+docker compose logs -f worker
+```
+
 관리자 계정 생성:
 
 ```bash
@@ -138,6 +155,8 @@ docker compose exec web python manage.py check --deploy
 - [ ] 강의 공개/비공개 설정 가능
 - [ ] 차시 생성 가능
 - [ ] 영상 업로드 가능
+- [ ] 차시 수정 화면에서 HLS 변환 요청 가능
+- [ ] `HLS 변환 작업` 메뉴에서 대기/진행/완료/실패 상태 확인 가능
 - [ ] 시험/문제/보기 생성 가능
 - [ ] 수강 신청 목록 확인 가능
 - [ ] 수강 승인 및 시작일/종료일 설정 가능
@@ -155,6 +174,7 @@ docker compose exec web python manage.py check --deploy
 - [ ] 수강 시작일 전 접근 차단
 - [ ] 수강 종료일 후 접근 차단
 - [ ] 영상 재생 가능
+- [ ] HLS 변환 완료 차시가 HLS로 재생됨
 - [ ] 영상 위 워터마크 표시
 - [ ] 진도 저장 표시 동작
 - [ ] 시험 응시 가능
@@ -181,6 +201,7 @@ docker compose exec web python manage.py check --deploy
   - 예: `/protected-media/...` 직접 접근 시 404 또는 403이어야 함
 - [ ] 영상 URL은 `/lessons/<id>/video/` 권한 확인을 거쳐야 함
 - [ ] PostgreSQL 포트가 외부 인터넷에 노출되지 않음
+- [ ] Redis 포트가 외부 인터넷에 노출되지 않음
 - [ ] NAS 방화벽과 공유기 포트포워딩 설정 확인
 
 ## 6. 백업 확인

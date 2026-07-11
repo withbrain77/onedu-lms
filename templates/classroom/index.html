@@ -3,8 +3,9 @@
 {% block title %}내 강의실 | Onedu LMS{% endblock %}
 
 {% block page_header %}
-<div class="page-header d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
+<div class="page-header student-hero d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
   <div>
+    <div class="hero-kicker">MY LEARNING</div>
     <h1>내 강의실</h1>
     <p>승인된 강의, 승인 대기 강의, 종료된 강의를 한곳에서 확인합니다.</p>
   </div>
@@ -13,9 +14,27 @@
 {% endblock %}
 
 {% block content %}
+<div class="learning-overview mb-4">
+  <div>
+    <span>수강 중</span>
+    <strong>{{ active_cards|length }}</strong>
+  </div>
+  <div>
+    <span>승인 대기</span>
+    <strong>{{ waiting_cards|length }}</strong>
+  </div>
+  <div>
+    <span>종료</span>
+    <strong>{{ ended_cards|length }}</strong>
+  </div>
+</div>
+
 <section class="mb-5">
-  <div class="section-title">
-    <h2>수강 중인 강의</h2>
+  <div class="section-title learning-section-title">
+    <div>
+      <span>STEP 01</span>
+      <h2>수강 중인 강의</h2>
+    </div>
   </div>
   {% if active_cards %}
     <div class="row g-4">
@@ -33,8 +52,11 @@
 </section>
 
 <section class="mb-5">
-  <div class="section-title">
-    <h2>승인 대기</h2>
+  <div class="section-title learning-section-title">
+    <div>
+      <span>STEP 02</span>
+      <h2>승인 대기</h2>
+    </div>
   </div>
   {% if waiting_cards %}
     <div class="row g-4">
@@ -52,8 +74,11 @@
 </section>
 
 <section>
-  <div class="section-title">
-    <h2>종료된 강의</h2>
+  <div class="section-title learning-section-title">
+    <div>
+      <span>STEP 03</span>
+      <h2>종료된 강의</h2>
+    </div>
   </div>
   {% if ended_cards %}
     <div class="row g-4">
@@ -72,8 +97,11 @@
 
 {% if other_cards %}
   <section class="mt-5">
-    <div class="section-title">
-      <h2>기타 신청</h2>
+    <div class="section-title learning-section-title">
+      <div>
+        <span>OTHER</span>
+        <h2>기타 신청</h2>
+      </div>
     </div>
     <div class="row g-4">
       {% for card in other_cards %}

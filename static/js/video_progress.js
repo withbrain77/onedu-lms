@@ -5,6 +5,7 @@
   }
 
   const progressUrl = video.dataset.progressUrl;
+  const hlsUrl = video.dataset.hlsUrl;
   const saveInterval = Number(video.dataset.saveInterval || 12000);
   const startPosition = Number(video.dataset.startPosition || 0);
   const playerShell = document.getElementById('videoPlayerShell');
@@ -25,6 +26,29 @@
     'wm-pos-bottom-left',
     'wm-pos-bottom-right',
   ];
+
+  function setupHlsPlayback() {
+    if (!hlsUrl) {
+      return;
+    }
+    if (window.Hls && window.Hls.isSupported()) {
+      const hls = new window.Hls({
+        enableWorker: true,
+        lowLatencyMode: false,
+      });
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(video);
+      hls.on(window.Hls.Events.ERROR, function (_event, data) {
+        if (data && data.fatal) {
+          setStatus('영상 스트리밍 오류');
+        }
+      });
+      return;
+    }
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = hlsUrl;
+    }
+  }
 
   function csrfToken() {
     const token = document.cookie
@@ -148,6 +172,8 @@
       saving = false;
     }
   }
+
+  setupHlsPlayback();
 
   video.addEventListener('loadedmetadata', function () {
     if (!hasRestoredPosition && startPosition > 0 && Number.isFinite(video.duration)) {

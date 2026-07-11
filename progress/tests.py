@@ -70,7 +70,7 @@ class SaveLessonProgressTests(TestCase):
         self.assertTrue(data['ok'])
         self.assertEqual(data['last_position_seconds'], 45)
         self.assertEqual(data['total_watched_seconds'], 12)
-        self.assertEqual(data['progress_percent'], 37)
+        self.assertEqual(data['progress_percent'], 10)
 
         progress = WatchProgress.objects.get(enrollment=enrollment, lesson=self.lesson)
         self.assertEqual(progress.user, self.student)
@@ -78,6 +78,52 @@ class SaveLessonProgressTests(TestCase):
         self.assertEqual(progress.total_watched_seconds, 12)
 
     def test_video_ended_marks_completed(self):
+        self.approve()
+        self.post_progress(
+            self.student,
+            {
+                'position_seconds': 60,
+                'duration_seconds': 120,
+                'watched_increment_seconds': 60,
+            },
+        )
+
+        response = self.post_progress(
+            self.student,
+            {
+                'position_seconds': 120,
+                'duration_seconds': 120,
+                'watched_increment_seconds': 50,
+                'completed': True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        progress = WatchProgress.objects.get(user=self.student, lesson=self.lesson)
+        self.assertTrue(progress.is_completed)
+        self.assertEqual(progress.progress_percent, 100)
+        self.assertIsNotNone(progress.completed_at)
+
+    def test_seek_position_does_not_inflate_progress(self):
+        self.approve()
+
+        response = self.post_progress(
+            self.student,
+            {
+                'position_seconds': 110,
+                'duration_seconds': 120,
+                'watched_increment_seconds': 10,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['last_position_seconds'], 110)
+        self.assertEqual(data['total_watched_seconds'], 10)
+        self.assertEqual(data['progress_percent'], 8)
+        self.assertFalse(data['is_completed'])
+
+    def test_video_ended_does_not_complete_when_watched_time_is_low(self):
         self.approve()
 
         response = self.post_progress(
@@ -92,9 +138,9 @@ class SaveLessonProgressTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         progress = WatchProgress.objects.get(user=self.student, lesson=self.lesson)
-        self.assertTrue(progress.is_completed)
-        self.assertEqual(progress.progress_percent, 100)
-        self.assertIsNotNone(progress.completed_at)
+        self.assertFalse(progress.is_completed)
+        self.assertEqual(progress.progress_percent, 8)
+        self.assertIsNone(progress.completed_at)
 
     def test_requested_student_cannot_save_progress(self):
         Enrollment.objects.create(user=self.student, course=self.course)

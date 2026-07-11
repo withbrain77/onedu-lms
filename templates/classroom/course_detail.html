@@ -3,8 +3,9 @@
 {% block title %}{{ course.title }} | 내 강의실{% endblock %}
 
 {% block page_header %}
-<div class="page-header d-flex flex-column flex-lg-row justify-content-between gap-3">
+<div class="page-header student-hero d-flex flex-column flex-lg-row justify-content-between gap-3">
   <div>
+    <div class="hero-kicker">COURSE TIMELINE</div>
     <h1>{{ course.title }}</h1>
     <p>차시별 학습 상태를 확인하고 이어서 학습하세요.</p>
   </div>
@@ -15,18 +16,24 @@
 {% block content %}
 <div class="row g-4">
   <div class="col-12 col-lg-8">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h5 mb-3">차시 목록</h2>
+    <div class="timeline-panel">
+      <div class="timeline-panel-head">
+        <div>
+          <span>학습 여정</span>
+          <h2>차시 목록</h2>
+        </div>
+        <strong>{{ progress_percent }}%</strong>
+      </div>
         {% if lesson_items %}
-          <div class="list-group lesson-list">
+          <div class="learning-timeline">
             {% for item in lesson_items %}
-              <a class="list-group-item list-group-item-action d-flex flex-column flex-md-row justify-content-between gap-2" href="{{ item.lesson.get_absolute_url }}">
-                <div>
-                  <div class="fw-semibold">{{ item.lesson.order }}. {{ item.lesson.title }}</div>
-                  <div class="small text-muted">{{ item.lesson.description|default:"차시 설명이 없습니다." }}</div>
+              <a class="timeline-step {% if item.progress and item.progress.is_completed %}done{% elif item.progress and item.progress.progress_percent %}active{% endif %}" href="{{ item.lesson.get_absolute_url }}">
+                <span class="timeline-step-number">{{ item.lesson.order }}</span>
+                <div class="timeline-step-body">
+                  <div class="timeline-step-title">{{ item.lesson.title }}</div>
+                  <div class="timeline-step-desc">{{ item.lesson.description|default:"차시 설명이 없습니다." }}</div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                <div class="timeline-step-action">
                   {% if item.progress and item.progress.is_completed %}
                     <span class="badge text-bg-success">완료</span>
                   {% elif item.progress and item.progress.progress_percent %}
@@ -45,7 +52,6 @@
             <p>관리자가 차시를 등록하면 학습을 시작할 수 있습니다.</p>
           </div>
         {% endif %}
-      </div>
     </div>
 
     {% if quiz_items %}
@@ -86,8 +92,9 @@
     {% endif %}
   </div>
   <div class="col-12 col-lg-4">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm learning-summary-card">
       <div class="card-body">
+        <div class="learning-card-label">LEARNING SUMMARY</div>
         <h2 class="h5 mb-3">학습 현황</h2>
         {% if enrollment.is_completed %}
           <span class="badge text-bg-success mb-3">수료 완료</span>

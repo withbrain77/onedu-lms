@@ -1,0 +1,130 @@
+<div class="concept-shell">
+  <div class="concept-topline">
+    <div>
+      <span class="concept-number">{{ number }}</span>
+      <h2>{{ name }}</h2>
+      <p>{{ note }}</p>
+    </div>
+    <div class="concept-actions">
+      <button type="button">강의 신청</button>
+      <button type="button">이어보기</button>
+    </div>
+  </div>
+
+  <div class="concept-app-frame">
+    <aside class="concept-sidebar">
+      <div class="concept-logo">ONEDU</div>
+      <nav>
+        <span class="active">내 강의실</span>
+        <span>강의 목록</span>
+        <span>수료증</span>
+        <span>공지사항</span>
+      </nav>
+    </aside>
+
+    <div class="concept-main">
+      <header class="concept-nav">
+        <div>
+          <strong>내 강의실</strong>
+          <span>홍길동 / student123</span>
+        </div>
+        <div class="concept-search">강의명, 상태 검색</div>
+      </header>
+
+      <div class="concept-hero">
+        <div>
+          <span class="concept-kicker">APPROVED LMS</span>
+          <h3>승인된 강의와 학습 상태를 한눈에 확인</h3>
+          <p>수강 기간, 진도율, 시험 상태를 카드와 테이블에서 바로 파악합니다.</p>
+        </div>
+        <div class="concept-stats">
+          <div><strong>3</strong><span>진행 중</span></div>
+          <div><strong>82%</strong><span>평균 진도</span></div>
+          <div><strong>1</strong><span>승인 대기</span></div>
+        </div>
+      </div>
+
+      <div class="concept-grid">
+        <article class="concept-course primary">
+          <div class="course-art">MASTER</div>
+          <div class="course-body">
+            <div class="course-line">
+              <span class="status approved">수강 중</span>
+              <span class="course-days">D-21</span>
+            </div>
+            <h4>IM Master's Seminar 1강</h4>
+            <p>핵심 강의 영상과 학습 자료를 이어서 진행합니다.</p>
+            <div class="concept-progress"><span style="width: 74%"></span></div>
+            <div class="course-footer">
+              <span>진도율 74%</span>
+              <button type="button">이어보기</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept-course">
+          <div class="course-art muted">BASIC</div>
+          <div class="course-body">
+            <div class="course-line">
+              <span class="status pending">승인 대기</span>
+              <span class="course-days">검토 중</span>
+            </div>
+            <h4>업무 기본 교육</h4>
+            <p>관리자 승인 후 내 강의실에서 수강할 수 있습니다.</p>
+            <div class="concept-progress"><span style="width: 0%"></span></div>
+            <div class="course-footer">
+              <span>진도율 0%</span>
+              <button type="button">상세보기</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="concept-learning">
+        <div class="concept-video">
+          <div class="video-watermark-preview">홍길동 / student123</div>
+          <span>HTML5 Video</span>
+        </div>
+        <div class="concept-lessons">
+          <div class="lesson-row done"><span>1강 오리엔테이션</span><b>완료</b></div>
+          <div class="lesson-row active"><span>2강 핵심 전략</span><b>재생 중</b></div>
+          <div class="lesson-row"><span>3강 실전 적용</span><b>대기</b></div>
+        </div>
+      </div>
+
+      <div class="concept-admin">
+        <div class="admin-title">
+          <strong>관리자 수강 신청 관리</strong>
+          <span>검색 / 필터 / 승인 작업</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>수강생</th>
+              <th>강의</th>
+              <th>상태</th>
+              <th>기간</th>
+              <th>작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>김수강</td>
+              <td>IM Master's Seminar</td>
+              <td><span class="status pending">승인 대기</span></td>
+              <td>2026.07.11 - 2026.08.10</td>
+              <td><button type="button">승인</button></td>
+            </tr>
+            <tr>
+              <td>이학습</td>
+              <td>업무 기본 교육</td>
+              <td><span class="status approved">수강 중</span></td>
+              <td>2026.07.01 - 2026.07.31</td>
+              <td><button type="button">확인</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

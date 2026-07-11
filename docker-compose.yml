@@ -14,6 +14,13 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--dir", "/tmp"]
+    restart: unless-stopped
+    volumes:
+      - ${ONEDU_REDIS_DIR:-./data/redis}:/data
+
   web:
     build: .
     restart: unless-stopped
@@ -39,9 +46,55 @@ services:
       CERTIFICATE_FONT_PATH: ${CERTIFICATE_FONT_PATH:-/usr/share/fonts/truetype/nanum/NanumGothic.ttf}
       USE_X_ACCEL_REDIRECT: ${USE_X_ACCEL_REDIRECT:-True}
       X_ACCEL_REDIRECT_PREFIX: ${X_ACCEL_REDIRECT_PREFIX:-/protected-media/}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+      CELERY_VIDEO_QUEUE: ${CELERY_VIDEO_QUEUE:-video}
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ${ONEDU_STATIC_DIR:-./data/static}:/vol/web/static
+      - ${ONEDU_MEDIA_DIR:-./data/media}:/vol/web/media
+      - ${ONEDU_PRIVATE_MEDIA_DIR:-./data/private_media}:/vol/web/private_media
+
+  worker:
+    build: .
+    restart: unless-stopped
+    command: celery -A config worker --loglevel=info --queues=${CELERY_VIDEO_QUEUE:-video} --concurrency=${CELERY_WORKER_CONCURRENCY:-1}
+    environment:
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-this-to-a-long-random-secret-key-before-production-000000}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8080}
+      DJANGO_SECURE_SSL_REDIRECT: ${DJANGO_SECURE_SSL_REDIRECT:-False}
+      DJANGO_SESSION_COOKIE_SECURE: ${DJANGO_SESSION_COOKIE_SECURE:-False}
+      DJANGO_CSRF_COOKIE_SECURE: ${DJANGO_CSRF_COOKIE_SECURE:-False}
+      DJANGO_SECURE_HSTS_SECONDS: ${DJANGO_SECURE_HSTS_SECONDS:-0}
+      POSTGRES_DB: ${POSTGRES_DB:-onedu}
+      POSTGRES_USER: ${POSTGRES_USER:-onedu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DB_CONN_MAX_AGE: ${DB_CONN_MAX_AGE:-600}
+      STATIC_ROOT: /vol/web/static
+      MEDIA_ROOT: /vol/web/media
+      PRIVATE_MEDIA_ROOT: /vol/web/private_media
+      CERTIFICATE_ISSUER_NAME: ${CERTIFICATE_ISSUER_NAME:-Onedu LMS}
+      CERTIFICATE_FONT_PATH: ${CERTIFICATE_FONT_PATH:-/usr/share/fonts/truetype/nanum/NanumGothic.ttf}
+      USE_X_ACCEL_REDIRECT: ${USE_X_ACCEL_REDIRECT:-True}
+      X_ACCEL_REDIRECT_PREFIX: ${X_ACCEL_REDIRECT_PREFIX:-/protected-media/}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+      CELERY_VIDEO_QUEUE: ${CELERY_VIDEO_QUEUE:-video}
+      DJANGO_RUN_MIGRATIONS: 0
+      DJANGO_COLLECTSTATIC: 0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - ${ONEDU_STATIC_DIR:-./data/static}:/vol/web/static
       - ${ONEDU_MEDIA_DIR:-./data/media}:/vol/web/media

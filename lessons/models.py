@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 
@@ -21,6 +22,9 @@ class Lesson(models.Model):
     )
     order = models.PositiveIntegerField('순서', default=1)
     duration_seconds = models.PositiveIntegerField('영상 길이(초)', default=0)
+    hls_playlist_path = models.CharField('HLS 재생 목록 경로', max_length=500, blank=True)
+    hls_ready = models.BooleanField('HLS 준비 완료', default=False)
+    hls_converted_at = models.DateTimeField('HLS 변환일시', null=True, blank=True)
     is_public = models.BooleanField('공개 여부', default=True)
     created_at = models.DateTimeField('생성일', auto_now_add=True)
     updated_at = models.DateTimeField('수정일', auto_now=True)
@@ -41,3 +45,54 @@ class Lesson(models.Model):
 
     def get_video_url(self):
         return reverse('lessons:video', kwargs={'pk': self.pk})
+
+    def get_hls_playlist_url(self):
+        return reverse('lessons:hls_playlist', kwargs={'pk': self.pk})
+
+    @property
+    def has_hls(self):
+        return self.hls_ready and bool(self.hls_playlist_path)
+
+
+class HLSConversionJob(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', '대기 중'
+        RUNNING = 'running', '변환 중'
+        SUCCEEDED = 'succeeded', '완료'
+        FAILED = 'failed', '실패'
+
+    lesson = models.ForeignKey(
+        Lesson,
+        verbose_name='차시',
+        on_delete=models.CASCADE,
+        related_name='hls_jobs',
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='요청 관리자',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='hls_conversion_jobs',
+    )
+    status = models.CharField('상태', max_length=20, choices=Status.choices, default=Status.PENDING)
+    force = models.BooleanField('기존 HLS 덮어쓰기', default=False)
+    transcode = models.BooleanField('H.264/AAC 재인코딩', default=False)
+    hls_time = models.PositiveIntegerField('세그먼트 길이(초)', default=6)
+    progress_percent = models.PositiveSmallIntegerField('진행률(%)', default=0)
+    progress_current_seconds = models.PositiveIntegerField('현재 변환 위치(초)', default=0)
+    progress_total_seconds = models.PositiveIntegerField('전체 영상 길이(초)', default=0)
+    celery_task_id = models.CharField('작업 큐 ID', max_length=255, blank=True)
+    error_message = models.TextField('오류 메시지', blank=True)
+    created_at = models.DateTimeField('요청일시', auto_now_add=True)
+    updated_at = models.DateTimeField('수정일시', auto_now=True)
+    started_at = models.DateTimeField('시작일시', null=True, blank=True)
+    finished_at = models.DateTimeField('종료일시', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'HLS 변환 작업'
+        verbose_name_plural = 'HLS 변환 작업'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f'{self.lesson} - {self.get_status_display()}'
