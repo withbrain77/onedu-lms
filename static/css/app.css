@@ -1144,6 +1144,30 @@ body {
   text-decoration: underline;
 }
 
+.auth-link-row {
+  align-items: center;
+  color: var(--onedu-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.auth-link-row a {
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.auth-link-row a:hover,
+.auth-link-row a:focus {
+  text-decoration: underline;
+}
+
+.auth-link-divider {
+  color: #cbd5e1;
+}
+
 .login-support-links {
   align-items: center;
   display: flex;

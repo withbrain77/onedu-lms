@@ -31,8 +31,12 @@
           </div>
           <button class="btn btn-primary w-100" type="submit">로그인</button>
         </form>
-        <div class="text-center mt-3 small">
-          계정이 없나요? <a href="{% url 'accounts:signup' %}">회원가입</a>
+        <div class="auth-link-row mt-3 small">
+          <span>계정이 없나요? <a href="{% url 'accounts:signup' %}">회원가입</a></span>
+          <span class="auth-link-divider" aria-hidden="true">|</span>
+          <span><a href="{% url 'accounts:find_username' %}">아이디 찾기</a></span>
+          <span class="auth-link-divider" aria-hidden="true">|</span>
+          <span><a href="{% url 'accounts:password_reset' %}">비밀번호 재설정</a></span>
         </div>
         <div class="login-support-info" aria-label="운영 회사 정보">
           <div class="login-support-company">

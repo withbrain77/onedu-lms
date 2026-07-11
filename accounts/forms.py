@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm, UserCreationForm
 
 from .models import User
 
@@ -45,3 +45,30 @@ class StudentSignUpForm(BootstrapFormMixin, UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class UsernameLookupForm(BootstrapFormMixin, forms.Form):
+    name = forms.CharField(label='이름', max_length=100)
+    email = forms.EmailField(label='이메일')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_bootstrap()
+        self.fields['name'].widget.attrs.setdefault('autocomplete', 'name')
+        self.fields['email'].widget.attrs.setdefault('autocomplete', 'email')
+
+
+class BootstrapPasswordResetForm(BootstrapFormMixin, PasswordResetForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_bootstrap()
+        self.fields['email'].label = '가입 이메일'
+        self.fields['email'].widget.attrs.setdefault('autocomplete', 'email')
+
+
+class BootstrapSetPasswordForm(BootstrapFormMixin, SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_bootstrap()
+        self.fields['new_password1'].label = '새 비밀번호'
+        self.fields['new_password2'].label = '새 비밀번호 확인'
