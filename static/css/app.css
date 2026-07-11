@@ -281,6 +281,11 @@ main.container {
   text-align: right;
 }
 
+.detail-meta dd.time-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .progress {
   height: 0.65rem;
   background-color: #e2e8f0;
@@ -926,6 +931,11 @@ body {
   font-weight: 700;
   margin-bottom: 0;
   text-align: right;
+}
+
+.detail-meta dd.time-value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .learning-card-actions {

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static lesson_time %}
 
 {% block title %}{{ lesson.title }} | Onedu LMS{% endblock %}
 
@@ -83,9 +83,26 @@
         <dl class="detail-meta">
           <div><dt>재생 방식</dt><dd>{% if lesson.has_hls %}HLS 스트리밍{% else %}MP4 재생{% endif %}</dd></div>
           <div><dt>순서</dt><dd>{{ lesson.order }}</dd></div>
-          <div><dt>영상 길이</dt><dd>{% if progress and progress.duration_seconds %}{{ progress.duration_seconds }}초{% else %}{{ lesson.duration_seconds }}초{% endif %}</dd></div>
-          <div><dt>마지막 위치</dt><dd>{% if progress %}{{ progress.last_position_seconds }}초{% else %}0초{% endif %}</dd></div>
-          <div><dt>총 시청 시간</dt><dd>{% if progress %}{{ progress.total_watched_seconds }}초{% else %}0초{% endif %}</dd></div>
+          <div>
+            <dt>영상 길이</dt>
+            {% if progress and progress.duration_seconds %}
+              <dd id="lessonDurationText" class="time-value" data-seconds="{{ progress.duration_seconds }}">{{ progress.duration_seconds|duration_hms }}</dd>
+            {% else %}
+              <dd id="lessonDurationText" class="time-value" data-seconds="{{ lesson.duration_seconds }}">{{ lesson.duration_seconds|duration_hms }}</dd>
+            {% endif %}
+          </div>
+          <div>
+            <dt>마지막 위치</dt>
+            <dd id="lessonLastPositionText" class="time-value" data-seconds="{% if progress %}{{ progress.last_position_seconds }}{% else %}0{% endif %}">
+              {% if progress %}{{ progress.last_position_seconds|duration_hms }}{% else %}0초{% endif %}
+            </dd>
+          </div>
+          <div>
+            <dt>총 시청 시간</dt>
+            <dd id="lessonTotalWatchedText" class="time-value" data-seconds="{% if progress %}{{ progress.total_watched_seconds }}{% else %}0{% endif %}">
+              {% if progress %}{{ progress.total_watched_seconds|duration_hms }}{% else %}0초{% endif %}
+            </dd>
+          </div>
         </dl>
         <div class="d-grid gap-2 mt-3">
           {% if next_lesson %}
@@ -127,5 +144,5 @@
   {% if lesson.has_hls %}
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
   {% endif %}
-  <script src="{% static 'js/video_progress.js' %}"></script>
+  <script src="{% static 'js/video_progress.js' %}?v=20260712-time-format"></script>
 {% endblock %}

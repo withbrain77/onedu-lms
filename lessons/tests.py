@@ -19,6 +19,15 @@ from enrollments.models import Enrollment
 
 from .forms import LessonAdminForm, list_server_video_files, validate_server_video_file
 from .models import HLSConversionJob, Lesson
+from .templatetags.lesson_time import duration_hms
+
+
+class LessonTimeTemplateFilterTests(TestCase):
+    def test_duration_hms_formats_seconds_for_learners(self):
+        self.assertEqual(duration_hms(0), '0초')
+        self.assertEqual(duration_hms(82), '1분 22초')
+        self.assertEqual(duration_hms(3280), '54분 40초')
+        self.assertEqual(duration_hms(3661), '1시간 1분 1초')
 
 
 class VideoProtectionAndWatermarkTests(TestCase):
@@ -109,6 +118,7 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertEqual(page_response.status_code, 200)
         self.assertEqual(file_response.status_code, 200)
         self.assertContains(page_response, self.video_url)
+        self.assertContains(page_response, '1분 0초')
         file_response.close()
 
     @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')

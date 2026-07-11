@@ -14,6 +14,9 @@
   const statusEl = document.getElementById('progressSaveStatus');
   const percentEl = document.getElementById('progressPercentText');
   const progressBar = document.getElementById('lessonProgressBar');
+  const durationText = document.getElementById('lessonDurationText');
+  const lastPositionText = document.getElementById('lessonLastPositionText');
+  const totalWatchedText = document.getElementById('lessonTotalWatchedText');
   let lastSaveAt = 0;
   let hasRestoredPosition = false;
   let saving = false;
@@ -61,6 +64,44 @@
     if (statusEl) {
       statusEl.textContent = message;
     }
+  }
+
+  function safeSeconds(value) {
+    const seconds = Math.floor(Number(value || 0));
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return 0;
+    }
+    return seconds;
+  }
+
+  function formatSeconds(value) {
+    const totalSeconds = safeSeconds(value);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}시간 ${minutes}분 ${seconds}초`;
+    }
+    if (minutes > 0) {
+      return `${minutes}분 ${seconds}초`;
+    }
+    return `${seconds}초`;
+  }
+
+  function setTimeText(element, seconds) {
+    if (!element) {
+      return;
+    }
+    const safeValue = safeSeconds(seconds);
+    element.dataset.seconds = String(safeValue);
+    element.textContent = formatSeconds(safeValue);
+  }
+
+  function updateTimeUI(data) {
+    setTimeText(durationText, data.duration_seconds);
+    setTimeText(lastPositionText, data.last_position_seconds);
+    setTimeText(totalWatchedText, data.total_watched_seconds);
   }
 
   function updateProgressUI(percent) {
@@ -136,8 +177,8 @@
     const completed = Boolean(options && options.completed);
     const watchedIncrement = Math.max(0, Math.round((Date.now() - lastSaveAt) / 1000));
     const payload = {
-      position_seconds: Math.floor(video.currentTime || 0),
-      duration_seconds: Math.floor(video.duration || 0),
+      position_seconds: safeSeconds(video.currentTime),
+      duration_seconds: safeSeconds(video.duration),
       watched_increment_seconds: Math.min(watchedIncrement, 60),
       completed: completed,
     };
@@ -163,6 +204,7 @@
       const data = await response.json();
       if (data.ok) {
         updateProgressUI(data.progress_percent);
+        updateTimeUI(data);
         setStatus(data.is_completed ? '시청 완료 저장됨' : '최근 진도 저장됨');
         lastSaveAt = Date.now();
       }
@@ -174,8 +216,16 @@
   }
 
   setupHlsPlayback();
+  updateTimeUI({
+    duration_seconds: durationText ? durationText.dataset.seconds : 0,
+    last_position_seconds: lastPositionText ? lastPositionText.dataset.seconds : 0,
+    total_watched_seconds: totalWatchedText ? totalWatchedText.dataset.seconds : 0,
+  });
 
   video.addEventListener('loadedmetadata', function () {
+    if (Number.isFinite(video.duration) && video.duration > 0) {
+      setTimeText(durationText, video.duration);
+    }
     if (!hasRestoredPosition && startPosition > 0 && Number.isFinite(video.duration)) {
       const restorePosition = Math.min(startPosition, Math.max(video.duration - 2, 0));
       if (restorePosition > 0) {
