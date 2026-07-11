@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Onedu LMS | 업무용 온라인 교육{% endblock %}
+{% block title %}위드브레인연구소 교육 영상 아카이브 | Onedu LMS{% endblock %}
 
 {% block content %}
 <section
@@ -10,28 +10,54 @@
   <div class="home-hero-shade"></div>
   <div class="home-hero-inner">
     <div class="home-hero-copy">
-      <div class="hero-kicker">APPROVED LEARNING SYSTEM</div>
-      <h1>승인형 업무 교육을 한곳에서 관리합니다</h1>
-      <p>수강 신청부터 영상 학습, 진도 저장, 시험, 수료증 확인까지 필요한 흐름을 간결하게 제공합니다.</p>
+      <div class="hero-kicker">WITHBRAIN VIDEO ARCHIVE</div>
+      <h1>위드브레인연구소 교육 영상 아카이브</h1>
+      <p>교육 영상, 세미나 다시보기, 강의 영상을 승인된 수강생에게 제한적으로 제공하고 시청 이력과 수료 현황을 관리하는 온라인 교육 공간입니다.</p>
       <div class="home-hero-actions">
         <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인</a>
         <a class="btn btn-light" href="{% url 'accounts:signup' %}">회원가입</a>
-        <a class="btn btn-outline-light" href="{% url 'courses:list' %}">강의 보기</a>
+        <a class="btn btn-outline-light" href="{% url 'courses:list' %}">신청 가능한 프로그램</a>
       </div>
     </div>
     <div class="home-hero-panel" aria-label="운영 현황">
       <div>
-        <span>공개 강의</span>
+        <span>공개 프로그램</span>
         <strong>{{ course_count }}</strong>
       </div>
       <div>
-        <span>등록 차시</span>
+        <span>영상 차시</span>
         <strong>{{ lesson_count }}</strong>
       </div>
       <div>
-        <span>수강 방식</span>
-        <strong>승인형</strong>
+        <span>공개 방식</span>
+        <strong>제한 공개</strong>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-purpose-section" aria-label="운영 목적">
+  <div class="home-purpose-copy">
+    <span>PRIVATE EDUCATION PORTAL</span>
+    <h2>필요한 사람에게 필요한 영상만 안전하게 제공합니다</h2>
+    <p>Onedu LMS는 위드브레인연구소가 운영하는 교육 프로그램, 세미나, 강의 자료를 승인된 수강생에게 제공하기 위한 전용 포털입니다. 수강생은 허용된 기간 안에서 영상을 시청하고, 관리자는 시청 진도와 수료 상태를 확인할 수 있습니다.</p>
+  </div>
+  <div class="home-purpose-grid">
+    <div>
+      <strong>교육 영상</strong>
+      <span>프로그램별 학습 자료 제공</span>
+    </div>
+    <div>
+      <strong>세미나 영상</strong>
+      <span>참석자와 승인 대상자에게 다시보기 제공</span>
+    </div>
+    <div>
+      <strong>강의 영상</strong>
+      <span>차시별 영상과 학습 이력 관리</span>
+    </div>
+    <div>
+      <strong>기술지원 교육</strong>
+      <span>협력기관과 수강생 대상 자료 운영</span>
     </div>
   </div>
 </section>
@@ -39,28 +65,33 @@
 <section class="home-workflow" aria-label="수강 흐름">
   <div class="home-workflow-item">
     <span>01</span>
-    <strong>강의 신청</strong>
-    <p>필요한 강의를 선택하고 수강 신청을 접수합니다.</p>
+    <strong>회원가입</strong>
+    <p>수강생 계정을 만들고 필요한 프로그램을 확인합니다.</p>
   </div>
   <div class="home-workflow-item">
     <span>02</span>
-    <strong>관리자 승인</strong>
-    <p>승인된 강의는 정해진 수강 기간 안에서 학습할 수 있습니다.</p>
+    <strong>프로그램 신청</strong>
+    <p>교육, 세미나, 강의 영상 중 필요한 과정을 신청합니다.</p>
   </div>
   <div class="home-workflow-item">
     <span>03</span>
-    <strong>학습과 수료</strong>
-    <p>영상 진도와 시험 결과를 기준으로 수료 상태를 확인합니다.</p>
+    <strong>승인 후 시청</strong>
+    <p>승인된 기간 안에서 영상을 시청하고 학습 이력을 저장합니다.</p>
+  </div>
+  <div class="home-workflow-item">
+    <span>04</span>
+    <strong>진도 확인</strong>
+    <p>관리자는 시청 상황, 시험 결과, 수료 여부를 확인합니다.</p>
   </div>
 </section>
 
 <section class="home-course-section">
   <div class="section-title">
     <div>
-      <span>COURSE CATALOG</span>
-      <h2>신청 가능한 강의</h2>
+      <span>AVAILABLE PROGRAMS</span>
+      <h2>신청 가능한 프로그램</h2>
     </div>
-    <a class="btn btn-outline-primary btn-sm" href="{% url 'courses:list' %}">전체 강의</a>
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'courses:list' %}">전체 프로그램</a>
   </div>
 
   {% if courses %}
@@ -76,14 +107,14 @@
               </div>
             {% endif %}
             <div class="card-body d-flex flex-column">
-              <div class="course-card-eyebrow">TRAINING PROGRAM</div>
+              <div class="course-card-eyebrow">WITHBRAIN PROGRAM</div>
               <div class="d-flex justify-content-between gap-2 mb-2">
                 <h3 class="h5 card-title mb-0">{{ course.title }}</h3>
                 <span class="badge text-bg-light border flex-shrink-0">신청 가능</span>
               </div>
               <p class="card-text text-muted line-clamp">{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
               <dl class="course-meta small mb-3">
-                <div><dt>차시</dt><dd>{{ course.lesson_count }}개</dd></div>
+                <div><dt>영상 차시</dt><dd>{{ course.lesson_count }}개</dd></div>
                 <div><dt>수강 기간</dt><dd>승인 후 배정</dd></div>
               </dl>
               <div class="mt-auto course-card-actions">
@@ -97,8 +128,8 @@
     </div>
   {% else %}
     <div class="empty-state compact">
-      <h2>공개된 강의가 없습니다.</h2>
-      <p>관리자가 강의를 공개하면 이곳에서 확인할 수 있습니다.</p>
+      <h2>공개된 프로그램이 없습니다.</h2>
+      <p>관리자가 프로그램을 공개하면 이곳에서 확인할 수 있습니다.</p>
       <a class="btn btn-outline-primary" href="{% url 'accounts:login' %}">로그인</a>
     </div>
   {% endif %}
@@ -110,6 +141,7 @@
     <span>평일 09:00-18:00</span>
   </div>
   <div>
+    <span>위드브레인연구소</span>
     <span>02-569-7308</span>
     <span>withbrain77@daum.net</span>
   </div>

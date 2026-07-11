@@ -423,10 +423,72 @@ main.container {
   line-height: 1.1;
 }
 
+.home-purpose-section {
+  align-items: center;
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  margin-bottom: 2rem;
+}
+
+.home-purpose-copy {
+  min-width: 0;
+}
+
+.home-purpose-copy span {
+  color: #0f766e;
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  margin-bottom: 0.65rem;
+}
+
+.home-purpose-copy h2 {
+  color: var(--onedu-ink);
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1.25;
+  margin-bottom: 0.8rem;
+}
+
+.home-purpose-copy p {
+  color: var(--onedu-muted);
+  margin-bottom: 0;
+}
+
+.home-purpose-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-purpose-grid div {
+  background: #fff;
+  border: 1px solid var(--onedu-border);
+  border-radius: 0.35rem;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.05);
+  min-width: 0;
+  padding: 1rem;
+}
+
+.home-purpose-grid strong {
+  color: var(--onedu-ink);
+  display: block;
+  font-weight: 850;
+  margin-bottom: 0.3rem;
+}
+
+.home-purpose-grid span {
+  color: var(--onedu-muted);
+  display: block;
+  font-size: 0.88rem;
+}
+
 .home-workflow {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   margin-bottom: 2.5rem;
 }
 
@@ -1362,7 +1424,12 @@ body {
   }
 
   .home-hero-panel,
+  .home-purpose-section,
   .home-workflow {
+    grid-template-columns: 1fr;
+  }
+
+  .home-purpose-grid {
     grid-template-columns: 1fr;
   }
 
