@@ -24,6 +24,8 @@ class HomePageTests(TestCase):
         self.assertContains(response, '위드브레인연구소 교육 영상 아카이브')
         self.assertContains(response, '교육 영상, 세미나 다시보기, 강의 영상')
         self.assertContains(response, '제한 공개')
+        self.assertContains(response, 'img/withbrain-logo.png')
+        self.assertContains(response, 'archive-console')
         self.assertContains(response, 'IM 마스터스 세미나 2026')
         self.assertContains(response, reverse('accounts:login'))
         self.assertContains(response, reverse('accounts:signup'))

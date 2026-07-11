@@ -1,15 +1,20 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}위드브레인연구소 교육 영상 아카이브 | Onedu LMS{% endblock %}
 
 {% block content %}
-<section
-  class="home-hero{% if featured_course and featured_course.thumbnail %} has-image{% endif %}"
-  {% if featured_course and featured_course.thumbnail %}style="--home-hero-image: url('{{ featured_course.thumbnail.url }}');"{% endif %}
->
-  <div class="home-hero-shade"></div>
-  <div class="home-hero-inner">
+<section class="home-hero archive-hero">
+  <div class="archive-hero-scene" aria-hidden="true">
+    <div class="archive-grid-plane"></div>
+    <div class="archive-signal-band band-one"></div>
+    <div class="archive-signal-band band-two"></div>
+  </div>
+  <div class="home-hero-inner archive-hero-inner">
     <div class="home-hero-copy">
+      <div class="home-brand-lockup">
+        <img src="{% static 'img/withbrain-logo.png' %}" alt="WITHBRAIN">
+      </div>
       <div class="hero-kicker">WITHBRAIN VIDEO ARCHIVE</div>
       <h1>위드브레인연구소 교육 영상 아카이브</h1>
       <p>교육 영상, 세미나 다시보기, 강의 영상을 승인된 수강생에게 제한적으로 제공하고 시청 이력과 수료 현황을 관리하는 온라인 교육 공간입니다.</p>
@@ -19,18 +24,35 @@
         <a class="btn btn-outline-light" href="{% url 'courses:list' %}">신청 가능한 프로그램</a>
       </div>
     </div>
-    <div class="home-hero-panel" aria-label="운영 현황">
-      <div>
-        <span>공개 프로그램</span>
-        <strong>{{ course_count }}</strong>
+
+    <div class="archive-console" aria-label="교육 영상 운영 요약">
+      <div class="archive-console-head">
+        <span>LIMITED ACCESS PLAYER</span>
+        <strong>교육 영상 운영 현황</strong>
       </div>
-      <div>
-        <span>영상 차시</span>
-        <strong>{{ lesson_count }}</strong>
+      <div class="archive-player-preview">
+        <div class="archive-player-screen">
+          <div class="archive-play-mark"></div>
+          <div class="archive-watermark-preview">WITHBRAIN / 승인 수강생</div>
+          <div class="archive-scan-line"></div>
+        </div>
+        <div class="archive-progress-preview">
+          <span></span>
+        </div>
       </div>
-      <div>
-        <span>공개 방식</span>
-        <strong>제한 공개</strong>
+      <div class="home-hero-panel" aria-label="운영 현황">
+        <div>
+          <span>공개 프로그램</span>
+          <strong>{{ course_count }}</strong>
+        </div>
+        <div>
+          <span>영상 차시</span>
+          <strong>{{ lesson_count }}</strong>
+        </div>
+        <div>
+          <span>공개 방식</span>
+          <strong>제한 공개</strong>
+        </div>
       </div>
     </div>
   </div>
