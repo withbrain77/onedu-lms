@@ -9,6 +9,7 @@ from django.utils import timezone
 from core.services.access import can_access_course, get_latest_enrollment
 from core.services.completion import evaluate_enrollment_completion
 from enrollments.models import Enrollment
+from enrollments.notifications import notify_enrollment_request
 from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
 from quizzes.services import get_course_quiz_items
@@ -186,6 +187,7 @@ def apply_course(request, slug):
         messages.success(request, '무료 강의 신청이 완료되었습니다. 바로 학습을 시작할 수 있습니다.')
         return redirect('enrollments:course_detail', course_id=enrollment.course_id)
 
-    Enrollment.objects.create(user=request.user, course=course)
+    enrollment = Enrollment.objects.create(user=request.user, course=course)
+    notify_enrollment_request(enrollment)
     messages.success(request, '수강 신청이 접수되었습니다. 이용료 확인 후 관리자가 승인하면 학습을 시작할 수 있습니다.')
     return redirect('enrollments:classroom')

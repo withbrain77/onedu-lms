@@ -5,6 +5,8 @@ from django.urls import include, path
 
 from core.views import home, ui_preview
 
+admin.site.index_template = 'admin/onedu_index.html'
+
 urlpatterns = [
     path('', home, name='home'),
     path('ui-preview/', ui_preview, name='ui_preview'),

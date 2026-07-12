@@ -1,0 +1,7 @@
+{% extends "admin/index.html" %}
+{% load admin_notifications %}
+
+{% block content %}
+  {% enrollment_admin_notifications %}
+  {{ block.super }}
+{% endblock %}

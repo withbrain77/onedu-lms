@@ -1,0 +1,37 @@
+{% if show_enrollment_notifications %}
+<section class="onedu-admin-notifications" aria-labelledby="onedu-admin-notifications-title">
+  <div class="onedu-admin-notifications__summary">
+    <div>
+      <p class="onedu-admin-notifications__eyebrow">승인 업무</p>
+      <h2 id="onedu-admin-notifications-title">승인 대기 수강 신청</h2>
+      <p>이용료 확인 후 승인해야 하는 신청입니다. 무료 과정 자동승인은 제외됩니다.</p>
+    </div>
+    <div class="onedu-admin-notifications__count">
+      <strong>{{ pending_enrollment_count }}</strong>
+      <span>건 대기</span>
+    </div>
+  </div>
+
+  {% if pending_enrollments %}
+    <div class="onedu-admin-notifications__list">
+      {% for enrollment in pending_enrollments %}
+        <a class="onedu-admin-notifications__item" href="{{ enrollment.change_url }}">
+          <span>
+            <strong>{{ enrollment.course_title }}</strong>
+            <small>{{ enrollment.student_name }} / {{ enrollment.student_username }}</small>
+          </span>
+          <time datetime="{{ enrollment.created_at|date:'c' }}">{{ enrollment.created_at|date:"Y-m-d H:i" }}</time>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="onedu-admin-notifications__empty">
+      현재 승인 대기 중인 유료 수강 신청이 없습니다.
+    </div>
+  {% endif %}
+
+  <div class="onedu-admin-notifications__actions">
+    <a class="button" href="{{ enrollment_changelist_url }}">수강 신청 전체 보기</a>
+  </div>
+</section>
+{% endif %}

@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from django.core import mail
+from django.test import override_settings
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -67,6 +69,25 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(classroom, '신청 대기')
         self.assertContains(classroom, '관리자 승인 대기')
 
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_paid_course_application_sends_admin_notification_email(self):
+        self.login_student()
+
+        self.client.post(reverse('courses:apply', kwargs={'slug': self.course.slug}))
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ['admin@example.com'])
+        self.assertIn('[ONEDU]', message.subject)
+        self.assertIn(self.course.title, message.body)
+        self.assertIn(self.student.username, message.body)
+        self.assertIn('https://onedu.withbrain.kr/admin/enrollments/enrollment/', message.body)
+
     def test_free_course_application_is_auto_approved(self):
         free_course = Course.objects.create(
             title='무료 공개 강의',
@@ -94,6 +115,26 @@ class MVPFlowViewTests(TestCase):
 
         lesson_response = self.client.get(free_lesson.get_absolute_url())
         self.assertEqual(lesson_response.status_code, 200)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+    )
+    def test_free_course_application_does_not_send_admin_notification_email(self):
+        free_course = Course.objects.create(
+            title='Free Notification Course',
+            description='Free course should not notify admins.',
+            is_public=True,
+            pricing_type=Course.PricingType.FREE,
+            price_krw=0,
+            default_enrollment_days=14,
+        )
+        self.login_student()
+
+        self.client.post(reverse('courses:apply', kwargs={'slug': free_course.slug}))
+
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_free_course_price_and_policy_are_visible(self):
         free_course = Course.objects.create(

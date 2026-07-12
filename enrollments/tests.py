@@ -175,3 +175,55 @@ class ReEnrollmentRequestTests(TestCase):
         response = client.get('/admin/enrollments/reenrollmentrequest/')
 
         self.assertEqual(response.status_code, 200)
+
+
+class AdminEnrollmentNotificationTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='notify_admin',
+            password='pass12345',
+            email='admin@example.com',
+        )
+        self.student = User.objects.create_user(
+            username='notify_student',
+            password='pass12345',
+            name='Notify Student',
+        )
+        self.paid_course = Course.objects.create(
+            title='Paid Notification Course',
+            is_public=True,
+            pricing_type=Course.PricingType.PAID,
+            price_krw=30000,
+        )
+        self.free_course = Course.objects.create(
+            title='Free Auto Course',
+            is_public=True,
+            pricing_type=Course.PricingType.FREE,
+            price_krw=0,
+        )
+        self.pending_paid = Enrollment.objects.create(
+            user=self.student,
+            course=self.paid_course,
+            status=Enrollment.Status.REQUESTED,
+        )
+        Enrollment.objects.create(
+            user=self.student,
+            course=self.free_course,
+            status=Enrollment.Status.REQUESTED,
+        )
+
+    def test_admin_index_shows_pending_paid_enrollment_notifications(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse('admin:index'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '승인 대기 수강 신청')
+        self.assertContains(response, '1</strong>')
+        self.assertContains(response, self.paid_course.title)
+        self.assertContains(response, self.student.username)
+        self.assertContains(
+            response,
+            reverse('admin:enrollments_enrollment_change', args=[self.pending_paid.pk]),
+        )
+        self.assertNotContains(response, self.free_course.title)
