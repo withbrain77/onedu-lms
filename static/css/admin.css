@@ -1491,6 +1491,40 @@ body.app-enrollments.model-reenrollmentrequest.change-list #result_list .field-e
   justify-content: flex-end;
 }
 
+.onedu-admin-dashboard-page a.button,
+.onedu-admin-dashboard-page a.button:link,
+.onedu-admin-dashboard-page a.button:visited,
+.onedu-admin-dashboard-page .button,
+.onedu-admin-dashboard-page .button.default {
+  align-items: center;
+  background: var(--dash-teal);
+  border: 1px solid var(--dash-teal);
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(8, 117, 111, 0.16);
+  color: #ffffff !important;
+  display: inline-flex;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 14px;
+  text-decoration: none;
+  text-shadow: none;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+
+.onedu-admin-dashboard-page a.button:hover,
+.onedu-admin-dashboard-page a.button:focus,
+.onedu-admin-dashboard-page .button:hover,
+.onedu-admin-dashboard-page .button:focus,
+.onedu-admin-dashboard-page .button.default:hover,
+.onedu-admin-dashboard-page .button.default:focus {
+  background: var(--dash-teal-dark);
+  border-color: var(--dash-teal-dark);
+  box-shadow: 0 14px 28px rgba(6, 79, 77, 0.2);
+  color: #ffffff !important;
+}
+
 .onedu-admin-user-chip {
   background: #fff;
   border: 1px solid var(--dash-border);
