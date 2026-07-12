@@ -1825,8 +1825,9 @@ body {
 
 .brand-icon {
   color: var(--onedu-primary);
-  font-size: 1.35rem;
-  line-height: 1;
+  flex: 0 0 auto;
+  height: 1.45rem;
+  width: 1.45rem;
 }
 
 .nav-link {
@@ -1929,7 +1930,8 @@ body {
 .portal-hero-points div {
   border-right: 1px solid rgba(8, 117, 111, 0.14);
   min-width: 0;
-  padding-right: 1rem;
+  padding: 0 1rem;
+  text-align: center;
 }
 
 .portal-hero-points div:last-child {
@@ -1940,20 +1942,38 @@ body {
   align-items: center;
   background: linear-gradient(135deg, #e8f7f5, #f8fcfb);
   border: 1px solid rgba(8, 117, 111, 0.16);
-  border-radius: 999px;
+  border-radius: 16px;
   color: var(--onedu-primary);
   display: inline-flex;
-  font-size: 0.78rem;
-  font-weight: 950;
   height: 2.35rem;
   justify-content: center;
   margin-bottom: 0.65rem;
   width: 2.35rem;
 }
 
-.portal-mini-icon i,
-.portal-category-icon i {
-  line-height: 1;
+.portal-hero-points .portal-mini-icon {
+  background: rgba(255, 255, 255, 0.68);
+  border-color: rgba(8, 117, 111, 0.2);
+  color: #0b6f6a;
+  height: 4.1rem;
+  margin-bottom: 0.8rem;
+  width: 4.1rem;
+}
+
+.portal-benefit-strip .portal-mini-icon {
+  height: 3.1rem;
+  width: 3.1rem;
+}
+
+.portal-svg-icon {
+  display: block;
+  height: 72%;
+  width: 72%;
+}
+
+.portal-hero-points .portal-svg-icon {
+  height: 82%;
+  width: 82%;
 }
 
 .portal-hero-points strong,
@@ -2255,7 +2275,7 @@ body {
   box-shadow: 0 14px 34px rgba(6, 27, 42, 0.06);
   display: grid;
   gap: 0.95rem;
-  grid-template-columns: 3.25rem minmax(0, 1fr);
+  grid-template-columns: 3.7rem minmax(0, 1fr);
   min-height: 8rem;
   padding: 1.15rem;
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
@@ -2276,9 +2296,9 @@ body {
   display: inline-flex;
   font-size: 1.18rem;
   font-weight: 950;
-  height: 3.25rem;
+  height: 3.7rem;
   justify-content: center;
-  width: 3.25rem;
+  width: 3.7rem;
 }
 
 .portal-category-card h3 {

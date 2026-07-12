@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="icon-onedu-mark" viewBox="0 0 48 48">
+    <path fill="currentColor" d="M24 4 7 13.5v21L24 44l17-9.5v-21L24 4Zm0 5.5 10.7 6L24 21.4l-10.7-5.9L24 9.5ZM12 20.1l9.8 5.4v11.2L12 31.2V20.1Zm24 11.1-9.8 5.5V25.5l9.8-5.4v11.1Z"/>
+  </symbol>
+
+  <symbol id="icon-shield-lock" viewBox="0 0 64 64">
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="M32 6.5 12.5 14v15.6c0 13.2 8.3 23.2 19.5 27.9 11.2-4.7 19.5-14.7 19.5-27.9V14L32 6.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="M24.5 30.5v-4.2a7.5 7.5 0 0 1 15 0v4.2"/>
+    <rect width="22" height="16.5" x="21" y="30.5" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="2.8"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M32 37.2v4.2"/>
+  </symbol>
+
+  <symbol id="icon-monitor-play" viewBox="0 0 64 64">
+    <rect width="40" height="29" x="12" y="12" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="3.5"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M25 50h14M32 41v9"/>
+    <path fill="currentColor" d="m28 22.2 12.4 7.3L28 36.8V22.2Z"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.2" d="M17.5 46h29"/>
+  </symbol>
+
+  <symbol id="icon-certificate" viewBox="0 0 64 64">
+    <path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" d="M17 7.5h24l10 10V56H17V7.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" d="M41 7.5v10h10"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M25 27h18M25 35h18M25 43h10"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="m39 45.5 3.4 3.4 7.1-8"/>
+  </symbol>
+
+  <symbol id="icon-play-screen" viewBox="0 0 64 64">
+    <rect width="40" height="30" x="12" y="14" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="3.5"/>
+    <path fill="currentColor" d="m29 24.5 11.5 6.5L29 37.5v-13Z"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M22 51h20M32 44v7"/>
+  </symbol>
+
+  <symbol id="icon-people" viewBox="0 0 64 64">
+    <circle cx="32" cy="23" r="8" fill="none" stroke="currentColor" stroke-width="3.2"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="M18.5 51c1.8-8.2 7-13 13.5-13s11.7 4.8 13.5 13"/>
+    <circle cx="16.5" cy="28" r="6" fill="none" stroke="currentColor" stroke-width="3"/>
+    <circle cx="47.5" cy="28" r="6" fill="none" stroke="currentColor" stroke-width="3"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3" d="M7.5 49c1.1-5.4 4.8-8.8 9.4-8.8M56.5 49c-1.1-5.4-4.8-8.8-9.4-8.8"/>
+  </symbol>
+
+  <symbol id="icon-graduation" viewBox="0 0 64 64">
+    <path fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" d="M6.5 23.5 32 12l25.5 11.5L32 35 6.5 23.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="M18 30.5v12c4.2 5 9 7.4 14 7.4s9.8-2.4 14-7.4v-12"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M55 25.5v16"/>
+    <circle cx="55" cy="46" r="2.8" fill="currentColor"/>
+  </symbol>
+
+  <symbol id="icon-headset" viewBox="0 0 64 64">
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M13 35v-6c0-10.5 8.2-18.5 19-18.5s19 8 19 18.5v6"/>
+    <rect width="10" height="17" x="9" y="31" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="3"/>
+    <rect width="10" height="17" x="45" y="31" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="3"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M45 47c-2.7 5-7.2 6.5-13 6.5h-4"/>
+  </symbol>
+
+  <symbol id="icon-lock" viewBox="0 0 64 64">
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="M22 29v-7.5a10 10 0 0 1 20 0V29"/>
+    <rect width="34" height="25" x="15" y="29" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="4"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M32 39v6"/>
+  </symbol>
+
+  <symbol id="icon-devices" viewBox="0 0 64 64">
+    <rect width="34" height="24" x="9" y="18" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="3"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M6 49h40"/>
+    <rect width="15" height="28" x="43" y="24" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="3.2" rx="3"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.5" d="M49 51h3"/>
+  </symbol>
+
+  <symbol id="icon-chart" viewBox="0 0 64 64">
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M12 51h42M14 51V13"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="m20 42 9-10 8 6 13-17"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3.2" d="M23 51V39M34 51V34M45 51V28"/>
+  </symbol>
+
+  <symbol id="icon-verified" viewBox="0 0 64 64">
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.2" d="M32 6.5 12.5 14v15.6c0 13.2 8.3 23.2 19.5 27.9 11.2-4.7 19.5-14.7 19.5-27.9V14L32 6.5Z"/>
+    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="m23.5 32 6.1 6.1 12.2-14"/>
+  </symbol>
+</svg>
