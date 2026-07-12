@@ -359,6 +359,46 @@ main.container {
   padding: 0.85rem;
 }
 
+.course-share-box {
+  background: #f8fbfc;
+  border: 1px solid rgba(8, 117, 111, 0.16);
+  border-radius: 0.75rem;
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.95rem;
+}
+
+.course-share-box > div {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.course-share-box span {
+  color: var(--onedu-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.course-share-box strong {
+  background: #fff;
+  border: 1px solid var(--onedu-border);
+  border-radius: 999px;
+  color: var(--onedu-primary);
+  font-size: 0.86rem;
+  font-weight: 900;
+  padding: 0.28rem 0.62rem;
+  white-space: nowrap;
+}
+
+.course-share-box small {
+  color: var(--onedu-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .progress {
   height: 0.65rem;
   background-color: #e2e8f0;
@@ -1210,6 +1250,12 @@ main.container {
 
   .deposit-notice dd {
     text-align: left;
+  }
+
+  .course-share-box > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 
   .empty-state {

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 
@@ -16,6 +17,12 @@ from progress.services import get_course_progress_percent
 from quizzes.services import get_course_quiz_items
 
 from .models import Course
+
+
+def _absolute_site_url(request, path):
+    if settings.PUBLIC_SITE_URL:
+        return f'{settings.PUBLIC_SITE_URL}{path}'
+    return request.build_absolute_uri(path)
 
 
 def _status_for(enrollment, access_result=None):
@@ -135,6 +142,7 @@ def course_detail(request, slug):
     ]
 
     status_label, status_class = _status_for(enrollment, access_result)
+    short_course_path = reverse('course_short_link', kwargs={'course_id': course.pk})
     return render(
         request,
         'courses/course_detail.html',
@@ -150,8 +158,15 @@ def course_detail(request, slug):
             'remaining_text': _remaining_text(enrollment, access_result),
             'quiz_items': get_course_quiz_items(request.user, course) if access_result and access_result.allowed else [],
             'completion_status': completion_status,
+            'short_course_path': short_course_path,
+            'short_course_url': _absolute_site_url(request, short_course_path),
         },
     )
+
+
+def short_course_redirect(request, course_id):
+    course = get_object_or_404(Course, pk=course_id, is_public=True)
+    return redirect(course)
 
 
 @login_required

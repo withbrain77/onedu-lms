@@ -62,6 +62,34 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(response, '표진호(위드브레인)')
         self.assertContains(response, '수강생 이름과 동일하게 입력해 주세요.')
 
+    def test_course_detail_shows_short_share_link(self):
+        short_path = reverse('course_short_link', kwargs={'course_id': self.course.pk})
+
+        response = self.client.get(self.course.get_absolute_url())
+
+        self.assertContains(response, '강의 주소 공유하기')
+        self.assertContains(response, short_path)
+        self.assertContains(response, 'data-course-share-url="http://testserver')
+        self.assertContains(response, 'course_share.js')
+
+    def test_short_course_link_redirects_to_course_detail(self):
+        short_path = reverse('course_short_link', kwargs={'course_id': self.course.pk})
+
+        response = self.client.get(short_path)
+
+        self.assertRedirects(response, self.course.get_absolute_url(), fetch_redirect_response=False)
+
+    def test_short_course_link_ignores_private_courses(self):
+        private_course = Course.objects.create(
+            title='비공개 강의',
+            description='비공개 강의입니다.',
+            is_public=False,
+        )
+
+        response = self.client.get(reverse('course_short_link', kwargs={'course_id': private_course.pk}))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_anonymous_classroom_redirects_to_login(self):
         response = self.client.get(reverse('enrollments:classroom'))
         self.assertEqual(response.status_code, 302)
