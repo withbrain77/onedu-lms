@@ -2732,21 +2732,17 @@ body {
   align-items: center;
   display: grid;
   gap: 1.25rem;
-  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.55fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(180px, 0.5fr) minmax(0, 1fr);
 }
 
-.portal-footer-brand {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
+.portal-footer-copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
-.portal-footer-brand img {
-  display: block;
-  max-height: 4rem;
-  max-width: min(14rem, 100%);
-  object-fit: contain;
+.portal-footer-hours {
+  min-width: 0;
 }
 
 .portal-footer strong {
