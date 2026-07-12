@@ -51,6 +51,17 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(response, '세미나 안내')
         self.assertContains(response, reverse('accounts:login'))
 
+    def test_paid_course_detail_shows_deposit_notice_to_logged_in_student(self):
+        self.login_student()
+
+        response = self.client.get(self.course.get_absolute_url())
+
+        self.assertContains(response, '입금 안내')
+        self.assertContains(response, '국민은행')
+        self.assertContains(response, '700101-01-323177')
+        self.assertContains(response, '표진호(위드브레인)')
+        self.assertContains(response, '수강생 이름과 동일하게 입력해 주세요.')
+
     def test_anonymous_classroom_redirects_to_login(self):
         response = self.client.get(reverse('enrollments:classroom'))
         self.assertEqual(response.status_code, 302)
@@ -77,6 +88,9 @@ class MVPFlowViewTests(TestCase):
         classroom = self.client.get(reverse('enrollments:classroom'))
         self.assertContains(classroom, '신청 대기')
         self.assertContains(classroom, '관리자 승인 대기')
+        self.assertContains(classroom, '입금 안내')
+        self.assertContains(classroom, '국민은행')
+        self.assertContains(classroom, '700101-01-323177')
 
         course_list = self.client.get(reverse('courses:list'))
         self.assertContains(course_list, self.course.get_absolute_url())
@@ -168,6 +182,7 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(list_response, '신청 즉시 수강 가능')
         self.assertContains(detail_response, '무료 프로그램입니다.')
         self.assertContains(detail_response, '무료 수강 신청')
+        self.assertNotContains(detail_response, '700101-01-323177')
 
     def test_requested_enrollment_cannot_access_lesson(self):
         Enrollment.objects.create(user=self.student, course=self.course)

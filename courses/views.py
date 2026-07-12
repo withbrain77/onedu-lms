@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -188,5 +189,14 @@ def apply_course(request, slug):
 
     enrollment = Enrollment.objects.create(user=request.user, course=course)
     notify_enrollment_request(enrollment)
-    messages.success(request, '수강 신청이 접수되었습니다. 이용료 확인 후 관리자가 승인하면 학습을 시작할 수 있습니다.')
+    deposit = settings.ONEDU_DEPOSIT_NOTICE
+    messages.success(
+        request,
+        (
+            '수강 신청이 접수되었습니다. '
+            f"{deposit['bank']} {deposit['account']} / 예금주 {deposit['holder']}로 입금해 주세요. "
+            f"입금자명은 {deposit['payer_note']} "
+            '입금 확인 후 관리자가 승인하면 학습을 시작할 수 있습니다.'
+        ),
+    )
     return redirect('enrollments:classroom')

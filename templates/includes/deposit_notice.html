@@ -1,0 +1,15 @@
+<div class="deposit-notice{% if compact %} deposit-notice-compact{% endif %}">
+  <div class="deposit-notice-head">
+    <span>입금 안내</span>
+    {% if course and course.price_label %}
+      <strong>{{ course.price_label }}</strong>
+    {% endif %}
+  </div>
+  <p>온라인 결제 없이 입금 확인 후 운영자가 수강을 승인합니다.</p>
+  <dl>
+    <div><dt>은행</dt><dd>{{ onedu_deposit_notice.bank }}</dd></div>
+    <div><dt>계좌번호</dt><dd>{{ onedu_deposit_notice.account }}</dd></div>
+    <div><dt>예금주</dt><dd>{{ onedu_deposit_notice.holder }}</dd></div>
+    <div><dt>입금자명</dt><dd>{{ onedu_deposit_notice.payer_note }}</dd></div>
+  </dl>
+</div>

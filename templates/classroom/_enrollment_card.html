@@ -51,6 +51,9 @@
           {% endif %}
         </div>
       {% endif %}
+      {% if item.enrollment.status == 'requested' and item.course.is_paid %}
+        {% include "includes/deposit_notice.html" with course=item.course compact=True %}
+      {% endif %}
       <div class="learning-card-actions mt-auto">
         {% if item.enrollment.is_completed and item.enrollment.certificate %}
           <a class="btn btn-success" href="{% url 'certificates:download' item.enrollment.certificate.id %}">수료증 다운로드</a>

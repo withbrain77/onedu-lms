@@ -99,6 +99,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.onedu_settings',
             ],
         },
     },
@@ -215,6 +216,12 @@ ONEDU_ADMIN_NOTIFICATION_EMAILS = env_list(
     'ONEDU_ADMIN_NOTIFICATION_EMAILS',
     'ONEDU_ADMIN_NOTIFICATION_EMAIL',
 )
+ONEDU_DEPOSIT_NOTICE = {
+    'bank': os.getenv('ONEDU_DEPOSIT_BANK', '국민은행'),
+    'account': os.getenv('ONEDU_DEPOSIT_ACCOUNT', '700101-01-323177'),
+    'holder': os.getenv('ONEDU_DEPOSIT_HOLDER', '표진호(위드브레인)'),
+    'payer_note': os.getenv('ONEDU_DEPOSIT_PAYER_NOTE', '수강생 이름과 동일하게 입력해 주세요.'),
+}
 
 SESSION_COOKIE_SECURE = env_bool('DJANGO_SESSION_COOKIE_SECURE', not DEBUG)
 CSRF_COOKIE_SECURE = env_bool('DJANGO_CSRF_COOKIE_SECURE', not DEBUG)
