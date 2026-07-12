@@ -12,7 +12,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         'status',
         'start_date',
         'end_date',
-        'days_remaining',
+        'remaining_days',
         'is_completed',
         'completed_at',
         'created_at',
@@ -45,6 +45,13 @@ class EnrollmentAdmin(admin.ModelAdmin):
     @admin.display(description='강의', ordering='course__title')
     def course_title(self, obj):
         return obj.course.title
+
+    @admin.display(description='남은 기간')
+    def remaining_days(self, obj):
+        days = obj.days_remaining
+        if days is None:
+            return '-'
+        return days
 
     def save_model(self, request, obj, form, change):
         if obj.status == Enrollment.Status.APPROVED and not obj.approved_by_id:

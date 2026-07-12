@@ -1050,6 +1050,96 @@ body.app-lessons.model-lesson.change-list #result_list .field-video_status {
   min-width: 20rem;
 }
 
+body.app-enrollments.model-enrollment.change-list #result_list {
+  min-width: 1380px;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .column-student_username,
+body.app-enrollments.model-enrollment.change-list #result_list .field-student_username {
+  min-width: 8rem;
+  white-space: nowrap;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .column-student_name,
+body.app-enrollments.model-enrollment.change-list #result_list .field-student_name {
+  min-width: 8rem;
+  word-break: keep-all;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .column-course_title,
+body.app-enrollments.model-enrollment.change-list #result_list .field-course_title {
+  line-height: 1.5;
+  min-width: 20rem;
+  width: 24rem;
+  word-break: keep-all;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .field-course_title a {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .column-status,
+body.app-enrollments.model-enrollment.change-list #result_list .field-status {
+  min-width: 8rem;
+  text-align: center;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .field-status select {
+  min-width: 7rem;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .column-start_date,
+body.app-enrollments.model-enrollment.change-list #result_list .field-start_date,
+body.app-enrollments.model-enrollment.change-list #result_list .column-end_date,
+body.app-enrollments.model-enrollment.change-list #result_list .field-end_date {
+  min-width: 13rem;
+  white-space: nowrap;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .field-start_date input,
+body.app-enrollments.model-enrollment.change-list #result_list .field-end_date input {
+  max-width: 8.8rem;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .column-remaining_days,
+body.app-enrollments.model-enrollment.change-list #result_list .field-remaining_days,
+body.app-enrollments.model-enrollment.change-list #result_list .column-is_completed,
+body.app-enrollments.model-enrollment.change-list #result_list .field-is_completed {
+  min-width: 6.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+body.app-enrollments.model-enrollment.change-list #result_list .column-completed_at,
+body.app-enrollments.model-enrollment.change-list #result_list .field-completed_at,
+body.app-enrollments.model-enrollment.change-list #result_list .column-created_at,
+body.app-enrollments.model-enrollment.change-list #result_list .field-created_at {
+  min-width: 10.5rem;
+  white-space: nowrap;
+}
+
+body.app-enrollments.model-reenrollmentrequest.change-list #result_list {
+  min-width: 1320px;
+}
+
+body.app-enrollments.model-reenrollmentrequest.change-list #result_list .column-course_title,
+body.app-enrollments.model-reenrollmentrequest.change-list #result_list .field-course_title {
+  min-width: 20rem;
+  width: 24rem;
+  word-break: keep-all;
+}
+
+body.app-enrollments.model-reenrollmentrequest.change-list #result_list .column-extension_start_date,
+body.app-enrollments.model-reenrollmentrequest.change-list #result_list .field-extension_start_date,
+body.app-enrollments.model-reenrollmentrequest.change-list #result_list .column-extension_end_date,
+body.app-enrollments.model-reenrollmentrequest.change-list #result_list .field-extension_end_date {
+  min-width: 13rem;
+  white-space: nowrap;
+}
+
 @media (max-width: 1024px) {
   #header,
   div.breadcrumbs {
