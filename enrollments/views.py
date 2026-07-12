@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from core.services.access import can_access_course
 from core.services.completion import evaluate_enrollment_completion
@@ -108,6 +109,24 @@ def classroom(request):
             'other_cards': other_cards,
         },
     )
+
+
+@login_required
+@require_POST
+def cancel_enrollment_request(request, enrollment_id):
+    enrollment = get_object_or_404(
+        Enrollment.objects.select_related('course', 'user'),
+        pk=enrollment_id,
+        user=request.user,
+    )
+    if enrollment.status != Enrollment.Status.REQUESTED:
+        messages.warning(request, '승인 대기 중인 수강 신청만 취소할 수 있습니다.')
+        return redirect('enrollments:classroom')
+
+    enrollment.status = Enrollment.Status.CANCELLED
+    enrollment.save(update_fields=['status', 'updated_at'])
+    messages.success(request, f'{enrollment.course.title} 수강 신청을 취소했습니다.')
+    return redirect('enrollments:classroom')
 
 
 @login_required

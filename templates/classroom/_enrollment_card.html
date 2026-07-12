@@ -71,6 +71,10 @@
         {% elif item.access.code == 'waiting_approval' %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
           <button class="btn btn-outline-secondary" type="button" disabled>관리자 승인 대기</button>
+          <form method="post" action="{% url 'enrollments:cancel_enrollment' item.enrollment.id %}" onsubmit="return confirm('수강 신청을 취소하시겠습니까?');">
+            {% csrf_token %}
+            <button class="btn btn-outline-danger" type="submit">신청 취소</button>
+          </form>
         {% else %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
         {% endif %}

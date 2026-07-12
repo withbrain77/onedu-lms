@@ -7,6 +7,12 @@ from .models import User
 
 
 class LoginPageTests(TestCase):
+    def test_base_navigation_shows_home_link(self):
+        response = self.client.get(reverse('accounts:login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/">홈</a>')
+
     def test_login_page_shows_operator_support_information(self):
         response = self.client.get(reverse('accounts:login'))
 

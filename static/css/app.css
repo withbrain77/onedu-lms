@@ -1373,6 +1373,14 @@ body {
   gap: 0.5rem;
 }
 
+.learning-card-actions form {
+  margin: 0;
+}
+
+.learning-card-actions .btn {
+  width: 100%;
+}
+
 .timeline-panel {
   background: #fff;
   border: 1px solid var(--onedu-border);

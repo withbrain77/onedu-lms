@@ -177,6 +177,77 @@ class ReEnrollmentRequestTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class EnrollmentCancellationTests(TestCase):
+    def setUp(self):
+        self.today = timezone.localdate()
+        self.student = User.objects.create_user(
+            username='cancel_student',
+            password='pass12345',
+            name='Cancel Student',
+        )
+        self.other_student = User.objects.create_user(
+            username='cancel_other',
+            password='pass12345',
+            name='Cancel Other',
+        )
+        self.course = Course.objects.create(
+            title='Cancellation Course',
+            is_public=True,
+            pricing_type=Course.PricingType.PAID,
+            price_krw=30000,
+        )
+
+    def test_requested_enrollment_can_be_cancelled_by_owner(self):
+        enrollment = Enrollment.objects.create(
+            user=self.student,
+            course=self.course,
+            status=Enrollment.Status.REQUESTED,
+        )
+        self.client.force_login(self.student)
+
+        response = self.client.post(
+            reverse('enrollments:cancel_enrollment', kwargs={'enrollment_id': enrollment.pk}),
+        )
+
+        self.assertRedirects(response, reverse('enrollments:classroom'))
+        enrollment.refresh_from_db()
+        self.assertEqual(enrollment.status, Enrollment.Status.CANCELLED)
+
+    def test_approved_enrollment_cannot_be_cancelled_by_student_action(self):
+        enrollment = Enrollment.objects.create(
+            user=self.student,
+            course=self.course,
+            status=Enrollment.Status.APPROVED,
+            start_date=self.today,
+            end_date=self.today + timedelta(days=30),
+        )
+        self.client.force_login(self.student)
+
+        response = self.client.post(
+            reverse('enrollments:cancel_enrollment', kwargs={'enrollment_id': enrollment.pk}),
+        )
+
+        self.assertRedirects(response, reverse('enrollments:classroom'))
+        enrollment.refresh_from_db()
+        self.assertEqual(enrollment.status, Enrollment.Status.APPROVED)
+
+    def test_other_user_cannot_cancel_enrollment(self):
+        enrollment = Enrollment.objects.create(
+            user=self.student,
+            course=self.course,
+            status=Enrollment.Status.REQUESTED,
+        )
+        self.client.force_login(self.other_student)
+
+        response = self.client.post(
+            reverse('enrollments:cancel_enrollment', kwargs={'enrollment_id': enrollment.pk}),
+        )
+
+        self.assertEqual(response.status_code, 404)
+        enrollment.refresh_from_db()
+        self.assertEqual(enrollment.status, Enrollment.Status.REQUESTED)
+
+
 class AdminEnrollmentNotificationTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(

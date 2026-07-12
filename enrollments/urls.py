@@ -6,6 +6,7 @@ app_name = 'enrollments'
 
 urlpatterns = [
     path('', views.classroom, name='classroom'),
+    path('cancel/<int:enrollment_id>/', views.cancel_enrollment_request, name='cancel_enrollment'),
     path('reenroll/<int:enrollment_id>/', views.request_reenrollment, name='request_reenrollment'),
     path('<int:course_id>/', views.classroom_course_detail, name='course_detail'),
 ]
