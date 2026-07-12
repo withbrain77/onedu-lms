@@ -2499,13 +2499,13 @@ body {
   border-radius: 12px;
   box-shadow: 0 12px 30px rgba(6, 27, 42, 0.05);
   display: grid;
-  gap: 1rem;
-  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: 0.9rem;
+  grid-template-columns: 2.8rem 4rem minmax(0, 1fr);
   padding: 1rem;
   position: relative;
 }
 
-.portal-timeline li span {
+.portal-step-number {
   align-items: center;
   background: var(--onedu-primary);
   border-radius: 999px;
@@ -2516,6 +2516,23 @@ body {
   height: 2.5rem;
   justify-content: center;
   width: 2.5rem;
+}
+
+.portal-step-icon {
+  align-items: center;
+  background: linear-gradient(135deg, #f4fbfa, #ffffff);
+  border: 1px solid rgba(8, 117, 111, 0.14);
+  border-radius: 999px;
+  color: #0b6f6a;
+  display: inline-flex;
+  height: 3.75rem;
+  justify-content: center;
+  width: 3.75rem;
+}
+
+.portal-step-icon .portal-svg-icon {
+  height: 72%;
+  width: 72%;
 }
 
 .portal-timeline h3 {
@@ -2677,6 +2694,16 @@ body {
   .portal-program-actions {
     grid-template-columns: 1fr;
   }
+
+  .portal-timeline li {
+    grid-template-columns: 2.65rem 3.4rem minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .portal-step-icon {
+    height: 3.25rem;
+    width: 3.25rem;
+  }
 }
 
 @media (max-width: 575.98px) {
@@ -2713,5 +2740,20 @@ body {
   .portal-player-controls {
     left: 0.9rem;
     right: 0.9rem;
+  }
+
+  .portal-timeline li {
+    align-items: start;
+    grid-template-columns: 2.55rem minmax(0, 1fr);
+  }
+
+  .portal-step-icon {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  .portal-timeline li > div {
+    grid-column: 1 / -1;
   }
 }
