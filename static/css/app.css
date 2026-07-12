@@ -1573,6 +1573,15 @@ body {
   margin: 0.35rem 0 0;
 }
 
+.lesson-attachment-item > .btn {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  min-width: 5.8rem;
+  white-space: nowrap;
+}
+
 .lesson-attachment-empty {
   background: #f8fafc;
   border: 1px dashed var(--onedu-border);
@@ -1693,6 +1702,10 @@ body {
   .lesson-attachment-item {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .lesson-attachment-item > .btn {
+    width: 100%;
   }
 
   .timeline-step {
