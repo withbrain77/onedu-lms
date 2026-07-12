@@ -163,6 +163,17 @@ class CourseAccessTests(TestCase):
 
 
 class AdminThemeTests(TestCase):
+    def test_admin_login_uses_mobile_friendly_layout(self):
+        response = self.client.get(reverse('admin:login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'onedu-admin-login')
+        self.assertContains(response, 'onedu-admin-login-card')
+        self.assertContains(response, 'ONEDU LMS 관리자')
+        self.assertContains(response, 'WITHBRAIN 운영 콘솔')
+        self.assertContains(response, 'css/admin.css')
+        self.assertNotContains(response, 'onedu-admin-workspace')
+
     def test_admin_index_loads_custom_theme(self):
         admin_user = User.objects.create_superuser(
             username='admin',
