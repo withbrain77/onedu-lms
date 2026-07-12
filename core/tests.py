@@ -33,7 +33,12 @@ class HomePageTests(TestCase):
         self.assertContains(response, reverse('accounts:signup'))
         self.assertContains(response, reverse('certificates:verify'))
 
-    def test_student_home_redirects_to_classroom(self):
+    def test_student_home_shows_home_page(self):
+        course = Course.objects.create(
+            title='Student Home Course',
+            description='Visible to logged in students.',
+            is_public=True,
+        )
         user = User.objects.create_user(
             username='student_home',
             password='pass12345',
@@ -43,10 +48,13 @@ class HomePageTests(TestCase):
 
         response = self.client.get(reverse('home'))
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('enrollments:classroom'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'WITHBRAIN VIDEO ARCHIVE')
+        self.assertContains(response, reverse('enrollments:classroom'))
+        self.assertContains(response, course.get_absolute_url())
+        self.assertContains(response, '전체 프로그램')
 
-    def test_staff_home_redirects_to_admin(self):
+    def test_staff_home_shows_home_page(self):
         admin_user = User.objects.create_superuser(
             username='home_admin',
             password='pass12345',
@@ -57,8 +65,9 @@ class HomePageTests(TestCase):
 
         response = self.client.get(reverse('home'))
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('admin:index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'WITHBRAIN VIDEO ARCHIVE')
+        self.assertContains(response, reverse('admin:index'))
 
 
 class CourseAccessTests(TestCase):

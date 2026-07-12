@@ -37,10 +37,11 @@ class MVPFlowViewTests(TestCase):
     def login_student(self):
         self.client.force_login(self.student)
 
-    def test_anonymous_course_detail_redirects_to_login(self):
+    def test_anonymous_course_detail_is_visible_without_login(self):
         response = self.client.get(self.course.get_absolute_url())
-        self.assertEqual(response.status_code, 302)
-        self.assertIn(reverse('accounts:login'), response['Location'])
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.course.title)
+        self.assertContains(response, reverse('accounts:login'))
 
     def test_anonymous_classroom_redirects_to_login(self):
         response = self.client.get(reverse('enrollments:classroom'))

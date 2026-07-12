@@ -21,8 +21,13 @@
       <div><dt>수강 기간</dt><dd>{{ course.access_period_label }}</dd></div>
     </dl>
     <div class="portal-program-actions">
-      <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인 후 신청</a>
-      <a class="btn btn-outline-secondary" href="{{ course.get_absolute_url }}">상세 보기</a>
+      {% if user.is_authenticated %}
+        <a class="btn btn-primary" href="{{ course.get_absolute_url }}">상세 보기</a>
+        <a class="btn btn-outline-secondary" href="{% url 'courses:list' %}">전체 프로그램</a>
+      {% else %}
+        <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인 후 신청</a>
+        <a class="btn btn-outline-secondary" href="{{ course.get_absolute_url }}">상세 보기</a>
+      {% endif %}
     </div>
   </div>
 </article>

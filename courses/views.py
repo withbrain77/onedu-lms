@@ -103,7 +103,6 @@ def course_list(request):
     return render(request, 'courses/course_list.html', {'course_cards': course_cards})
 
 
-@login_required
 def course_detail(request, slug):
     course = get_object_or_404(
         Course.objects.prefetch_related('lessons'),
