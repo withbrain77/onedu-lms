@@ -5,11 +5,10 @@ from courses.models import Course
 
 
 def home(request):
+    public_courses = Course.objects.filter(is_public=True).prefetch_related('lessons')
     courses = list(
-        Course.objects
-        .filter(is_public=True)
-        .prefetch_related('lessons')
-        .order_by('title')[:3]
+        public_courses
+        .order_by('-created_at', '-id')[:2]
     )
     featured_course = courses[0] if courses else None
     return render(
@@ -18,7 +17,7 @@ def home(request):
         {
             'featured_course': featured_course,
             'courses': courses,
-            'course_count': len(courses),
+            'course_count': public_courses.count(),
             'lesson_count': sum(course.lesson_count for course in courses),
         },
     )

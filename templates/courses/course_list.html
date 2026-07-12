@@ -58,6 +58,7 @@
                 {% elif item.access and item.access.code == 'not_started' %}
                   <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
                 {% elif item.enrollment and item.enrollment.status == 'requested' %}
+                  <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
                   <button class="btn btn-outline-secondary" type="button" disabled>승인 대기 중</button>
                 {% else %}
                   <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>

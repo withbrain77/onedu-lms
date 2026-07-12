@@ -38,9 +38,17 @@ class MVPFlowViewTests(TestCase):
         self.client.force_login(self.student)
 
     def test_anonymous_course_detail_is_visible_without_login(self):
+        self.course.thumbnail = 'course_thumbnails/test-thumb.png'
+        self.course.save(update_fields=['thumbnail'])
+
         response = self.client.get(self.course.get_absolute_url())
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.course.title)
+        self.assertContains(response, 'course-detail-intro')
+        self.assertContains(response, 'course-detail-thumb')
+        self.assertContains(response, 'course_thumbnails/test-thumb.png')
+        self.assertContains(response, '세미나 안내')
         self.assertContains(response, reverse('accounts:login'))
 
     def test_anonymous_classroom_redirects_to_login(self):
@@ -69,6 +77,11 @@ class MVPFlowViewTests(TestCase):
         classroom = self.client.get(reverse('enrollments:classroom'))
         self.assertContains(classroom, '신청 대기')
         self.assertContains(classroom, '관리자 승인 대기')
+
+        course_list = self.client.get(reverse('courses:list'))
+        self.assertContains(course_list, self.course.get_absolute_url())
+        self.assertContains(course_list, '상세 보기')
+        self.assertContains(course_list, '승인 대기 중')
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',

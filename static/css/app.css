@@ -804,6 +804,107 @@ main.container {
   top: 5rem;
 }
 
+.course-detail-intro {
+  background: #fff;
+  border: 1px solid var(--onedu-border);
+  border-radius: 0.65rem;
+  box-shadow: var(--onedu-shadow);
+  display: grid;
+  gap: 0;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.course-detail-thumb {
+  align-items: center;
+  background: linear-gradient(135deg, #fbfefd, #edf7f6);
+  display: flex;
+  justify-content: center;
+  min-height: 320px;
+  overflow: hidden;
+}
+
+.course-detail-thumb img {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  width: 100%;
+}
+
+.course-detail-thumb-placeholder {
+  align-content: end;
+  background:
+    linear-gradient(145deg, rgba(8, 117, 111, 0.92), rgba(6, 27, 42, 0.98)),
+    repeating-linear-gradient(120deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 28px);
+  color: #fff;
+  display: grid;
+  height: 100%;
+  min-height: 320px;
+  padding: 1.6rem;
+  width: 100%;
+}
+
+.course-detail-thumb-placeholder span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.course-detail-thumb-placeholder strong {
+  font-size: 2rem;
+  font-weight: 950;
+  line-height: 1.12;
+  margin-top: 0.45rem;
+}
+
+.course-detail-guide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.65rem;
+}
+
+.course-detail-guide h2 {
+  color: var(--onedu-ink);
+  font-size: 1.5rem;
+  font-weight: 950;
+  margin-bottom: 0.8rem;
+}
+
+.course-detail-guide p {
+  color: var(--onedu-ink-soft);
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+}
+
+.course-detail-guide-meta {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.course-detail-guide-meta div {
+  align-items: center;
+  border-top: 1px solid var(--onedu-border);
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.65rem;
+}
+
+.course-detail-guide-meta dt {
+  color: var(--onedu-muted);
+  font-weight: 850;
+}
+
+.course-detail-guide-meta dd {
+  color: var(--onedu-ink);
+  font-weight: 900;
+  margin: 0;
+  text-align: right;
+}
+
 .learning-placeholder {
   min-height: min(56vw, 430px);
   border-radius: 0.35rem;
@@ -2507,6 +2608,10 @@ body {
   margin-top: auto;
 }
 
+.portal-program-actions .btn:only-child {
+  grid-column: 1 / -1;
+}
+
 .portal-workflow {
   min-width: 0;
 }
@@ -2741,6 +2846,15 @@ body {
 
   .portal-program-actions {
     grid-template-columns: 1fr;
+  }
+
+  .course-detail-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .course-detail-thumb,
+  .course-detail-thumb-placeholder {
+    min-height: 220px;
   }
 
   .portal-timeline li {

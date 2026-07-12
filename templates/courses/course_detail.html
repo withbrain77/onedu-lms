@@ -8,7 +8,6 @@
     <div>
       <div class="hero-kicker">COURSE DETAIL</div>
       <h1>{{ course.title }}</h1>
-      <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
     </div>
     <div class="text-lg-end">
       <span class="badge {{ status_class }}">{{ status_label }}</span>
@@ -18,6 +17,29 @@
 {% endblock %}
 
 {% block content %}
+<section class="course-detail-intro mb-4" aria-labelledby="courseIntroTitle">
+  <div class="course-detail-thumb">
+    {% if course.thumbnail %}
+      <img src="{{ course.thumbnail.url }}" alt="{{ course.title }} 썸네일">
+    {% else %}
+      <div class="course-detail-thumb-placeholder">
+        <span>WITHBRAIN</span>
+        <strong>ONEDU PROGRAM</strong>
+      </div>
+    {% endif %}
+  </div>
+  <div class="course-detail-guide">
+    <div class="learning-card-label">PROGRAM GUIDE</div>
+    <h2 id="courseIntroTitle">세미나 안내</h2>
+    <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
+    <dl class="course-detail-guide-meta">
+      <div><dt>영상 차시</dt><dd>{{ lesson_items|length }}개</dd></div>
+      <div><dt>이용료</dt><dd>{{ course.price_label }}</dd></div>
+      <div><dt>승인 방식</dt><dd>{{ course.approval_policy_label }}</dd></div>
+    </dl>
+  </div>
+</section>
+
 <div class="row g-4">
   <div class="col-12 col-lg-8">
     <div class="timeline-panel">

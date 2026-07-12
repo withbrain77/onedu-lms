@@ -33,6 +33,35 @@ class HomePageTests(TestCase):
         self.assertContains(response, reverse('accounts:signup'))
         self.assertContains(response, reverse('certificates:verify'))
 
+    def test_home_page_shows_two_recent_public_courses(self):
+        old_course = Course.objects.create(
+            title='Old Public Program',
+            description='Old public program.',
+            is_public=True,
+        )
+        middle_course = Course.objects.create(
+            title='Middle Public Program',
+            description='Middle public program.',
+            is_public=True,
+        )
+        newest_course = Course.objects.create(
+            title='Newest Public Program',
+            description='Newest public program.',
+            is_public=True,
+        )
+        Course.objects.filter(pk=old_course.pk).update(created_at=timezone.now() - timedelta(days=2))
+        Course.objects.filter(pk=middle_course.pk).update(created_at=timezone.now() - timedelta(days=1))
+        Course.objects.filter(pk=newest_course.pk).update(created_at=timezone.now())
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Newest Public Program')
+        self.assertContains(response, 'Middle Public Program')
+        self.assertNotContains(response, 'Old Public Program')
+        self.assertContains(response, '전체 프로그램 더보기')
+        self.assertContains(response, reverse('courses:list'))
+
     def test_student_home_shows_home_page(self):
         course = Course.objects.create(
             title='Student Home Course',
