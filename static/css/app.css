@@ -2617,13 +2617,10 @@ body {
 }
 
 .portal-footer-brand img {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
   display: block;
-  max-height: 3.6rem;
-  max-width: min(13rem, 100%);
+  max-height: 4rem;
+  max-width: min(14rem, 100%);
   object-fit: contain;
-  padding: 0.35rem 0.55rem;
 }
 
 .portal-footer strong {
