@@ -1,5 +1,7 @@
 from datetime import timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -201,6 +203,15 @@ class AdminThemeTests(TestCase):
                 self.assertContains(response, 'onedu-admin-workspace')
                 self.assertContains(response, 'onedu-admin-sidebar')
                 self.assertContains(response, '운영 콘솔')
+
+
+class DeploymentConfigTests(TestCase):
+    def test_compose_passes_enrollment_notification_env_to_web_container(self):
+        compose = (Path(settings.BASE_DIR) / 'docker-compose.yml').read_text(encoding='utf-8')
+
+        self.assertIn('ONEDU_NOTIFY_ENROLLMENT_REQUEST', compose)
+        self.assertIn('ONEDU_ADMIN_NOTIFICATION_EMAIL:', compose)
+        self.assertIn('ONEDU_ADMIN_NOTIFICATION_EMAILS:', compose)
 
 
 class UIPreviewTests(TestCase):

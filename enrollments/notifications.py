@@ -14,7 +14,12 @@ def _notification_recipients():
     recipients = getattr(settings, 'ONEDU_ADMIN_NOTIFICATION_EMAILS', [])
     if isinstance(recipients, str):
         recipients = [item.strip() for item in recipients.split(',') if item.strip()]
-    return list(recipients)
+    recipients = list(recipients)
+    if recipients:
+        return recipients
+
+    email_host_user = getattr(settings, 'EMAIL_HOST_USER', '')
+    return [email_host_user] if email_host_user else []
 
 
 def _admin_change_url(enrollment):
@@ -41,6 +46,7 @@ def notify_enrollment_request(enrollment):
 
     recipients = _notification_recipients()
     if not recipients:
+        logger.warning('Enrollment request notification skipped because no admin recipient email is configured.')
         return False
 
     requested_at = timezone.localtime(enrollment.created_at).strftime('%Y-%m-%d %H:%M')

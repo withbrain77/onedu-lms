@@ -88,6 +88,22 @@ CELERY_WORKER_CONCURRENCY=1
 - HLS 변환 작업 큐 설정이다.
 - NAS 부하를 줄이기 위해 worker 동시 실행 수는 기본 `1`을 권장한다.
 
+```env
+DJANGO_EMAIL_HOST=smtp.example.com
+DJANGO_EMAIL_PORT=587
+DJANGO_EMAIL_HOST_USER=no-reply@example.com
+DJANGO_EMAIL_HOST_PASSWORD=메일-앱-비밀번호
+DJANGO_EMAIL_USE_TLS=True
+DJANGO_DEFAULT_FROM_EMAIL=Onedu LMS <no-reply@example.com>
+ONEDU_NOTIFY_ENROLLMENT_REQUEST=True
+ONEDU_ADMIN_NOTIFICATION_EMAIL=admin@example.com
+```
+
+- 유료 강의 수강 신청이 접수되면 `ONEDU_ADMIN_NOTIFICATION_EMAIL` 주소로 승인요청 메일이 발송된다.
+- 여러 관리자에게 보내려면 `ONEDU_ADMIN_NOTIFICATION_EMAILS=admin1@example.com,admin2@example.com`처럼 쉼표로 구분한다.
+- `ONEDU_ADMIN_NOTIFICATION_EMAIL`을 비워 두면 SMTP 로그인 계정인 `DJANGO_EMAIL_HOST_USER`가 기본 수신자가 된다.
+- 무료 강의는 신청 즉시 자동 승인되므로 승인요청 메일을 보내지 않는다.
+
 ## 3. 배포 명령 순서
 
 프로젝트 폴더에서 실행한다.

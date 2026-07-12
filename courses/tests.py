@@ -116,6 +116,20 @@ class MVPFlowViewTests(TestCase):
         self.assertIn(self.student.username, message.body)
         self.assertIn('https://onedu.withbrain.kr/admin/enrollments/enrollment/', message.body)
 
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=[],
+        EMAIL_HOST_USER='operator@example.com',
+    )
+    def test_paid_course_application_can_use_smtp_account_as_admin_notification_recipient(self):
+        self.login_student()
+
+        self.client.post(reverse('courses:apply', kwargs={'slug': self.course.slug}))
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['operator@example.com'])
+
     def test_free_course_application_is_auto_approved(self):
         free_course = Course.objects.create(
             title='무료 공개 강의',
