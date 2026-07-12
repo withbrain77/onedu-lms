@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}회원가입 | Onedu LMS{% endblock %}
 
@@ -14,13 +15,56 @@
   <div class="col-12 col-lg-7">
     <div class="card shadow-sm">
       <div class="card-body p-4">
-        <form method="post" novalidate>
+        <form method="post" novalidate data-password-feedback-form>
           {% csrf_token %}
           {% for field in form %}
             <div class="mb-3">
               <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
               {{ field }}
-              {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% if field.help_text and field.name != 'password1' %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              {% if field.name == 'password1' %}
+                <div class="password-feedback-panel mt-3" data-password-feedback aria-live="polite">
+                  <div class="password-feedback-head">
+                    <span>비밀번호 조건</span>
+                    <strong data-password-summary>입력 전</strong>
+                  </div>
+                  <ul class="password-rule-list">
+                    <li class="password-rule" data-password-rule="length">
+                      <span class="password-rule-icon" aria-hidden="true"></span>
+                      <span>8자 이상 입력</span>
+                      <em data-password-rule-status>대기</em>
+                    </li>
+                    <li class="password-rule" data-password-rule="common">
+                      <span class="password-rule-icon" aria-hidden="true"></span>
+                      <span>흔한 비밀번호가 아님</span>
+                      <em data-password-rule-status>대기</em>
+                    </li>
+                    <li class="password-rule" data-password-rule="numeric">
+                      <span class="password-rule-icon" aria-hidden="true"></span>
+                      <span>숫자로만 구성되지 않음</span>
+                      <em data-password-rule-status>대기</em>
+                    </li>
+                    <li class="password-rule" data-password-rule="similar">
+                      <span class="password-rule-icon" aria-hidden="true"></span>
+                      <span>아이디, 이름, 이메일과 너무 비슷하지 않음</span>
+                      <em data-password-rule-status>대기</em>
+                    </li>
+                    <li class="password-rule" data-password-rule="match">
+                      <span class="password-rule-icon" aria-hidden="true"></span>
+                      <span>비밀번호 확인값과 일치</span>
+                      <em data-password-rule-status>대기</em>
+                    </li>
+                  </ul>
+                  <p class="password-feedback-note mb-0">
+                    화면 안내는 입력을 돕기 위한 것이며, 저장 시 서버에서 한 번 더 검증합니다.
+                  </p>
+                </div>
+              {% endif %}
+              {% if field.name == 'password2' %}
+                <div class="password-match-hint form-text" data-password-match-message aria-live="polite">
+                  비밀번호 확인값을 입력해 주세요.
+                </div>
+              {% endif %}
               {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
             </div>
           {% endfor %}
@@ -33,4 +77,9 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/signup_password_feedback.js' %}?v=20260712-password-feedback" defer></script>
 {% endblock %}

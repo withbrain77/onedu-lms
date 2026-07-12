@@ -20,6 +20,20 @@ class LoginPageTests(TestCase):
         self.assertContains(response, reverse('accounts:password_reset'))
 
 
+class SignupPageTests(TestCase):
+    def test_signup_page_shows_live_password_feedback(self):
+        response = self.client.get(reverse('accounts:signup'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-password-feedback-form')
+        self.assertContains(response, 'data-password-rule="length"')
+        self.assertContains(response, 'data-password-rule="common"')
+        self.assertContains(response, 'data-password-rule="numeric"')
+        self.assertContains(response, 'data-password-rule="similar"')
+        self.assertContains(response, 'data-password-rule="match"')
+        self.assertContains(response, 'signup_password_feedback.js')
+
+
 class AccountRecoveryTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

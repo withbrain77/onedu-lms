@@ -2797,3 +2797,143 @@ body {
     grid-column: 1 / -1;
   }
 }
+
+.password-feedback-panel {
+  background: linear-gradient(135deg, rgba(8, 117, 111, 0.07), rgba(37, 99, 235, 0.04));
+  border: 1px solid rgba(8, 117, 111, 0.18);
+  border-radius: 0.85rem;
+  padding: 1rem;
+}
+
+.password-feedback-head {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.password-feedback-head span {
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 850;
+}
+
+.password-feedback-head strong {
+  background: #eef3f7;
+  border: 1px solid #d8e5ea;
+  border-radius: 999px;
+  color: #536274;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.65rem;
+  white-space: nowrap;
+}
+
+.password-feedback-head strong[data-state="pass"] {
+  background: #e7f8ef;
+  border-color: #bde8cf;
+  color: #0f7a43;
+}
+
+.password-feedback-head strong[data-state="fail"] {
+  background: #fff0f0;
+  border-color: #f5c2c7;
+  color: #b42318;
+}
+
+.password-rule-list {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.password-rule {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(216, 229, 234, 0.95);
+  border-radius: 0.65rem;
+  color: #425466;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 1.2rem minmax(0, 1fr) auto;
+  padding: 0.58rem 0.7rem;
+}
+
+.password-rule-icon {
+  align-items: center;
+  background: #d8e5ea;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  height: 1rem;
+  justify-content: center;
+  width: 1rem;
+}
+
+.password-rule-icon::before {
+  content: "";
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.password-rule[data-state="pass"] {
+  border-color: #bde8cf;
+  color: #0f5132;
+}
+
+.password-rule[data-state="pass"] .password-rule-icon {
+  background: #198754;
+}
+
+.password-rule[data-state="pass"] .password-rule-icon::before {
+  content: "✓";
+}
+
+.password-rule[data-state="fail"] {
+  border-color: #f5c2c7;
+  color: #842029;
+}
+
+.password-rule[data-state="fail"] .password-rule-icon {
+  background: #dc3545;
+}
+
+.password-rule[data-state="fail"] .password-rule-icon::before {
+  content: "!";
+}
+
+.password-rule em {
+  color: #667085;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.password-rule[data-state="pass"] em {
+  color: #198754;
+}
+
+.password-rule[data-state="fail"] em {
+  color: #dc3545;
+}
+
+.password-feedback-note {
+  color: #667085;
+  font-size: 0.82rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 575.98px) {
+  .password-rule {
+    align-items: start;
+    grid-template-columns: 1.2rem minmax(0, 1fr);
+  }
+
+  .password-rule em {
+    grid-column: 2;
+  }
+}
