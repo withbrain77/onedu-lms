@@ -3,7 +3,6 @@
 
 {% block bodyclass %}{{ block.super }} onedu-admin-dashboard-page{% endblock %}
 {% block content_title %}{% endblock %}
-{% block nav-sidebar %}{% endblock %}
 
 {% block breadcrumbs %}
 <div class="breadcrumbs onedu-admin-breadcrumbs">
@@ -15,41 +14,7 @@
 
 {% block content %}
 {% onedu_admin_dashboard as dashboard %}
-<div class="onedu-admin-shell">
-  <input class="onedu-admin-menu-toggle" id="oneduAdminMenuToggle" type="checkbox">
-  <label class="onedu-admin-menu-button" for="oneduAdminMenuToggle">관리 메뉴</label>
-
-  <aside class="onedu-admin-sidebar" aria-label="관리 메뉴">
-    <div class="onedu-admin-sidebar__brand">
-      <strong>ONEDU LMS</strong>
-      <span>운영 콘솔</span>
-    </div>
-
-    <nav class="onedu-admin-menu">
-      {% for section in dashboard.menu_sections %}
-        <details class="onedu-admin-menu-section" {% if section.is_active or section.is_dashboard %}open{% endif %}>
-          <summary>
-            <span class="onedu-admin-menu-icon" aria-hidden="true">{{ section.icon }}</span>
-            <span>{{ section.title }}</span>
-          </summary>
-          <ul>
-            {% for item in section.items %}
-              <li>
-                <a class="{% if item.is_active %}is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
-                  <span>{{ item.label }}</span>
-                </a>
-                {% if item.can_add %}
-                  <a class="onedu-admin-menu-add" href="{{ item.add_url }}" aria-label="{{ item.label }} 추가">+</a>
-                {% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-        </details>
-      {% endfor %}
-    </nav>
-  </aside>
-
-  <main class="onedu-admin-main" id="main">
+<div class="onedu-admin-main">
     <header class="onedu-admin-hero">
       <div>
         <p class="onedu-admin-kicker">LMS OPERATIONS</p>
@@ -259,6 +224,5 @@
         {% endif %}
       </section>
     </div>
-  </main>
 </div>
 {% endblock %}

@@ -1291,6 +1291,40 @@ body.app-enrollments.model-reenrollmentrequest.change-list #result_list .field-e
 }
 
 /* ONEDU admin operations dashboard */
+body.onedu-admin-workspace {
+  --dash-bg: #f3f7f8;
+  --dash-card: #ffffff;
+  --dash-border: #d8e5e7;
+  --dash-ink: #081627;
+  --dash-muted: #627084;
+  --dash-teal: #08756f;
+  --dash-teal-dark: #064f4d;
+  --dash-navy: #071827;
+  --dash-warning: #c47a05;
+  --dash-danger: #c24141;
+  --dash-shadow: 0 18px 46px rgba(16, 30, 54, 0.08);
+}
+
+body.onedu-admin-workspace .main {
+  background:
+    radial-gradient(circle at top right, rgba(8, 117, 111, 0.11), transparent 34rem),
+    linear-gradient(180deg, #f8fbfc 0%, var(--dash-bg) 100%);
+  color: var(--dash-ink);
+  display: grid;
+  gap: 0;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: calc(100vh - 120px);
+}
+
+body.onedu-admin-workspace .content {
+  min-width: 0;
+  width: 100%;
+}
+
+body.onedu-admin-workspace #content {
+  padding: 30px;
+}
+
 .onedu-admin-dashboard-page #content {
   padding: 0;
 }
@@ -1309,29 +1343,6 @@ body.app-enrollments.model-reenrollmentrequest.change-list #result_list .field-e
 
 .onedu-admin-breadcrumbs span {
   margin-left: 0.35rem;
-}
-
-.onedu-admin-shell {
-  --dash-bg: #f3f7f8;
-  --dash-card: #ffffff;
-  --dash-border: #d8e5e7;
-  --dash-ink: #081627;
-  --dash-muted: #627084;
-  --dash-teal: #08756f;
-  --dash-teal-dark: #064f4d;
-  --dash-navy: #071827;
-  --dash-warning: #c47a05;
-  --dash-danger: #c24141;
-  --dash-shadow: 0 18px 46px rgba(16, 30, 54, 0.08);
-  background:
-    radial-gradient(circle at top right, rgba(8, 117, 111, 0.11), transparent 34rem),
-    linear-gradient(180deg, #f8fbfc 0%, var(--dash-bg) 100%);
-  color: var(--dash-ink);
-  display: grid;
-  gap: 0;
-  grid-template-columns: 280px minmax(0, 1fr);
-  margin: 0;
-  min-height: calc(100vh - 120px);
 }
 
 .onedu-admin-menu-toggle,
@@ -1976,7 +1987,7 @@ body.app-enrollments.model-reenrollmentrequest.change-list #result_list .field-e
 }
 
 @media (max-width: 1120px) {
-  .onedu-admin-shell {
+  body.onedu-admin-workspace .main {
     grid-template-columns: 1fr;
   }
 

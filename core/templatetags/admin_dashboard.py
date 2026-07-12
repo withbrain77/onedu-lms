@@ -384,7 +384,7 @@ def _build_hls_summary(models):
 @register.simple_tag(takes_context=True)
 def onedu_admin_dashboard(context):
     request = context.get('request')
-    app_list = context.get('app_list') or []
+    app_list = context.get('app_list') or context.get('available_apps') or []
     models = _model_map(app_list)
     return {
         'menu_sections': _build_menu(request, app_list, models),

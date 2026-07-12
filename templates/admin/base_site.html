@@ -1,7 +1,15 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
+{% block bodyclass %}{{ block.super }} onedu-admin-workspace{% endblock %}
+
 {% block extrastyle %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'css/admin.css' %}?v=20260713-admin-button-contrast">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}?v=20260713-admin-persistent-sidebar">
+{% endblock %}
+
+{% block nav-sidebar %}
+  {% if has_permission %}
+    {% include "admin/includes/operations_sidebar.html" %}
+  {% endif %}
 {% endblock %}

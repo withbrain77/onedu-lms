@@ -175,10 +175,32 @@ class AdminThemeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ONEDU LMS 관리자')
         self.assertContains(response, 'css/admin.css')
-        self.assertContains(response, 'onedu-admin-shell')
+        self.assertContains(response, 'onedu-admin-workspace')
+        self.assertContains(response, 'onedu-admin-sidebar')
         self.assertContains(response, '운영 대시보드')
         self.assertContains(response, '빠른 작업')
         self.assertContains(response, '최근 활동')
+
+    def test_admin_model_pages_keep_operations_sidebar(self):
+        admin_user = User.objects.create_superuser(
+            username='admin_pages',
+            password='pass12345',
+            email='admin-pages@example.com',
+            name='관리자',
+        )
+        self.client.force_login(admin_user)
+
+        for url in (
+            reverse('admin:accounts_user_changelist'),
+            reverse('admin:enrollments_enrollment_changelist'),
+        ):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'onedu-admin-workspace')
+                self.assertContains(response, 'onedu-admin-sidebar')
+                self.assertContains(response, '운영 콘솔')
 
 
 class UIPreviewTests(TestCase):
