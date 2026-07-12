@@ -39,6 +39,12 @@ class StudentSignUpForm(BootstrapFormMixin, UserCreationForm):
         self.fields['password1'].label = '비밀번호'
         self.fields['password2'].label = '비밀번호 확인'
 
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip().lower()
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError('이미 가입된 이메일 주소입니다. 아이디 찾기 또는 비밀번호 재설정을 이용해 주세요.')
+        return email
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.role = User.Role.STUDENT

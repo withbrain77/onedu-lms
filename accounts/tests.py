@@ -12,6 +12,7 @@ class LoginPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/">홈</a>')
+        self.assertContains(response, 'WITHBRAIN ONEDU TRAINING SYSTEM')
 
     def test_login_page_shows_operator_support_information(self):
         response = self.client.get(reverse('accounts:login'))
@@ -38,6 +39,30 @@ class SignupPageTests(TestCase):
         self.assertContains(response, 'data-password-rule="similar"')
         self.assertContains(response, 'data-password-rule="match"')
         self.assertContains(response, 'signup_password_feedback.js')
+
+    def test_signup_rejects_duplicate_email_case_insensitively(self):
+        User.objects.create_user(
+            username='existing_user',
+            password='Oldpass12345',
+            name='Existing User',
+            email='student@example.com',
+        )
+
+        response = self.client.post(
+            reverse('accounts:signup'),
+            {
+                'username': 'new_student',
+                'name': 'New Student',
+                'email': 'STUDENT@example.com',
+                'phone': '010-1234-5678',
+                'password1': 'StrongPass12345!',
+                'password2': 'StrongPass12345!',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '이미 가입된 이메일 주소입니다')
+        self.assertFalse(User.objects.filter(username='new_student').exists())
 
 
 class AccountRecoveryTests(TestCase):
