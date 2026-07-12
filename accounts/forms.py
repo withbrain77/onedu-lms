@@ -15,9 +15,17 @@ class BootstrapFormMixin:
 
 
 class BootstrapAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
+    remember_username = forms.BooleanField(
+        label='아이디 기억하기',
+        required=False,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.apply_bootstrap()
+        self.fields['username'].label = '아이디'
+        self.fields['username'].widget.attrs.setdefault('autocomplete', 'username')
+        self.fields['password'].widget.attrs.setdefault('autocomplete', 'current-password')
 
 
 class StudentSignUpForm(BootstrapFormMixin, UserCreationForm):

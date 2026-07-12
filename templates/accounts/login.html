@@ -29,6 +29,10 @@
             {{ form.password }}
             {% for error in form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
           </div>
+          <div class="form-check auth-remember-row mb-3">
+            {{ form.remember_username }}
+            <label class="form-check-label" for="{{ form.remember_username.id_for_label }}">아이디 기억하기</label>
+          </div>
           <button class="btn btn-primary w-100" type="submit">로그인</button>
         </form>
         <div class="auth-link-row mt-3 small">

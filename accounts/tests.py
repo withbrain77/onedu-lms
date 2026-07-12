@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.test.utils import override_settings
 
 from .models import User
+from .views import REMEMBER_USERNAME_COOKIE
 
 
 class LoginPageTests(TestCase):
@@ -25,6 +26,61 @@ class LoginPageTests(TestCase):
         self.assertContains(response, '평일 09:00-18:00')
         self.assertContains(response, reverse('accounts:find_username'))
         self.assertContains(response, reverse('accounts:password_reset'))
+
+    def test_login_page_shows_remember_username_checkbox(self):
+        response = self.client.get(reverse('accounts:login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '아이디 기억하기')
+        self.assertContains(response, 'name="remember_username"')
+
+    def test_login_page_prefills_remembered_username(self):
+        self.client.cookies[REMEMBER_USERNAME_COOKIE] = 'remembered_student'
+
+        response = self.client.get(reverse('accounts:login'))
+
+        self.assertContains(response, 'value="remembered_student"')
+        self.assertContains(response, 'name="remember_username"')
+        self.assertContains(response, 'checked')
+
+    def test_successful_login_can_remember_username(self):
+        User.objects.create_user(
+            username='student01',
+            password='StrongPass12345!',
+            name='테스트 수강생',
+        )
+
+        response = self.client.post(
+            reverse('accounts:login'),
+            {
+                'username': 'student01',
+                'password': 'StrongPass12345!',
+                'remember_username': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.cookies[REMEMBER_USERNAME_COOKIE].value, 'student01')
+
+    def test_successful_login_without_remembering_deletes_existing_username_cookie(self):
+        User.objects.create_user(
+            username='student02',
+            password='StrongPass12345!',
+            name='테스트 수강생',
+        )
+        self.client.cookies[REMEMBER_USERNAME_COOKIE] = 'old_student'
+
+        response = self.client.post(
+            reverse('accounts:login'),
+            {
+                'username': 'student02',
+                'password': 'StrongPass12345!',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.cookies[REMEMBER_USERNAME_COOKIE].value, '')
+        self.assertEqual(response.cookies[REMEMBER_USERNAME_COOKIE]['max-age'], 0)
 
 
 class SignupPageTests(TestCase):

@@ -1914,6 +1914,33 @@ body {
   text-decoration: underline;
 }
 
+.auth-remember-row {
+  align-items: center;
+  color: var(--onedu-ink-soft);
+  display: flex;
+  gap: 0.45rem;
+  min-height: 1.6rem;
+}
+
+.auth-remember-row .form-check-input {
+  border-color: #9fb9c4;
+  height: 1.05rem;
+  margin: 0;
+  width: 1.05rem;
+}
+
+.auth-remember-row .form-check-input:checked {
+  background-color: var(--onedu-primary);
+  border-color: var(--onedu-primary);
+}
+
+.auth-remember-row .form-check-label {
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 750;
+  margin: 0;
+}
+
 .auth-link-divider {
   color: #cbd5e1;
 }

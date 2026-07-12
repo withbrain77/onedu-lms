@@ -29,6 +29,10 @@ from .forms import (
 from .models import User
 
 
+REMEMBER_USERNAME_COOKIE = 'onedu_remembered_username'
+REMEMBER_USERNAME_MAX_AGE = 60 * 60 * 24 * 180
+
+
 class SignUpView(CreateView):
     form_class = StudentSignUpForm
     template_name = 'accounts/signup.html'
@@ -44,11 +48,34 @@ class LMSLoginView(LoginView):
     authentication_form = BootstrapAuthenticationForm
     template_name = 'accounts/login.html'
 
+    def get_initial(self):
+        initial = super().get_initial()
+        remembered_username = self.request.COOKIES.get(REMEMBER_USERNAME_COOKIE, '').strip()
+        if remembered_username:
+            initial['username'] = remembered_username
+            initial['remember_username'] = True
+        return initial
+
     def get_success_url(self):
         user = self.request.user
         if user.is_staff or getattr(user, 'role', None) == User.Role.ADMIN:
             return reverse('admin:index')
         return reverse('enrollments:classroom')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if form.cleaned_data.get('remember_username'):
+            response.set_cookie(
+                REMEMBER_USERNAME_COOKIE,
+                form.cleaned_data.get('username', '').strip(),
+                max_age=REMEMBER_USERNAME_MAX_AGE,
+                secure=self.request.is_secure(),
+                httponly=True,
+                samesite='Lax',
+            )
+        else:
+            response.delete_cookie(REMEMBER_USERNAME_COOKIE, samesite='Lax')
+        return response
 
 
 class UsernameLookupView(FormView):
