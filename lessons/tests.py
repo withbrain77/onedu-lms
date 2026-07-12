@@ -1,4 +1,5 @@
 from datetime import timedelta
+from io import BytesIO
 from pathlib import Path
 import shutil
 import subprocess
@@ -12,6 +13,8 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from pypdf import PdfReader
+from reportlab.pdfgen import canvas
 
 from accounts.models import User
 from courses.models import Course
@@ -89,7 +92,22 @@ class VideoProtectionAndWatermarkTests(TestCase):
             end_date=self.today + timedelta(days=end_offset),
         )
 
-    def create_attachment(self, title='강의 슬라이드', filename='강의자료.pdf', content=b'lesson document'):
+    def sample_pdf_bytes(self):
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer)
+        pdf.drawString(72, 720, 'Lesson document')
+        pdf.showPage()
+        pdf.save()
+        return buffer.getvalue()
+
+    def response_body(self, response):
+        if getattr(response, 'streaming', False):
+            return b''.join(response.streaming_content)
+        return response.content
+
+    def create_attachment(self, title='강의 슬라이드', filename='강의자료.pdf', content=None):
+        if content is None:
+            content = self.sample_pdf_bytes() if filename.lower().endswith('.pdf') else b'lesson document'
         attachment = LessonAttachment.objects.create(
             lesson=self.lesson,
             title=title,
@@ -210,8 +228,8 @@ class VideoProtectionAndWatermarkTests(TestCase):
         response.close()
 
     @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')
-    def test_attachment_download_uses_x_accel_redirect_when_enabled(self):
-        attachment = self.create_attachment(filename='자료.pdf')
+    def test_non_pdf_attachment_download_uses_x_accel_redirect_when_enabled(self):
+        attachment = self.create_attachment(filename='자료.txt')
         self.approve()
         self.client.force_login(self.student)
 
@@ -220,6 +238,29 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['X-Accel-Redirect'].startswith('/protected-media/lesson_attachments/'))
         self.assertEqual(response.content, b'')
+
+    @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')
+    def test_pdf_attachment_download_gets_soft_user_watermark(self):
+        ascii_student = User.objects.create_user(
+            username='ascii_student',
+            password='pass12345',
+            name='Student One',
+        )
+        attachment = self.create_attachment(filename='자료.pdf')
+        self.approve(user=ascii_student)
+        self.client.force_login(ascii_student)
+
+        response = self.client.get(attachment.get_download_url())
+        body = self.response_body(response)
+        text = '\n'.join(page.extract_text() or '' for page in PdfReader(BytesIO(body)).pages)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.has_header('X-Accel-Redirect'))
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('WITHBRAIN', text)
+        self.assertIn('Student One', text)
+        self.assertIn('ONEDU LMS', text)
+        response.close()
 
     def test_requested_student_cannot_download_lesson_attachment(self):
         attachment = self.create_attachment()

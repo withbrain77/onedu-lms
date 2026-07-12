@@ -13,6 +13,7 @@ from core.services.access import can_access_lesson
 from progress.models import WatchProgress
 
 from .models import Lesson, LessonAttachment
+from .services.pdf_watermark import PDFWatermarkError, render_watermarked_pdf
 
 
 HLS_ALLOWED_SUFFIXES = {'.ts', '.m4s', '.mp4', '.aac', '.vtt'}
@@ -64,6 +65,14 @@ def _protected_file_response(file_path, content_type, filename, disposition='inl
         response['X-Accel-Redirect'] = f'{internal_prefix}/{quote(relative_path.as_posix())}'
     else:
         response = FileResponse(file_path.open('rb'), content_type=content_type)
+    response['Content-Disposition'] = _content_disposition(disposition, filename)
+    response['Cache-Control'] = 'private, no-store'
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+
+def _protected_stream_response(stream, content_type, filename, disposition='attachment'):
+    response = FileResponse(stream, content_type=content_type)
     response['Content-Disposition'] = _content_disposition(disposition, filename)
     response['Cache-Control'] = 'private, no-store'
     response['X-Content-Type-Options'] = 'nosniff'
@@ -229,4 +238,16 @@ def lesson_attachment_download(request, pk, attachment_id):
 
     file_path = _private_file_path(attachment.file.name)
     content_type = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
+    is_pdf = file_path.suffix.lower() == '.pdf' or content_type == 'application/pdf'
+    if is_pdf:
+        try:
+            watermarked_pdf = render_watermarked_pdf(file_path, request.user)
+        except PDFWatermarkError:
+            raise Http404('Attachment file not found')
+        return _protected_stream_response(
+            watermarked_pdf,
+            'application/pdf',
+            attachment.filename,
+            disposition='attachment',
+        )
     return _protected_file_response(file_path, content_type, attachment.filename, disposition='attachment')
