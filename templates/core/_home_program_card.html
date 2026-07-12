@@ -1,0 +1,28 @@
+<article class="portal-program-card">
+  <div class="portal-program-media">
+    {% if course.thumbnail %}
+      <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}">
+    {% else %}
+      <div class="portal-program-placeholder">
+        <span>WITHBRAIN</span>
+        <strong>ONEDU PROGRAM</strong>
+      </div>
+    {% endif %}
+  </div>
+  <div class="portal-program-body">
+    <div class="portal-program-head">
+      <span>TRAINING PROGRAM</span>
+      <span class="badge text-bg-light border">신청 가능</span>
+    </div>
+    <h3>{{ course.title }}</h3>
+    <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
+    <dl class="portal-program-meta">
+      <div><dt>영상 차시</dt><dd>{{ course.lesson_count }}개</dd></div>
+      <div><dt>수강 기간</dt><dd>승인 후 배정</dd></div>
+    </dl>
+    <div class="portal-program-actions">
+      <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인 후 신청</a>
+      <a class="btn btn-outline-secondary" href="{{ course.get_absolute_url }}">상세 보기</a>
+    </div>
+  </div>
+</article>

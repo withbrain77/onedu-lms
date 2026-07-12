@@ -1,171 +1,208 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}위드브레인연구소 교육 영상 아카이브 | Onedu LMS{% endblock %}
+{% block title %}위드브레인연구소 교육·세미나 영상 아카이브 | Onedu LMS{% endblock %}
 
 {% block content %}
-<section class="home-hero archive-hero">
-  <div class="archive-hero-scene" aria-hidden="true">
-    <div class="archive-grid-plane"></div>
-    <div class="archive-signal-band band-one"></div>
-    <div class="archive-signal-band band-two"></div>
-  </div>
-  <div class="home-hero-inner archive-hero-inner">
-    <div class="home-hero-copy">
-      <div class="home-brand-lockup">
-        <img src="{% static 'img/withbrain-logo.png' %}" alt="WITHBRAIN">
-      </div>
-      <div class="hero-kicker">WITHBRAIN VIDEO ARCHIVE</div>
-      <h1>위드브레인연구소 교육 영상 아카이브</h1>
-      <p>교육 영상, 세미나 다시보기, 강의 영상을 승인된 수강생에게 제한적으로 제공하고 시청 이력과 수료 현황을 관리하는 온라인 교육 공간입니다.</p>
-      <div class="home-hero-actions">
-        <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인</a>
-        <a class="btn btn-light" href="{% url 'accounts:signup' %}">회원가입</a>
-        <a class="btn btn-outline-light" href="{% url 'courses:list' %}">신청 가능한 프로그램</a>
-      </div>
-    </div>
+<div class="portal-home">
+  <section class="portal-hero" aria-labelledby="homeHeroTitle">
+    <div class="portal-hero-bg" aria-hidden="true"></div>
+    <div class="portal-shell portal-hero-grid">
+      <div class="portal-hero-copy">
+        <div class="hero-kicker">WITHBRAIN VIDEO ARCHIVE</div>
+        <h1 id="homeHeroTitle">위드브레인연구소 교육·세미나 영상 아카이브</h1>
+        <p>
+          승인된 수강생에게 교육 영상과 세미나 영상을 제공하고,
+          시청 이력과 수료 현황을 관리하는 플랫폼입니다.
+        </p>
 
-    <div class="archive-console" aria-label="교육 영상 운영 요약">
-      <div class="archive-console-head">
-        <span>LIMITED ACCESS PLAYER</span>
-        <strong>교육 영상 운영 현황</strong>
-      </div>
-      <div class="archive-player-preview">
-        <div class="archive-player-screen">
-          <div class="archive-play-mark"></div>
-          <div class="archive-watermark-preview">WITHBRAIN / 승인 수강생</div>
-          <div class="archive-scan-line"></div>
+        <div class="portal-hero-points" aria-label="서비스 특징">
+          <div>
+            <span class="portal-mini-icon" aria-hidden="true">A</span>
+            <strong>승인된 수강생 전용</strong>
+            <small>신청 및 승인 이후 안전한 콘텐츠 이용</small>
+          </div>
+          <div>
+            <span class="portal-mini-icon" aria-hidden="true">L</span>
+            <strong>체계적인 학습 관리</strong>
+            <small>시청 이력과 학습 현황을 한눈에 확인</small>
+          </div>
+          <div>
+            <span class="portal-mini-icon" aria-hidden="true">C</span>
+            <strong>검증 가능한 수료 안내</strong>
+            <small>수료증 발급 및 검증 지원</small>
+          </div>
         </div>
-        <div class="archive-progress-preview">
-          <span></span>
+
+        <div class="home-hero-actions portal-hero-actions">
+          <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인</a>
+          <a class="btn btn-light" href="{% url 'accounts:signup' %}">회원가입</a>
+          <a class="btn btn-outline-primary" href="{% url 'courses:list' %}">신청 가능한 프로그램</a>
         </div>
       </div>
-      <div class="home-hero-panel" aria-label="운영 현황">
+
+      <aside class="portal-player-card archive-console" aria-label="교육 영상 운영 현황">
+        <div class="portal-player-head">
+          <span>LIMITED ACCESS PLAYER</span>
+          <strong>교육 영상 운영 현황</strong>
+        </div>
+        <div class="portal-player-screen">
+          <div class="portal-player-watermark">WITHBRAIN / 승인 수강생</div>
+          <div class="portal-play-button" aria-hidden="true"></div>
+          <div class="portal-player-network" aria-hidden="true"></div>
+          <div class="portal-player-controls" aria-hidden="true">
+            <span>08:24</span>
+            <div><i></i></div>
+            <span>30:15</span>
+          </div>
+        </div>
+        <dl class="portal-player-stats">
+          <div><dt>공개 프로그램</dt><dd>{{ course_count }}개</dd></div>
+          <div><dt>영상 차시</dt><dd>{{ lesson_count }}개</dd></div>
+          <div><dt>공개 방식</dt><dd>제한 공개</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <section class="portal-shell portal-category-section" aria-labelledby="categoryTitle">
+    <h2 id="categoryTitle" class="visually-hidden">영상 카테고리</h2>
+    <div class="portal-category-grid">
+      <article class="portal-category-card">
+        <span class="portal-category-icon" aria-hidden="true">▶</span>
         <div>
-          <span>공개 프로그램</span>
-          <strong>{{ course_count }}</strong>
+          <h3>교육 영상</h3>
+          <p>프로그램별 핵심 학습 자료를 제공합니다.</p>
         </div>
+      </article>
+      <article class="portal-category-card">
+        <span class="portal-category-icon" aria-hidden="true">●</span>
         <div>
-          <span>영상 차시</span>
-          <strong>{{ lesson_count }}</strong>
+          <h3>세미나 영상</h3>
+          <p>참석자와 승인 대상자에게 다시보기를 제공합니다.</p>
         </div>
+      </article>
+      <article class="portal-category-card">
+        <span class="portal-category-icon" aria-hidden="true">▰</span>
         <div>
-          <span>공개 방식</span>
-          <strong>제한 공개</strong>
+          <h3>강의 영상</h3>
+          <p>차시별 영상과 학습 이력을 관리합니다.</p>
+        </div>
+      </article>
+      <article class="portal-category-card">
+        <span class="portal-category-icon" aria-hidden="true">T</span>
+        <div>
+          <h3>기술지원 교육</h3>
+          <p>협력기관과 수강생 대상 자료를 운영합니다.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="portal-shell portal-main-grid">
+    <div class="portal-programs" aria-labelledby="programTitle">
+      <div class="portal-section-title">
+        <div>
+          <span>AVAILABLE PROGRAMS</span>
+          <h2 id="programTitle">신청 가능한 프로그램</h2>
+        </div>
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'courses:list' %}">전체 프로그램</a>
+      </div>
+
+      {% if courses %}
+        <div class="portal-program-list">
+          {% for course in courses %}
+            {% include "core/_home_program_card.html" with course=course %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state compact">
+          <h2>공개된 프로그램이 없습니다.</h2>
+          <p>관리자가 프로그램을 공개하면 이곳에서 확인할 수 있습니다.</p>
+          <a class="btn btn-outline-primary" href="{% url 'accounts:login' %}">로그인</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="portal-workflow" aria-labelledby="workflowTitle">
+      <div class="portal-section-title">
+        <div>
+          <span>LEARNING FLOW</span>
+          <h2 id="workflowTitle">학습 이용 안내</h2>
         </div>
       </div>
+      <ol class="portal-timeline">
+        <li>
+          <span>1</span>
+          <div>
+            <h3>회원가입</h3>
+            <p>수강생 계정을 만들고 필요한 프로그램을 확인합니다.</p>
+          </div>
+        </li>
+        <li>
+          <span>2</span>
+          <div>
+            <h3>프로그램 신청</h3>
+            <p>교육, 세미나, 강의 영상 중 필요한 과정을 신청합니다.</p>
+          </div>
+        </li>
+        <li>
+          <span>3</span>
+          <div>
+            <h3>승인 후 시청</h3>
+            <p>승인된 기간 안에서 영상을 시청하고 학습 이력을 저장합니다.</p>
+          </div>
+        </li>
+        <li>
+          <span>4</span>
+          <div>
+            <h3>진도 확인</h3>
+            <p>시청 상황, 시험 결과, 수료 여부를 확인합니다.</p>
+          </div>
+        </li>
+      </ol>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="home-purpose-section" aria-label="운영 목적">
-  <div class="home-purpose-copy">
-    <span>PRIVATE EDUCATION PORTAL</span>
-    <h2>필요한 사람에게 필요한 영상만 안전하게 제공합니다</h2>
-    <p>Onedu LMS는 위드브레인연구소가 운영하는 교육 프로그램, 세미나, 강의 자료를 승인된 수강생에게 제공하기 위한 전용 포털입니다. 수강생은 허용된 기간 안에서 영상을 시청하고, 관리자는 시청 진도와 수료 상태를 확인할 수 있습니다.</p>
-  </div>
-  <div class="home-purpose-grid">
+  <section class="portal-shell portal-benefit-strip" aria-label="운영 장점">
     <div>
-      <strong>교육 영상</strong>
-      <span>프로그램별 학습 자료 제공</span>
+      <span class="portal-mini-icon" aria-hidden="true">S</span>
+      <strong>안전한 학습 환경</strong>
+      <p>승인된 학습자만 접근 가능한 보안 기반 플랫폼</p>
     </div>
     <div>
-      <strong>세미나 영상</strong>
-      <span>참석자와 승인 대상자에게 다시보기 제공</span>
+      <span class="portal-mini-icon" aria-hidden="true">M</span>
+      <strong>어디서나 학습</strong>
+      <p>PC와 모바일에서 필요한 영상을 이어서 학습</p>
     </div>
     <div>
-      <strong>강의 영상</strong>
-      <span>차시별 영상과 학습 이력 관리</span>
+      <span class="portal-mini-icon" aria-hidden="true">P</span>
+      <strong>학습 현황 관리</strong>
+      <p>시청 이력, 진도, 수료 현황을 체계적으로 관리</p>
     </div>
     <div>
-      <strong>기술지원 교육</strong>
-      <span>협력기관과 수강생 대상 자료 운영</span>
+      <span class="portal-mini-icon" aria-hidden="true">T</span>
+      <strong>신뢰할 수 있는 콘텐츠</strong>
+      <p>위드브레인연구소의 전문성과 검증된 교육 콘텐츠</p>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="home-workflow" aria-label="수강 흐름">
-  <div class="home-workflow-item">
-    <span>01</span>
-    <strong>회원가입</strong>
-    <p>수강생 계정을 만들고 필요한 프로그램을 확인합니다.</p>
-  </div>
-  <div class="home-workflow-item">
-    <span>02</span>
-    <strong>프로그램 신청</strong>
-    <p>교육, 세미나, 강의 영상 중 필요한 과정을 신청합니다.</p>
-  </div>
-  <div class="home-workflow-item">
-    <span>03</span>
-    <strong>승인 후 시청</strong>
-    <p>승인된 기간 안에서 영상을 시청하고 학습 이력을 저장합니다.</p>
-  </div>
-  <div class="home-workflow-item">
-    <span>04</span>
-    <strong>진도 확인</strong>
-    <p>관리자는 시청 상황, 시험 결과, 수료 여부를 확인합니다.</p>
-  </div>
-</section>
-
-<section class="home-course-section">
-  <div class="section-title">
-    <div>
-      <span>AVAILABLE PROGRAMS</span>
-      <h2>신청 가능한 프로그램</h2>
+  <footer class="portal-footer">
+    <div class="portal-shell portal-footer-inner">
+      <div>
+        <strong>WITHBRAIN</strong>
+        <span>The brain brightens</span>
+      </div>
+      <div>
+        <strong>운영 문의</strong>
+        <span>평일 09:00-18:00</span>
+      </div>
+      <address>
+        <span>위드브레인연구소</span>
+        <a href="tel:025697308">02-569-7308</a>
+        <a href="mailto:withbrain77@daum.net">withbrain77@daum.net</a>
+      </address>
     </div>
-    <a class="btn btn-outline-primary btn-sm" href="{% url 'courses:list' %}">전체 프로그램</a>
-  </div>
-
-  {% if courses %}
-    <div class="row g-4">
-      {% for course in courses %}
-        <div class="col-12 col-md-6 col-xl-4">
-          <article class="card course-card home-course-card h-100 shadow-sm">
-            {% if course.thumbnail %}
-              <img src="{{ course.thumbnail.url }}" class="card-img-top course-thumb" alt="{{ course.title }}">
-            {% else %}
-              <div class="course-thumb course-thumb-empty">
-                <span>TRAINING</span>
-              </div>
-            {% endif %}
-            <div class="card-body d-flex flex-column">
-              <div class="course-card-eyebrow">WITHBRAIN PROGRAM</div>
-              <div class="d-flex justify-content-between gap-2 mb-2">
-                <h3 class="h5 card-title mb-0">{{ course.title }}</h3>
-                <span class="badge text-bg-light border flex-shrink-0">신청 가능</span>
-              </div>
-              <p class="card-text text-muted line-clamp">{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
-              <dl class="course-meta small mb-3">
-                <div><dt>영상 차시</dt><dd>{{ course.lesson_count }}개</dd></div>
-                <div><dt>수강 기간</dt><dd>승인 후 배정</dd></div>
-              </dl>
-              <div class="mt-auto course-card-actions">
-                <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인 후 신청</a>
-                <a class="btn btn-outline-secondary" href="{{ course.get_absolute_url }}">상세 보기</a>
-              </div>
-            </div>
-          </article>
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="empty-state compact">
-      <h2>공개된 프로그램이 없습니다.</h2>
-      <p>관리자가 프로그램을 공개하면 이곳에서 확인할 수 있습니다.</p>
-      <a class="btn btn-outline-primary" href="{% url 'accounts:login' %}">로그인</a>
-    </div>
-  {% endif %}
-</section>
-
-<section class="home-support-strip" aria-label="운영 문의">
-  <div>
-    <strong>운영 문의</strong>
-    <span>평일 09:00-18:00</span>
-  </div>
-  <div>
-    <span>위드브레인연구소</span>
-    <span>02-569-7308</span>
-    <span>withbrain77@daum.net</span>
-  </div>
-</section>
+  </footer>
+</div>
 {% endblock %}
