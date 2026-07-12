@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 from core.services.access import can_access_course, get_latest_enrollment
 from core.services.completion import evaluate_enrollment_completion
@@ -171,6 +174,18 @@ def apply_course(request, slug):
         messages.warning(request, '수강 기간이 종료되었습니다. 재수강 신청은 다음 단계에서 제공됩니다.')
         return redirect(course)
 
+    if course.is_free:
+        today = timezone.localdate()
+        enrollment = Enrollment.objects.create(
+            user=request.user,
+            course=course,
+            status=Enrollment.Status.APPROVED,
+            start_date=today,
+            end_date=today + timedelta(days=course.default_enrollment_days),
+        )
+        messages.success(request, '무료 강의 신청이 완료되었습니다. 바로 학습을 시작할 수 있습니다.')
+        return redirect('enrollments:course_detail', course_id=enrollment.course_id)
+
     Enrollment.objects.create(user=request.user, course=course)
-    messages.success(request, '수강 신청이 접수되었습니다. 관리자가 승인하면 학습을 시작할 수 있습니다.')
+    messages.success(request, '수강 신청이 접수되었습니다. 참가비 확인 후 관리자가 승인하면 학습을 시작할 수 있습니다.')
     return redirect('enrollments:classroom')

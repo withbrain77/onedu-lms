@@ -18,7 +18,7 @@
     <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
     <dl class="portal-program-meta">
       <div><dt>영상 차시</dt><dd>{{ course.lesson_count }}개</dd></div>
-      <div><dt>수강 기간</dt><dd>승인 후 배정</dd></div>
+      <div><dt>수강 기간</dt><dd>{{ course.access_period_label }}</dd></div>
     </dl>
     <div class="portal-program-actions">
       <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인 후 신청</a>

@@ -22,6 +22,8 @@ class MVPFlowViewTests(TestCase):
             title='업무 보안 기본 교육',
             description='업무에 필요한 기본 보안 강의입니다.',
             is_public=True,
+            pricing_type=Course.PricingType.PAID,
+            price_krw=30000,
         )
         self.lesson = Lesson.objects.create(
             course=self.course,
@@ -48,6 +50,8 @@ class MVPFlowViewTests(TestCase):
         response = self.client.get(reverse('courses:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.course.title)
+        self.assertContains(response, '30,000원')
+        self.assertContains(response, '운영자 확인 후 승인')
         self.assertContains(response, '수강 신청')
 
     def test_student_can_apply_and_waiting_state_is_visible(self):
@@ -61,6 +65,53 @@ class MVPFlowViewTests(TestCase):
         classroom = self.client.get(reverse('enrollments:classroom'))
         self.assertContains(classroom, '신청 대기')
         self.assertContains(classroom, '관리자 승인 대기')
+
+    def test_free_course_application_is_auto_approved(self):
+        free_course = Course.objects.create(
+            title='무료 공개 강의',
+            description='무료로 볼 수 있는 강의입니다.',
+            is_public=True,
+            pricing_type=Course.PricingType.FREE,
+            price_krw=0,
+            default_enrollment_days=14,
+        )
+        free_lesson = Lesson.objects.create(
+            course=free_course,
+            title='무료 1차시',
+            order=1,
+            is_public=True,
+        )
+        self.login_student()
+
+        response = self.client.post(reverse('courses:apply', kwargs={'slug': free_course.slug}))
+
+        enrollment = Enrollment.objects.get(user=self.student, course=free_course)
+        self.assertEqual(enrollment.status, Enrollment.Status.APPROVED)
+        self.assertEqual(enrollment.start_date, self.today)
+        self.assertEqual(enrollment.end_date, self.today + timedelta(days=14))
+        self.assertRedirects(response, reverse('enrollments:course_detail', kwargs={'course_id': free_course.pk}))
+
+        lesson_response = self.client.get(free_lesson.get_absolute_url())
+        self.assertEqual(lesson_response.status_code, 200)
+
+    def test_free_course_price_and_policy_are_visible(self):
+        free_course = Course.objects.create(
+            title='무료 영상 과정',
+            description='무료 영상입니다.',
+            is_public=True,
+            pricing_type=Course.PricingType.FREE,
+            price_krw=0,
+            default_enrollment_days=30,
+        )
+        self.login_student()
+
+        list_response = self.client.get(reverse('courses:list'))
+        detail_response = self.client.get(free_course.get_absolute_url())
+
+        self.assertContains(list_response, '무료')
+        self.assertContains(list_response, '신청 즉시 수강 가능')
+        self.assertContains(detail_response, '무료 프로그램입니다.')
+        self.assertContains(detail_response, '무료 수강 신청')
 
     def test_requested_enrollment_cannot_access_lesson(self):
         Enrollment.objects.create(user=self.student, course=self.course)

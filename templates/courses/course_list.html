@@ -36,6 +36,8 @@
             </div>
             <p class="card-text text-muted line-clamp">{{ item.course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
             <dl class="course-meta small mb-3">
+              <div><dt>참가비</dt><dd>{{ item.course.price_label }}</dd></div>
+              <div><dt>승인 방식</dt><dd>{{ item.course.approval_policy_label }}</dd></div>
               <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
               <div><dt>남은 기간</dt><dd>{{ item.remaining_text }}</dd></div>
             </dl>
@@ -61,7 +63,7 @@
                   <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
                   <form method="post" action="{% url 'courses:apply' item.course.slug %}">
                     {% csrf_token %}
-                    <button class="btn btn-primary w-100" type="submit">수강 신청</button>
+                    <button class="btn btn-primary w-100" type="submit">{% if item.course.is_free %}무료 수강 신청{% else %}수강 신청{% endif %}</button>
                   </form>
                 {% endif %}
               {% else %}

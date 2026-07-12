@@ -39,6 +39,9 @@ class CourseAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'is_public',
+        'pricing_type',
+        'price_display',
+        'default_enrollment_days',
         'required_progress_percent',
         'require_quiz_pass',
         'certificate_enabled',
@@ -47,13 +50,14 @@ class CourseAdmin(admin.ModelAdmin):
         'created_at',
         'updated_at',
     )
-    list_filter = ('is_public', 'require_quiz_pass', 'certificate_enabled', 'created_at')
+    list_filter = ('is_public', 'pricing_type', 'require_quiz_pass', 'certificate_enabled', 'created_at')
     search_fields = ('title', 'description')
     prepopulated_fields = {'slug': ('title',)}
     inlines = [LessonInline]
     list_per_page = 30
     fieldsets = (
         ('기본 정보', {'fields': ('title', 'slug', 'description', 'thumbnail', 'is_public')}),
+        ('참가비/승인 정책', {'fields': ('pricing_type', 'price_krw', 'default_enrollment_days')}),
         ('수료 정책', {'fields': ('required_progress_percent', 'require_quiz_pass', 'certificate_enabled')}),
         ('기록', {'fields': ('created_by',)}),
     )
@@ -65,6 +69,10 @@ class CourseAdmin(admin.ModelAdmin):
     @admin.display(description='수강 신청 수', ordering='admin_enrollment_count')
     def enrollment_count(self, obj):
         return obj.admin_enrollment_count
+
+    @admin.display(description='참가비', ordering='price_krw')
+    def price_display(self, obj):
+        return obj.price_label
 
     def save_model(self, request, obj, form, change):
         if not obj.created_by_id:
