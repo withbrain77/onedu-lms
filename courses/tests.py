@@ -105,6 +105,15 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(response, '운영자 확인 후 승인')
         self.assertContains(response, '수강 신청')
 
+    def test_course_list_classroom_cta_is_visible_for_students(self):
+        self.login_student()
+
+        response = self.client.get(reverse('courses:list'))
+
+        self.assertContains(response, 'page-header-cta')
+        self.assertContains(response, reverse('enrollments:classroom'))
+        self.assertContains(response, '내 강의실')
+
     def test_student_can_apply_and_waiting_state_is_visible(self):
         self.login_student()
         response = self.client.post(reverse('courses:apply', kwargs={'slug': self.course.slug}))

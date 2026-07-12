@@ -1411,6 +1411,26 @@ body {
   min-height: auto;
 }
 
+.page-header-cta {
+  box-shadow: 0 14px 28px rgba(8, 117, 111, 0.18);
+  min-width: 7.2rem;
+}
+
+.page-header .page-header-cta,
+.page-header .page-header-cta:link,
+.page-header .page-header-cta:visited {
+  background-color: var(--onedu-primary);
+  border-color: var(--onedu-primary);
+  color: #fff;
+}
+
+.page-header .page-header-cta:hover,
+.page-header .page-header-cta:focus {
+  background-color: #0b5f59;
+  border-color: #0b5f59;
+  color: #fff;
+}
+
 .player-page-header {
   margin-bottom: 1rem;
   padding-bottom: 1.4rem;

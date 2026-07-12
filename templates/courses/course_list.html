@@ -10,7 +10,7 @@
     <p>수강 가능한 강의를 확인하고 필요한 강의를 신청하세요.</p>
   </div>
   {% if user.is_authenticated and not user.is_staff %}
-    <a class="btn btn-outline-primary" href="{% url 'enrollments:classroom' %}">내 강의실</a>
+    <a class="btn btn-primary page-header-cta" href="{% url 'enrollments:classroom' %}">내 강의실</a>
   {% endif %}
 </div>
 {% endblock %}
