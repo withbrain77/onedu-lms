@@ -175,6 +175,10 @@ class AdminThemeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ONEDU LMS 관리자')
         self.assertContains(response, 'css/admin.css')
+        self.assertContains(response, 'onedu-admin-shell')
+        self.assertContains(response, '운영 대시보드')
+        self.assertContains(response, '빠른 작업')
+        self.assertContains(response, '최근 활동')
 
 
 class UIPreviewTests(TestCase):

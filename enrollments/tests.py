@@ -290,6 +290,8 @@ class AdminEnrollmentNotificationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '승인 대기 수강 신청')
+        self.assertContains(response, '운영 대시보드')
+        self.assertContains(response, '빠른 작업')
         self.assertContains(response, '1</strong>')
         self.assertContains(response, self.paid_course.title)
         self.assertContains(response, self.student.username)
@@ -297,4 +299,3 @@ class AdminEnrollmentNotificationTests(TestCase):
             response,
             reverse('admin:enrollments_enrollment_change', args=[self.pending_paid.pk]),
         )
-        self.assertNotContains(response, self.free_course.title)

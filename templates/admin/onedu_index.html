@@ -1,7 +1,264 @@
-{% extends "admin/index.html" %}
-{% load admin_notifications %}
+{% extends "admin/base_site.html" %}
+{% load admin_dashboard i18n %}
+
+{% block bodyclass %}{{ block.super }} onedu-admin-dashboard-page{% endblock %}
+{% block content_title %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs onedu-admin-breadcrumbs">
+  <a href="{% url 'admin:index' %}">홈</a>
+  <span>›</span>
+  <span>운영 대시보드</span>
+</div>
+{% endblock %}
 
 {% block content %}
-  {% enrollment_admin_notifications %}
-  {{ block.super }}
+{% onedu_admin_dashboard as dashboard %}
+<div class="onedu-admin-shell">
+  <input class="onedu-admin-menu-toggle" id="oneduAdminMenuToggle" type="checkbox">
+  <label class="onedu-admin-menu-button" for="oneduAdminMenuToggle">관리 메뉴</label>
+
+  <aside class="onedu-admin-sidebar" aria-label="관리 메뉴">
+    <div class="onedu-admin-sidebar__brand">
+      <strong>ONEDU LMS</strong>
+      <span>운영 콘솔</span>
+    </div>
+
+    <nav class="onedu-admin-menu">
+      {% for section in dashboard.menu_sections %}
+        <details class="onedu-admin-menu-section" {% if section.is_active or section.is_dashboard %}open{% endif %}>
+          <summary>
+            <span class="onedu-admin-menu-icon" aria-hidden="true">{{ section.icon }}</span>
+            <span>{{ section.title }}</span>
+          </summary>
+          <ul>
+            {% for item in section.items %}
+              <li>
+                <a class="{% if item.is_active %}is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
+                  <span>{{ item.label }}</span>
+                </a>
+                {% if item.can_add %}
+                  <a class="onedu-admin-menu-add" href="{{ item.add_url }}" aria-label="{{ item.label }} 추가">+</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <main class="onedu-admin-main" id="main">
+    <header class="onedu-admin-hero">
+      <div>
+        <p class="onedu-admin-kicker">LMS OPERATIONS</p>
+        <h1>운영 대시보드</h1>
+        <p>수강 신청, 프로그램 운영, 진도와 수료 현황을 한 화면에서 확인합니다.</p>
+      </div>
+      <div class="onedu-admin-hero__actions">
+        <span class="onedu-admin-user-chip">{{ request.user.get_username }}</span>
+        <a class="button" href="/">사이트 보기</a>
+        {% if dashboard.pending_enrollments.url %}
+          <a class="button default" href="{{ dashboard.pending_enrollments.url }}">승인 대기 {{ dashboard.pending_enrollments.count }}건</a>
+        {% endif %}
+      </div>
+    </header>
+
+    <section class="onedu-admin-stats" aria-label="운영 통계">
+      {% for stat in dashboard.stats %}
+        <a class="onedu-admin-stat {% if stat.tone %}is-{{ stat.tone }}{% endif %}" href="{{ stat.url|default:'#' }}">
+          <span class="onedu-admin-stat__icon" aria-hidden="true">{{ stat.icon }}</span>
+          <span class="onedu-admin-stat__body">
+            <span>{{ stat.label }}</span>
+            <strong>{{ stat.value }}</strong>
+            <small>{{ stat.description }}</small>
+          </span>
+        </a>
+      {% endfor %}
+    </section>
+
+    <div class="onedu-admin-grid">
+      <section class="onedu-admin-card onedu-admin-card--wide" aria-labelledby="pendingEnrollmentTitle">
+        <div class="onedu-admin-card__head">
+          <div>
+            <p class="onedu-admin-kicker">APPROVAL QUEUE</p>
+            <h2 id="pendingEnrollmentTitle">승인 대기 수강 신청</h2>
+          </div>
+          <span class="onedu-admin-badge is-warning"><strong>{{ dashboard.pending_enrollments.count }}</strong>건 대기</span>
+        </div>
+
+        {% if dashboard.pending_enrollments.items %}
+          <div class="onedu-admin-table-wrap">
+            <table class="onedu-admin-table">
+              <thead>
+                <tr>
+                  <th>수강생</th>
+                  <th>프로그램</th>
+                  <th>신청일</th>
+                  <th>유형</th>
+                  <th>작업</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for enrollment in dashboard.pending_enrollments.items %}
+                  <tr>
+                    <td>
+                      <strong>{{ enrollment.student_name }}</strong>
+                      <small>{{ enrollment.student_username }}{% if enrollment.student_email %} · {{ enrollment.student_email }}{% endif %}</small>
+                    </td>
+                    <td>{{ enrollment.course_title }}</td>
+                    <td><time datetime="{{ enrollment.created_at|date:'c' }}">{{ enrollment.created_at|date:"Y-m-d H:i" }}</time></td>
+                    <td><span class="onedu-admin-badge">{{ enrollment.request_type }}</span></td>
+                    <td>
+                      <div class="onedu-admin-row-actions">
+                        <a href="{{ enrollment.change_url }}">상세</a>
+                        <a class="is-positive" href="{{ enrollment.change_url }}">승인</a>
+                        <a class="is-danger" href="{{ enrollment.change_url }}">반려</a>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="onedu-admin-card__foot">
+            <p>승인/반려 버튼은 기존 수강 신청 변경 화면으로 이동합니다. 상태, 수강 시작일, 종료일, 반려 사유를 저장하면 기존 관리자 로직이 적용됩니다.</p>
+            <a class="button" href="{{ dashboard.pending_enrollments.url }}">전체 보기</a>
+          </div>
+        {% else %}
+          <div class="onedu-admin-empty">
+            <strong>현재 승인 대기 신청이 없습니다.</strong>
+            <span>새 유료 수강 신청이 들어오면 이 영역에 최근 5건이 표시됩니다.</span>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="onedu-admin-card" aria-labelledby="quickActionTitle">
+        <div class="onedu-admin-card__head">
+          <div>
+            <p class="onedu-admin-kicker">QUICK ACTIONS</p>
+            <h2 id="quickActionTitle">빠른 작업</h2>
+          </div>
+        </div>
+        <div class="onedu-admin-quick-actions">
+          {% for action in dashboard.quick_actions %}
+            <a href="{{ action.url }}">
+              <strong>{{ action.label }}</strong>
+              <span>{{ action.description }}</span>
+            </a>
+          {% empty %}
+            <div class="onedu-admin-empty compact">사용 가능한 빠른 작업이 없습니다.</div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="onedu-admin-card onedu-admin-card--wide" aria-labelledby="programStatusTitle">
+        <div class="onedu-admin-card__head">
+          <div>
+            <p class="onedu-admin-kicker">PROGRAMS</p>
+            <h2 id="programStatusTitle">운영 중 프로그램 현황</h2>
+          </div>
+          {% if dashboard.courses.url %}
+            <a class="button" href="{{ dashboard.courses.url }}">전체 프로그램</a>
+          {% endif %}
+        </div>
+        {% if dashboard.courses.items %}
+          <div class="onedu-admin-program-list">
+            {% for course in dashboard.courses.items %}
+              <a class="onedu-admin-program" href="{{ course.change_url|default:dashboard.courses.url }}">
+                <span>
+                  <strong>{{ course.title }}</strong>
+                  <small>{{ course.period }}</small>
+                </span>
+                <span class="onedu-admin-program__meta">
+                  <span class="onedu-admin-badge {% if course.is_public %}is-success{% endif %}">{% if course.is_public %}공개{% else %}비공개{% endif %}</span>
+                  <span>차시 {{ course.lesson_count }}</span>
+                  <span>수강 {{ course.enrollment_count }}</span>
+                  <span>대기 {{ course.pending_count }}</span>
+                  <span>수료 {{ course.completed_count }}</span>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="onedu-admin-empty">
+            <strong>등록된 프로그램이 없습니다.</strong>
+            <span>프로그램 등록 후 차시와 자료를 연결해 주세요.</span>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="onedu-admin-card" aria-labelledby="opsStatusTitle">
+        <div class="onedu-admin-card__head">
+          <div>
+            <p class="onedu-admin-kicker">OPERATIONS</p>
+            <h2 id="opsStatusTitle">운영 알림</h2>
+          </div>
+        </div>
+        <div class="onedu-admin-ops-list">
+          <a href="{{ dashboard.pending_enrollments.url|default:'#' }}">
+            <span class="onedu-admin-badge is-warning">{{ dashboard.pending_enrollments.count }}</span>
+            <strong>수강 승인 대기</strong>
+          </a>
+          <a href="{% if dashboard.hls.url %}{{ dashboard.hls.url }}?status__exact=running{% else %}#{% endif %}">
+            <span class="onedu-admin-badge">{{ dashboard.hls.running }}</span>
+            <strong>HLS 변환 중</strong>
+          </a>
+          <a href="{% if dashboard.hls.url %}{{ dashboard.hls.url }}?status__exact=failed{% else %}#{% endif %}">
+            <span class="onedu-admin-badge is-danger">{{ dashboard.hls.failed }}</span>
+            <strong>HLS 실패</strong>
+          </a>
+          <a href="{% url 'admin:enrollments_reenrollmentrequest_changelist' %}?status__exact=pending">
+            <span class="onedu-admin-badge">{{ dashboard.reenrollment_pending_count }}</span>
+            <strong>재수강 대기</strong>
+          </a>
+        </div>
+      </section>
+
+      <section class="onedu-admin-card onedu-admin-card--full" aria-labelledby="recentActivityTitle">
+        <div class="onedu-admin-card__head">
+          <div>
+            <p class="onedu-admin-kicker">ACTIVITY</p>
+            <h2 id="recentActivityTitle">최근 활동</h2>
+          </div>
+        </div>
+        {% if dashboard.recent_activity %}
+          <div class="onedu-admin-activity-list">
+            {% for entry in dashboard.recent_activity %}
+              <div class="onedu-admin-activity">
+                <span class="onedu-admin-activity__mark {% if entry.is_addition %}is-add{% elif entry.is_change %}is-change{% elif entry.is_deletion %}is-delete{% endif %}" aria-hidden="true">
+                  {% if entry.is_addition %}+{% elif entry.is_change %}~{% elif entry.is_deletion %}-{% else %}•{% endif %}
+                </span>
+                <div>
+                  <div class="onedu-admin-activity__title">
+                    {% if entry.get_admin_url %}
+                      <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                    {% else %}
+                      <strong>{{ entry.object_repr }}</strong>
+                    {% endif %}
+                  </div>
+                  <p>
+                    {% if entry.is_addition %}<span class="onedu-admin-badge is-success">추가</span>
+                    {% elif entry.is_change %}<span class="onedu-admin-badge">수정</span>
+                    {% elif entry.is_deletion %}<span class="onedu-admin-badge is-danger">삭제</span>
+                    {% endif %}
+                    <span>{{ entry.content_type.name|default:"항목" }}</span>
+                    <span>{{ entry.user.get_username }}</span>
+                    <time datetime="{{ entry.action_time|date:'c' }}">{{ entry.action_time|date:"Y-m-d H:i" }}</time>
+                  </p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="onedu-admin-empty">
+            <strong>최근 활동이 없습니다.</strong>
+            <span>관리자에서 추가, 수정, 삭제 작업을 하면 이곳에 표시됩니다.</span>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+  </main>
+</div>
 {% endblock %}
