@@ -1820,10 +1820,13 @@ body {
 }
 
 .brand-word::before {
-  background: linear-gradient(180deg, #0a9c92, var(--onedu-primary-dark));
-  border-radius: 999px;
-  height: 1.35rem;
-  width: 0.34rem;
+  display: none;
+}
+
+.brand-icon {
+  color: var(--onedu-primary);
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
 .nav-link {
@@ -1946,6 +1949,11 @@ body {
   justify-content: center;
   margin-bottom: 0.65rem;
   width: 2.35rem;
+}
+
+.portal-mini-icon i,
+.portal-category-icon i {
+  line-height: 1;
 }
 
 .portal-hero-points strong,
