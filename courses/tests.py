@@ -123,6 +123,8 @@ class MVPFlowViewTests(TestCase):
         self.assertEqual(enrollment.status, Enrollment.Status.REQUESTED)
 
         classroom = self.client.get(reverse('enrollments:classroom'))
+        self.assertContains(classroom, 'page-header-cta')
+        self.assertContains(classroom, '강의 목록 보기')
         self.assertContains(classroom, '신청 대기')
         self.assertContains(classroom, '관리자 승인 대기')
         self.assertContains(classroom, '입금 안내')
