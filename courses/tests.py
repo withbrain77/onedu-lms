@@ -50,6 +50,7 @@ class MVPFlowViewTests(TestCase):
         response = self.client.get(reverse('courses:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.course.title)
+        self.assertContains(response, '이용료')
         self.assertContains(response, '30,000원')
         self.assertContains(response, '운영자 확인 후 승인')
         self.assertContains(response, '수강 신청')

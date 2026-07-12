@@ -21,7 +21,7 @@ class Course(models.Model):
         choices=PricingType.choices,
         default=PricingType.FREE,
     )
-    price_krw = models.PositiveIntegerField('참가비(원)', default=0)
+    price_krw = models.PositiveIntegerField('이용료(원)', default=0)
     default_enrollment_days = models.PositiveSmallIntegerField('기본 수강 기간(일)', default=30)
     required_progress_percent = models.PositiveSmallIntegerField('수료 진도 기준(%)', default=90)
     require_quiz_pass = models.BooleanField('시험 합격 필요', default=True)
@@ -47,9 +47,9 @@ class Course(models.Model):
 
     def clean(self):
         if self.pricing_type == self.PricingType.FREE and self.price_krw:
-            raise ValidationError({'price_krw': '무료 강의는 참가비를 0원으로 설정해 주세요.'})
+            raise ValidationError({'price_krw': '무료 강의는 이용료를 0원으로 설정해 주세요.'})
         if self.pricing_type == self.PricingType.PAID and self.price_krw <= 0:
-            raise ValidationError({'price_krw': '유료 강의는 참가비를 1원 이상 입력해 주세요.'})
+            raise ValidationError({'price_krw': '유료 강의는 이용료를 1원 이상 입력해 주세요.'})
         if self.default_enrollment_days <= 0:
             raise ValidationError({'default_enrollment_days': '기본 수강 기간은 1일 이상이어야 합니다.'})
 

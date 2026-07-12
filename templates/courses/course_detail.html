@@ -107,7 +107,7 @@
         <h2 class="h5 mb-3">수강 정보</h2>
         <dl class="detail-meta">
           <div><dt>상태</dt><dd>{% if enrollment and enrollment.is_completed %}<span class="badge text-bg-success">수료 완료</span>{% else %}<span class="badge {{ status_class }}">{{ status_label }}</span>{% endif %}</dd></div>
-          <div><dt>참가비</dt><dd>{{ course.price_label }}</dd></div>
+          <div><dt>이용료</dt><dd>{{ course.price_label }}</dd></div>
           <div><dt>승인 방식</dt><dd>{{ course.approval_policy_label }}</dd></div>
           <div><dt>수강 기간</dt><dd>{{ period_text }}</dd></div>
           <div><dt>남은 기간</dt><dd>{{ remaining_text }}</dd></div>
@@ -123,7 +123,7 @@
           <a class="btn btn-primary w-100" href="{% url 'enrollments:course_detail' course.id %}">내 강의실에서 보기</a>
         {% elif user.is_authenticated %}
           {% if enrollment and enrollment.status == 'requested' %}
-            <div class="alert alert-info small mb-3">참가비 확인 후 관리자 승인과 수강 기간 배정이 진행됩니다.</div>
+            <div class="alert alert-info small mb-3">이용료 확인 후 관리자 승인과 수강 기간 배정이 진행됩니다.</div>
             <button class="btn btn-outline-secondary w-100" type="button" disabled>신청 대기 중</button>
           {% elif enrollment and access %}
             <div class="alert alert-warning small">{{ access.message }}</div>
@@ -132,7 +132,7 @@
             {% if course.is_free %}
               <div class="alert alert-success small mb-3">무료 프로그램입니다. 신청 즉시 {{ course.default_enrollment_days }}일 동안 수강할 수 있습니다.</div>
             {% else %}
-              <div class="alert alert-info small mb-3">본 프로그램은 참가비 {{ course.price_label }}가 있는 유료 프로그램입니다. 온라인 결제는 없으며, 신청 후 운영자 확인을 거쳐 승인됩니다.</div>
+              <div class="alert alert-info small mb-3">본 프로그램은 이용료 {{ course.price_label }}가 있는 유료 프로그램입니다. 온라인 결제는 없으며, 신청 후 운영자 확인을 거쳐 승인됩니다.</div>
             {% endif %}
             <form method="post" action="{% url 'courses:apply' course.slug %}">
               {% csrf_token %}

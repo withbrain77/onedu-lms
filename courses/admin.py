@@ -57,7 +57,7 @@ class CourseAdmin(admin.ModelAdmin):
     list_per_page = 30
     fieldsets = (
         ('기본 정보', {'fields': ('title', 'slug', 'description', 'thumbnail', 'is_public')}),
-        ('참가비/승인 정책', {'fields': ('pricing_type', 'price_krw', 'default_enrollment_days')}),
+        ('이용료/승인 정책', {'fields': ('pricing_type', 'price_krw', 'default_enrollment_days')}),
         ('수료 정책', {'fields': ('required_progress_percent', 'require_quiz_pass', 'certificate_enabled')}),
         ('기록', {'fields': ('created_by',)}),
     )
@@ -70,7 +70,7 @@ class CourseAdmin(admin.ModelAdmin):
     def enrollment_count(self, obj):
         return obj.admin_enrollment_count
 
-    @admin.display(description='참가비', ordering='price_krw')
+    @admin.display(description='이용료', ordering='price_krw')
     def price_display(self, obj):
         return obj.price_label
 

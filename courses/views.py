@@ -187,5 +187,5 @@ def apply_course(request, slug):
         return redirect('enrollments:course_detail', course_id=enrollment.course_id)
 
     Enrollment.objects.create(user=request.user, course=course)
-    messages.success(request, '수강 신청이 접수되었습니다. 참가비 확인 후 관리자가 승인하면 학습을 시작할 수 있습니다.')
+    messages.success(request, '수강 신청이 접수되었습니다. 이용료 확인 후 관리자가 승인하면 학습을 시작할 수 있습니다.')
     return redirect('enrollments:classroom')
