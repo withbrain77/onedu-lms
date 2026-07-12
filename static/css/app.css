@@ -2026,12 +2026,61 @@ body {
   position: relative;
 }
 
+.portal-player-screen::before {
+  background:
+    radial-gradient(circle at 30% 35%, rgba(45, 212, 191, 0.2), transparent 18%),
+    radial-gradient(circle at 68% 42%, rgba(59, 130, 246, 0.18), transparent 24%);
+  content: "";
+  inset: -18%;
+  position: absolute;
+  transform: translate3d(-3%, -2%, 0);
+  animation: portalAmbientVideo 9s ease-in-out infinite alternate;
+}
+
+.portal-player-live {
+  background:
+    linear-gradient(115deg, transparent 0 34%, rgba(36, 218, 202, 0.18) 35%, transparent 37%),
+    linear-gradient(25deg, transparent 0 58%, rgba(120, 255, 244, 0.12) 59%, transparent 61%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 10px);
+  inset: 0;
+  opacity: 0.72;
+  position: absolute;
+}
+
+.portal-player-wave {
+  background:
+    radial-gradient(circle at 10% 74%, rgba(255, 255, 255, 0.18) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 18% 64%, rgba(20, 184, 166, 0.48) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 27% 71%, rgba(20, 184, 166, 0.36) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 36% 61%, rgba(255, 255, 255, 0.16) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 48% 67%, rgba(20, 184, 166, 0.42) 0 1px, transparent 1.5px),
+    linear-gradient(16deg, transparent 0 48%, rgba(74, 222, 210, 0.2) 48.5%, transparent 49.2%),
+    linear-gradient(-18deg, transparent 0 42%, rgba(74, 222, 210, 0.12) 42.5%, transparent 43.2%);
+  inset: 0;
+  opacity: 0.7;
+  position: absolute;
+  transform: translateX(-6%);
+  animation: portalSignalDrift 12s linear infinite;
+}
+
+.portal-player-scan {
+  background: linear-gradient(90deg, transparent, rgba(245, 200, 75, 0.65), transparent);
+  height: 2px;
+  left: 0;
+  opacity: 0.52;
+  position: absolute;
+  right: 0;
+  top: 36%;
+  transform: translateY(-3rem);
+  animation: portalScanLine 5.2s ease-in-out infinite;
+}
+
 .portal-player-network {
   background-image:
     linear-gradient(135deg, transparent 0 48%, rgba(74, 222, 210, 0.18) 48% 49%, transparent 49%),
     linear-gradient(24deg, transparent 0 56%, rgba(74, 222, 210, 0.13) 56% 57%, transparent 57%);
   inset: 0;
-  opacity: 0.8;
+  opacity: 0.55;
   position: absolute;
 }
 
@@ -2048,17 +2097,30 @@ body {
 }
 
 .portal-play-button {
-  border-bottom: 1.1rem solid transparent;
-  border-left: 1.65rem solid #fff;
-  border-top: 1.1rem solid transparent;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  display: flex;
   filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.28));
-  height: 0;
+  height: 4rem;
+  justify-content: center;
   left: 50%;
   position: absolute;
   top: 50%;
-  transform: translate(-42%, -50%);
-  width: 0;
+  transform: translate(-50%, -50%);
+  width: 4rem;
   z-index: 2;
+}
+
+.portal-play-button span {
+  border-bottom: 0.95rem solid transparent;
+  border-left: 1.38rem solid #fff;
+  border-top: 0.95rem solid transparent;
+  display: block;
+  height: 0;
+  margin-left: 0.22rem;
+  width: 0;
 }
 
 .portal-player-controls {
@@ -2084,10 +2146,60 @@ body {
 }
 
 .portal-player-controls i {
+  animation: portalProgressLoop 8s ease-in-out infinite;
   background: linear-gradient(90deg, #f5c84b, #fff2a8);
   display: block;
   height: 100%;
   width: 39%;
+}
+
+@keyframes portalAmbientVideo {
+  from {
+    transform: translate3d(-4%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 4%, 0) scale(1.08);
+  }
+}
+
+@keyframes portalSignalDrift {
+  from {
+    transform: translateX(-8%);
+  }
+  to {
+    transform: translateX(8%);
+  }
+}
+
+@keyframes portalScanLine {
+  0%,
+  100% {
+    opacity: 0.14;
+    transform: translateY(-4.8rem);
+  }
+  50% {
+    opacity: 0.72;
+    transform: translateY(4.8rem);
+  }
+}
+
+@keyframes portalProgressLoop {
+  0%,
+  100% {
+    width: 32%;
+  }
+  50% {
+    width: 76%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-player-screen::before,
+  .portal-player-wave,
+  .portal-player-scan,
+  .portal-player-controls i {
+    animation: none;
+  }
 }
 
 .portal-player-stats {
