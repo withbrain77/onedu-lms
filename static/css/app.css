@@ -3230,3 +3230,43 @@ body {
     grid-column: 2;
   }
 }
+
+.account-profile-summary {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(8, 117, 111, 0.08), rgba(255, 255, 255, 0.96));
+  border: 1px solid rgba(8, 117, 111, 0.16);
+  border-radius: 0.75rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+}
+
+.account-profile-summary span {
+  color: var(--onedu-muted);
+  font-weight: 800;
+}
+
+.account-profile-summary strong {
+  color: var(--onedu-ink);
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.account-side-card {
+  top: 5rem;
+}
+
+@media (min-width: 992px) {
+  .account-side-card {
+    position: sticky;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .account-profile-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

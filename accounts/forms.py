@@ -1,5 +1,11 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    PasswordChangeForm,
+    PasswordResetForm,
+    SetPasswordForm,
+    UserCreationForm,
+)
 
 from .models import User
 
@@ -61,6 +67,35 @@ class StudentSignUpForm(BootstrapFormMixin, UserCreationForm):
         return user
 
 
+class StudentProfileForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('name', 'email', 'phone')
+        labels = {
+            'name': '이름',
+            'email': '이메일',
+            'phone': '연락처',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_bootstrap()
+        self.fields['name'].required = True
+        self.fields['email'].required = True
+        self.fields['name'].widget.attrs.setdefault('autocomplete', 'name')
+        self.fields['email'].widget.attrs.setdefault('autocomplete', 'email')
+        self.fields['phone'].widget.attrs.setdefault('autocomplete', 'tel')
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip().lower()
+        queryset = User.objects.filter(email__iexact=email)
+        if self.instance and self.instance.pk:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if email and queryset.exists():
+            raise forms.ValidationError('이미 다른 계정에서 사용 중인 이메일 주소입니다.')
+        return email
+
+
 class UsernameLookupForm(BootstrapFormMixin, forms.Form):
     name = forms.CharField(label='이름', max_length=100)
     email = forms.EmailField(label='이메일')
@@ -86,3 +121,15 @@ class BootstrapSetPasswordForm(BootstrapFormMixin, SetPasswordForm):
         self.apply_bootstrap()
         self.fields['new_password1'].label = '새 비밀번호'
         self.fields['new_password2'].label = '새 비밀번호 확인'
+
+
+class BootstrapPasswordChangeForm(BootstrapFormMixin, PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_bootstrap()
+        self.fields['old_password'].label = '현재 비밀번호'
+        self.fields['new_password1'].label = '새 비밀번호'
+        self.fields['new_password2'].label = '새 비밀번호 확인'
+        self.fields['old_password'].widget.attrs.setdefault('autocomplete', 'current-password')
+        self.fields['new_password1'].widget.attrs.setdefault('autocomplete', 'new-password')
+        self.fields['new_password2'].widget.attrs.setdefault('autocomplete', 'new-password')

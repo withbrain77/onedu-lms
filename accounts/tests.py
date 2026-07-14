@@ -121,6 +121,104 @@ class SignupPageTests(TestCase):
         self.assertFalse(User.objects.filter(username='new_student').exists())
 
 
+class ProfileManagementTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='student_profile',
+            password='Oldpass12345!',
+            name='기존 이름',
+            email='old@example.com',
+            phone='010-1111-2222',
+        )
+        self.other = User.objects.create_user(
+            username='other_profile',
+            password='Oldpass12345!',
+            name='다른 사용자',
+            email='other@example.com',
+        )
+
+    def test_profile_requires_login(self):
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('accounts:login'), response['Location'])
+
+    def test_logged_in_user_can_view_profile_and_nav_link(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '내 정보 수정')
+        self.assertContains(response, 'student_profile')
+        self.assertContains(response, 'old@example.com')
+        self.assertContains(response, reverse('accounts:password_change'))
+        self.assertContains(response, reverse('accounts:profile'))
+
+    def test_user_can_update_profile(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('accounts:profile'),
+            {
+                'name': '변경 이름',
+                'email': 'NEW@example.com',
+                'phone': '010-9999-0000',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accounts:profile'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.name, '변경 이름')
+        self.assertEqual(self.user.email, 'new@example.com')
+        self.assertEqual(self.user.phone, '010-9999-0000')
+
+    def test_profile_rejects_duplicate_email_case_insensitively(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('accounts:profile'),
+            {
+                'name': '변경 이름',
+                'email': 'OTHER@example.com',
+                'phone': '010-9999-0000',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '이미 다른 계정에서 사용 중인 이메일 주소입니다')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'old@example.com')
+
+    def test_password_change_requires_login(self):
+        response = self.client.get(reverse('accounts:password_change'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('accounts:login'), response['Location'])
+
+    def test_user_can_change_password_and_keep_session(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('accounts:password_change'),
+            {
+                'old_password': 'Oldpass12345!',
+                'new_password1': 'Newpass12345!',
+                'new_password2': 'Newpass12345!',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accounts:password_change_done'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Newpass12345!'))
+        self.assertFalse(self.user.check_password('Oldpass12345!'))
+
+        profile_response = self.client.get(reverse('accounts:profile'))
+        self.assertEqual(profile_response.status_code, 200)
+
+
 class AccountRecoveryTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

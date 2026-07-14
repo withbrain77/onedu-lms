@@ -5,8 +5,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import (
     LoginView,
+    PasswordChangeDoneView,
+    PasswordChangeView,
     PasswordResetCompleteView,
     PasswordResetConfirmView,
     PasswordResetDoneView,
@@ -17,13 +20,15 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, FormView
+from django.views.generic import CreateView, FormView, UpdateView
 
 from .forms import (
     BootstrapAuthenticationForm,
+    BootstrapPasswordChangeForm,
     BootstrapPasswordResetForm,
     BootstrapSetPasswordForm,
     StudentSignUpForm,
+    StudentProfileForm,
     UsernameLookupForm,
 )
 from .models import User
@@ -75,6 +80,20 @@ class LMSLoginView(LoginView):
             )
         else:
             response.delete_cookie(REMEMBER_USERNAME_COOKIE, samesite='Lax')
+        return response
+
+
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    form_class = StudentProfileForm
+    template_name = 'accounts/profile.html'
+    success_url = reverse_lazy('accounts:profile')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, '내 정보가 저장되었습니다.')
         return response
 
 
@@ -150,6 +169,16 @@ class LMSPasswordResetConfirmView(PasswordResetConfirmView):
 
 class LMSPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'accounts/password_reset_complete.html'
+
+
+class LMSPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    form_class = BootstrapPasswordChangeForm
+    template_name = 'accounts/password_change_form.html'
+    success_url = reverse_lazy('accounts:password_change_done')
+
+
+class LMSPasswordChangeDoneView(LoginRequiredMixin, PasswordChangeDoneView):
+    template_name = 'accounts/password_change_done.html'
 
 
 @login_required

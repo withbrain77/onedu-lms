@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}내 정보 수정 | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <h1>내 정보 수정</h1>
+  <p>이메일과 연락처를 최신 정보로 유지해 주세요.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <div class="account-profile-summary mb-4">
+          <span>아이디</span>
+          <strong>{{ user.username }}</strong>
+        </div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+          {% endfor %}
+          <button class="btn btn-primary w-100" type="submit">내 정보 저장</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm account-side-card">
+      <div class="card-body p-4">
+        <div class="learning-card-label">ACCOUNT SECURITY</div>
+        <h2 class="h5 mb-3">비밀번호 관리</h2>
+        <p class="text-muted small">현재 비밀번호를 알고 있다면 새 비밀번호로 직접 변경할 수 있습니다.</p>
+        <a class="btn btn-outline-primary w-100" href="{% url 'accounts:password_change' %}">비밀번호 변경</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
