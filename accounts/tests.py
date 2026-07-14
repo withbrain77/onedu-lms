@@ -112,7 +112,7 @@ class SignupPageTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '개인정보 처리방침 및 접속 기록 저장 안내에 동의해 주세요.')
+        self.assertContains(response, '개인정보 처리방침에 동의해 주세요.')
         self.assertFalse(User.objects.filter(username='privacy_student').exists())
 
     def test_signup_rejects_duplicate_email_case_insensitively(self):
