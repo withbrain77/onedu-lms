@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import Enrollment, ReEnrollmentRequest
+from .notifications import notify_enrollment_approved
 
 
 @admin.register(Enrollment)
@@ -54,9 +55,23 @@ class EnrollmentAdmin(admin.ModelAdmin):
         return days
 
     def save_model(self, request, obj, form, change):
+        previous_status = None
+        if change and obj.pk:
+            previous_status = (
+                Enrollment.objects
+                .filter(pk=obj.pk)
+                .values_list('status', flat=True)
+                .first()
+            )
+        should_notify_approval = (
+            obj.status == Enrollment.Status.APPROVED
+            and previous_status != Enrollment.Status.APPROVED
+        )
         if obj.status == Enrollment.Status.APPROVED and not obj.approved_by_id:
             obj.approved_by = request.user
         super().save_model(request, obj, form, change)
+        if should_notify_approval:
+            notify_enrollment_approved(obj)
 
 
 @admin.register(ReEnrollmentRequest)

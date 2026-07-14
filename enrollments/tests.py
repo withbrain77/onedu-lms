@@ -1,12 +1,16 @@
 from datetime import timedelta
 
+from django.contrib.admin.sites import AdminSite
+from django.core import mail
 from django.test import Client, TestCase
+from django.test import RequestFactory, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
 from courses.models import Course
 
+from .admin import EnrollmentAdmin
 from .models import Enrollment, ReEnrollmentRequest
 
 
@@ -299,3 +303,86 @@ class AdminEnrollmentNotificationTests(TestCase):
             response,
             reverse('admin:enrollments_enrollment_change', args=[self.pending_paid.pk]),
         )
+
+
+class EnrollmentApprovalEmailTests(TestCase):
+    def setUp(self):
+        self.today = timezone.localdate()
+        self.admin_user = User.objects.create_superuser(
+            username='approval_admin',
+            password='pass12345',
+            email='admin@example.com',
+        )
+        self.student = User.objects.create_user(
+            username='approval_student',
+            password='pass12345',
+            name='승인 수강생',
+            email='student@example.com',
+        )
+        self.course = Course.objects.create(
+            title='Approval Notification Course',
+            is_public=True,
+            pricing_type=Course.PricingType.PAID,
+            price_krw=30000,
+        )
+        self.enrollment = Enrollment.objects.create(
+            user=self.student,
+            course=self.course,
+            status=Enrollment.Status.REQUESTED,
+        )
+        self.model_admin = EnrollmentAdmin(Enrollment, AdminSite())
+        self.request = RequestFactory().post('/admin/enrollments/enrollment/')
+        self.request.user = self.admin_user
+
+    def approve_enrollment(self, enrollment=None):
+        enrollment = enrollment or Enrollment.objects.get(pk=self.enrollment.pk)
+        enrollment.status = Enrollment.Status.APPROVED
+        enrollment.start_date = self.today
+        enrollment.end_date = self.today + timedelta(days=30)
+        self.model_admin.save_model(self.request, enrollment, form=None, change=True)
+        return enrollment
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True,
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_admin_approval_sends_student_email(self):
+        self.approve_enrollment()
+
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.status, Enrollment.Status.APPROVED)
+        self.assertEqual(self.enrollment.approved_by, self.admin_user)
+        self.assertEqual(len(mail.outbox), 1)
+
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ['student@example.com'])
+        self.assertIn('수강 신청이 승인되었습니다', message.subject)
+        self.assertIn('승인 수강생', message.body)
+        self.assertIn(self.course.title, message.body)
+        self.assertIn(str(self.today), message.body)
+        self.assertIn('https://onedu.withbrain.kr/classroom/', message.body)
+        self.assertIn(f'https://onedu.withbrain.kr/classroom/{self.course.pk}/', message.body)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True,
+    )
+    def test_approved_enrollment_update_does_not_send_duplicate_email(self):
+        enrollment = self.approve_enrollment()
+        self.assertEqual(len(mail.outbox), 1)
+
+        enrollment = Enrollment.objects.get(pk=enrollment.pk)
+        enrollment.end_date = self.today + timedelta(days=60)
+        self.model_admin.save_model(self.request, enrollment, form=None, change=True)
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_APPROVAL=False,
+    )
+    def test_approval_email_can_be_disabled(self):
+        self.approve_enrollment()
+
+        self.assertEqual(len(mail.outbox), 0)

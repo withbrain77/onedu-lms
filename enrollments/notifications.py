@@ -24,6 +24,10 @@ def _notification_recipients():
 
 def _admin_change_url(enrollment):
     path = reverse('admin:enrollments_enrollment_change', args=[enrollment.pk])
+    return _site_url(path)
+
+
+def _site_url(path):
     public_site_url = getattr(settings, 'PUBLIC_SITE_URL', '')
     if public_site_url:
         return f'{public_site_url}{path}'
@@ -75,6 +79,58 @@ def notify_enrollment_request(enrollment):
         )
     except Exception:
         logger.exception('Failed to send enrollment request notification email.')
+        return False
+
+    return True
+
+
+def notify_enrollment_approved(enrollment):
+    if not getattr(settings, 'ONEDU_NOTIFY_ENROLLMENT_APPROVAL', True):
+        return False
+    if enrollment.status != Enrollment.Status.APPROVED:
+        return False
+
+    recipient = (enrollment.user.email or '').strip()
+    if not recipient:
+        logger.warning(
+            'Enrollment approval notification skipped because student %s has no email address.',
+            enrollment.user_id,
+        )
+        return False
+
+    course_url = _site_url(reverse('enrollments:course_detail', kwargs={'course_id': enrollment.course_id}))
+    classroom_url = _site_url(reverse('enrollments:classroom'))
+    user = enrollment.user
+    course = enrollment.course
+    approved_at = timezone.localtime(enrollment.approved_at or timezone.now()).strftime('%Y-%m-%d %H:%M')
+    if enrollment.start_date and enrollment.end_date:
+        period = f'{enrollment.start_date} ~ {enrollment.end_date}'
+    else:
+        period = '관리자가 별도로 안내하거나 추후 배정'
+
+    subject = '[ONEDU] 수강 신청이 승인되었습니다'
+    message = (
+        f'안녕하세요, {user.display_name}님.\n\n'
+        '수강 신청이 승인되었습니다.\n\n'
+        f'강의: {course.title}\n'
+        f'수강 기간: {period}\n'
+        f'승인일시: {approved_at}\n\n'
+        '아래 링크에서 학습을 시작할 수 있습니다.\n'
+        f'강의 바로가기: {course_url}\n'
+        f'내 강의실: {classroom_url}\n\n'
+        '수강 기간 안에서 영상을 시청해 주세요.\n'
+    )
+
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient],
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception('Failed to send enrollment approval notification email.')
         return False
 
     return True
