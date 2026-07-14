@@ -19,13 +19,16 @@
           {% csrf_token %}
           {% for field in form %}
             {% if field.name == 'privacy_agreement' %}
-              <div class="form-check privacy-consent-box mb-3">
+              <div class="form-check privacy-consent-box mb-3{% if field.errors %} privacy-consent-box-invalid{% endif %}" data-privacy-consent-box>
                 {{ field }}
                 <label class="form-check-label" for="{{ field.id_for_label }}">
                   <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">개인정보 처리방침</a>에 동의합니다.
                 </label>
                 <div class="form-text">
                   수강 신청, 학습 이력 관리, 서비스 보안을 위해 필요한 이용 기록이 최소한으로 저장됩니다.
+                </div>
+                <div class="privacy-consent-client-error invalid-feedback d-none" data-privacy-consent-error role="alert">
+                  개인정보 처리방침에 동의해야 회원가입을 진행할 수 있습니다.
                 </div>
                 {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
               </div>
@@ -94,5 +97,5 @@
 
 {% block scripts %}
 {{ block.super }}
-<script src="{% static 'js/signup_password_feedback.js' %}?v=20260712-password-feedback" defer></script>
+<script src="{% static 'js/signup_password_feedback.js' %}?v=20260715-signup-consent" defer></script>
 {% endblock %}

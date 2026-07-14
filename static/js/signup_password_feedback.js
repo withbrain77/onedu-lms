@@ -11,6 +11,9 @@
   const confirmInput = form.querySelector('#id_password2');
   const summary = form.querySelector('[data-password-summary]');
   const matchMessage = form.querySelector('[data-password-match-message]');
+  const privacyInput = form.querySelector('#id_privacy_agreement');
+  const privacyBox = form.querySelector('[data-privacy-consent-box]');
+  const privacyError = form.querySelector('[data-privacy-consent-error]');
 
   if (!passwordInput || !confirmInput || !summary) {
     return;
@@ -93,6 +96,39 @@
     input.classList.toggle('is-invalid', !isValid);
   }
 
+  function showPrivacyError(shouldFocus) {
+    if (!privacyInput || !privacyBox || privacyInput.checked) {
+      if (privacyBox) {
+        privacyBox.classList.remove('privacy-consent-box-invalid');
+      }
+      if (privacyInput) {
+        privacyInput.classList.remove('is-invalid');
+        privacyInput.removeAttribute('aria-invalid');
+      }
+      if (privacyError) {
+        privacyError.classList.add('d-none');
+        privacyError.classList.remove('d-block');
+      }
+      return false;
+    }
+
+    privacyBox.classList.add('privacy-consent-box-invalid');
+    privacyInput.classList.add('is-invalid');
+    privacyInput.setAttribute('aria-invalid', 'true');
+
+    if (privacyError) {
+      privacyError.classList.remove('d-none');
+      privacyError.classList.add('d-block');
+    }
+
+    if (shouldFocus) {
+      privacyBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.setTimeout(() => privacyInput.focus({ preventScroll: true }), 180);
+    }
+
+    return true;
+  }
+
   function evaluate() {
     const password = passwordInput.value;
     const confirmation = confirmInput.value;
@@ -152,8 +188,21 @@
     }
   });
 
+  if (privacyInput) {
+    privacyInput.addEventListener('change', () => showPrivacyError(false));
+  }
+
+  form.addEventListener('submit', (event) => {
+    if (showPrivacyError(true)) {
+      event.preventDefault();
+    }
+  });
+
   ruleElements.forEach((item) => {
     item.dataset.state = 'pending';
   });
   evaluate();
+  if (privacyBox && privacyBox.classList.contains('privacy-consent-box-invalid')) {
+    showPrivacyError(true);
+  }
 })();

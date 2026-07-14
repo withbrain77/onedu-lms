@@ -3241,6 +3241,7 @@ body {
   border: 1px solid rgba(8, 117, 111, 0.16);
   border-radius: 0.85rem;
   padding: 1rem 1rem 1rem 2.75rem;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .privacy-consent-box .form-check-input {
@@ -3256,6 +3257,25 @@ body {
 .privacy-consent-box .form-text {
   color: var(--onedu-muted);
   line-height: 1.55;
+}
+
+.privacy-consent-box-invalid {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.08), rgba(255, 255, 255, 0.96));
+  border-color: rgba(220, 53, 69, 0.42);
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.08);
+}
+
+.privacy-consent-box-invalid .form-check-input {
+  border-color: #dc3545;
+}
+
+.privacy-consent-box-invalid .form-check-label {
+  color: #842029;
+}
+
+.privacy-consent-client-error {
+  font-weight: 750;
+  margin-top: 0.5rem;
 }
 
 .privacy-policy-layout {
