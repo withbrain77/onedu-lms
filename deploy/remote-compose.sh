@@ -69,6 +69,7 @@ Actions:
   restart-queue                  Recreate redis and restart queue services
   hls-status                     Show recent HLS conversion jobs
   hls-reset-stuck                Mark pending HLS jobs without task IDs as failed
+  expiry-notices                 Send 7-day enrollment expiry notice emails
   tail                           Follow web/nginx logs
   diagnose-video                 Run full video diagnostics
   diagnose-video LESSON USERNAME Run focused video diagnostics
@@ -110,6 +111,9 @@ EOF
     ;;
   hls-reset-stuck)
     ops hls-reset-stuck
+    ;;
+  expiry-notices)
+    ops expiry-notices
     ;;
   tail)
     compose logs -f web nginx

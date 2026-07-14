@@ -36,6 +36,7 @@ Actions:
   health          Show status, check, and local HTTP headers
   hls-status      Show recent HLS conversion jobs
   hls-reset-stuck Mark pending jobs without task IDs as failed
+  expiry-notices  Send 7-day enrollment expiry notice emails
 EOF
 }
 
@@ -128,6 +129,9 @@ for job in jobs:
 
 print('updated', len(jobs))
 PY
+    ;;
+  expiry-notices)
+    compose exec -T web python manage.py send_expiry_notices
     ;;
   *)
     echo "Unknown action: $1"

@@ -134,3 +134,54 @@ def notify_enrollment_approved(enrollment):
         return False
 
     return True
+
+
+def notify_enrollment_expiry_7d(enrollment):
+    if not getattr(settings, 'ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D', True):
+        return False
+    if enrollment.status != Enrollment.Status.APPROVED:
+        return False
+    if enrollment.is_completed:
+        return False
+    if not enrollment.end_date:
+        return False
+
+    recipient = (enrollment.user.email or '').strip()
+    if not recipient:
+        logger.warning(
+            'Enrollment expiry notification skipped because student %s has no email address.',
+            enrollment.user_id,
+        )
+        return False
+
+    course_url = _site_url(reverse('enrollments:course_detail', kwargs={'course_id': enrollment.course_id}))
+    classroom_url = _site_url(reverse('enrollments:classroom'))
+    user = enrollment.user
+    course = enrollment.course
+
+    subject = '[ONEDU] 수강 기간 종료 7일 전 안내'
+    message = (
+        f'안녕하세요, {user.display_name}님.\n\n'
+        '수강 중인 강의의 수강 기간이 7일 후 종료됩니다.\n\n'
+        f'강의: {course.title}\n'
+        f'수강 종료일: {enrollment.end_date}\n'
+        '남은 기간: 7일\n\n'
+        '기간 안에 남은 영상을 시청하고 필요한 학습을 마무리해 주세요.\n'
+        f'강의 바로가기: {course_url}\n'
+        f'내 강의실: {classroom_url}\n\n'
+        '이미 학습을 완료했다면 내 강의실에서 수료 상태와 수료증을 확인할 수 있습니다.\n'
+    )
+
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [recipient],
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception('Failed to send enrollment expiry notification email.')
+        return False
+
+    return True

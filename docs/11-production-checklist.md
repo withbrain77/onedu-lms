@@ -81,12 +81,16 @@ X_ACCEL_REDIRECT_PREFIX=/protected-media/
 ```env
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/1
+CELERY_TASK_DEFAULT_QUEUE=default
 CELERY_VIDEO_QUEUE=video
 CELERY_WORKER_CONCURRENCY=1
+CELERY_EXPIRY_NOTICE_HOUR=9
+CELERY_EXPIRY_NOTICE_MINUTE=0
 ```
 
 - HLS 변환 작업 큐 설정이다.
 - NAS 부하를 줄이기 위해 worker 동시 실행 수는 기본 `1`을 권장한다.
+- 수강 만료 7일 전 알림은 같은 worker의 Celery beat 스케줄러가 매일 `CELERY_EXPIRY_NOTICE_HOUR:CELERY_EXPIRY_NOTICE_MINUTE`에 자동 실행한다.
 
 ```env
 DJANGO_EMAIL_HOST=smtp.example.com
@@ -97,14 +101,31 @@ DJANGO_EMAIL_USE_TLS=True
 DJANGO_DEFAULT_FROM_EMAIL=Onedu LMS <no-reply@example.com>
 ONEDU_NOTIFY_ENROLLMENT_REQUEST=True
 ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True
+ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D=True
 ONEDU_ADMIN_NOTIFICATION_EMAIL=admin@example.com
 ```
 
 - 유료 강의 수강 신청이 접수되면 `ONEDU_ADMIN_NOTIFICATION_EMAIL` 주소로 승인요청 메일이 발송된다.
 - 관리자가 수강 신청을 승인하면 수강생 이메일 주소로 승인 안내 메일이 발송된다.
+- 수강 종료 7일 전에는 수료 완료되지 않은 승인 수강생에게 만료 예정 안내 메일이 발송된다.
 - 여러 관리자에게 보내려면 `ONEDU_ADMIN_NOTIFICATION_EMAILS=admin1@example.com,admin2@example.com`처럼 쉼표로 구분한다.
 - `ONEDU_ADMIN_NOTIFICATION_EMAIL`을 비워 두면 SMTP 로그인 계정인 `DJANGO_EMAIL_HOST_USER`가 기본 수신자가 된다.
 - 무료 강의는 신청 즉시 자동 승인되므로 승인요청 메일을 보내지 않는다.
+
+### 수강 만료 7일 전 알림 확인
+
+수강 만료 알림은 worker 컨테이너에서 매일 자동 실행된다. 운영 중 수동으로 즉시 실행해야 할 때는 다음 명령을 사용한다.
+
+```bash
+cd /volume1/wbinstitute/docker/onedu/app
+docker compose -p onedu exec -T web python manage.py send_expiry_notices
+```
+
+수동 확인만 하고 싶을 때는 컨테이너 안에서 dry-run을 실행한다.
+
+```bash
+docker compose -p onedu exec -T web python manage.py send_expiry_notices --dry-run
+```
 
 ## 3. 배포 명령 순서
 

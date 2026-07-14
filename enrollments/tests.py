@@ -1,7 +1,9 @@
 from datetime import timedelta
+from io import StringIO
 
 from django.contrib.admin.sites import AdminSite
 from django.core import mail
+from django.core.management import call_command
 from django.test import Client, TestCase
 from django.test import RequestFactory, override_settings
 from django.urls import reverse
@@ -386,3 +388,108 @@ class EnrollmentApprovalEmailTests(TestCase):
         self.approve_enrollment()
 
         self.assertEqual(len(mail.outbox), 0)
+
+
+class EnrollmentExpiryNoticeCommandTests(TestCase):
+    def setUp(self):
+        self.today = timezone.localdate()
+        self.student = User.objects.create_user(
+            username='expiry_student',
+            password='pass12345',
+            name='만료 안내 수강생',
+            email='expiry@example.com',
+        )
+        self.course = Course.objects.create(
+            title='Expiry Notice Course',
+            is_public=True,
+            pricing_type=Course.PricingType.PAID,
+            price_krw=30000,
+        )
+
+    def enrollment(self, **kwargs):
+        defaults = {
+            'user': self.student,
+            'course': self.course,
+            'status': Enrollment.Status.APPROVED,
+            'start_date': self.today - timedelta(days=10),
+            'end_date': self.today + timedelta(days=7),
+        }
+        defaults.update(kwargs)
+        return Enrollment.objects.create(**defaults)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D=True,
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_command_sends_expiry_notice_once_and_records_sent_at(self):
+        enrollment = self.enrollment()
+        output = StringIO()
+
+        call_command('send_expiry_notices', date=str(self.today), stdout=output)
+
+        enrollment.refresh_from_db()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIsNotNone(enrollment.expiry_notice_7d_sent_at)
+        self.assertIn('matched=1 sent=1 skipped=0 dry_run=False', output.getvalue())
+
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ['expiry@example.com'])
+        self.assertIn('수강 기간 종료 7일 전 안내', message.subject)
+        self.assertIn('만료 안내 수강생', message.body)
+        self.assertIn(self.course.title, message.body)
+        self.assertIn(str(enrollment.end_date), message.body)
+        self.assertIn('https://onedu.withbrain.kr/classroom/', message.body)
+        self.assertIn(f'https://onedu.withbrain.kr/classroom/{self.course.pk}/', message.body)
+
+        second_output = StringIO()
+        call_command('send_expiry_notices', date=str(self.today), stdout=second_output)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('matched=0 sent=0 skipped=0 dry_run=False', second_output.getvalue())
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D=True,
+    )
+    def test_command_dry_run_does_not_send_or_mark(self):
+        enrollment = self.enrollment()
+        output = StringIO()
+
+        call_command('send_expiry_notices', date=str(self.today), dry_run=True, stdout=output)
+
+        enrollment.refresh_from_db()
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIsNone(enrollment.expiry_notice_7d_sent_at)
+        self.assertIn('[dry-run]', output.getvalue())
+        self.assertIn('matched=1 sent=0 skipped=0 dry_run=True', output.getvalue())
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D=True,
+    )
+    def test_command_skips_completed_unapproved_and_non_matching_dates(self):
+        self.enrollment(is_completed=True)
+        self.enrollment(status=Enrollment.Status.REQUESTED)
+        self.enrollment(end_date=self.today + timedelta(days=8))
+        output = StringIO()
+
+        call_command('send_expiry_notices', date=str(self.today), stdout=output)
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIn('matched=0 sent=0 skipped=0 dry_run=False', output.getvalue())
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D=False,
+    )
+    def test_command_respects_disabled_expiry_notice_setting(self):
+        enrollment = self.enrollment()
+        output = StringIO()
+
+        call_command('send_expiry_notices', date=str(self.today), stdout=output)
+
+        enrollment.refresh_from_db()
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIsNone(enrollment.expiry_notice_7d_sent_at)
+        self.assertIn('matched=1 sent=0 skipped=1 dry_run=False', output.getvalue())

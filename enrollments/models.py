@@ -48,6 +48,7 @@ class Enrollment(models.Model):
     completed_at = models.DateTimeField('수료일시', null=True, blank=True)
     completion_progress_percent = models.PositiveSmallIntegerField('수료 판정 진도율', default=0)
     completion_note = models.TextField('수료 메모', blank=True)
+    expiry_notice_7d_sent_at = models.DateTimeField('7일 전 만료 알림 발송일시', null=True, blank=True)
     created_at = models.DateTimeField('신청일시', auto_now_add=True)
     updated_at = models.DateTimeField('수정일시', auto_now=True)
 

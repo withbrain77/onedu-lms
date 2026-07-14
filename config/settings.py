@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from celery.schedules import crontab
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 
@@ -194,8 +195,19 @@ CELERY_TASK_ALWAYS_EAGER = env_bool('CELERY_TASK_ALWAYS_EAGER', False)
 CELERY_TASK_EAGER_PROPAGATES = env_bool('CELERY_TASK_EAGER_PROPAGATES', True)
 CELERY_TASK_DEFAULT_QUEUE = os.getenv('CELERY_TASK_DEFAULT_QUEUE', 'default')
 CELERY_VIDEO_QUEUE = os.getenv('CELERY_VIDEO_QUEUE', 'video')
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_EXPIRY_NOTICE_HOUR = env_int('CELERY_EXPIRY_NOTICE_HOUR', 9)
+CELERY_EXPIRY_NOTICE_MINUTE = env_int('CELERY_EXPIRY_NOTICE_MINUTE', 0)
 CELERY_TASK_ROUTES = {
     'lessons.tasks.convert_lesson_hls_task': {'queue': CELERY_VIDEO_QUEUE},
+    'enrollments.tasks.send_expiry_notices_task': {'queue': CELERY_TASK_DEFAULT_QUEUE},
+}
+CELERY_BEAT_SCHEDULE = {
+    'send-enrollment-expiry-notices-daily': {
+        'task': 'enrollments.tasks.send_expiry_notices_task',
+        'schedule': crontab(hour=CELERY_EXPIRY_NOTICE_HOUR, minute=CELERY_EXPIRY_NOTICE_MINUTE),
+        'options': {'queue': CELERY_TASK_DEFAULT_QUEUE},
+    },
 }
 
 DEFAULT_FROM_EMAIL = os.getenv('DJANGO_DEFAULT_FROM_EMAIL', 'Onedu LMS <no-reply@example.com>')
@@ -213,6 +225,7 @@ EMAIL_USE_SSL = env_bool('DJANGO_EMAIL_USE_SSL', False)
 EMAIL_TIMEOUT = env_int('DJANGO_EMAIL_TIMEOUT', 10)
 ONEDU_NOTIFY_ENROLLMENT_REQUEST = env_bool('ONEDU_NOTIFY_ENROLLMENT_REQUEST', True)
 ONEDU_NOTIFY_ENROLLMENT_APPROVAL = env_bool('ONEDU_NOTIFY_ENROLLMENT_APPROVAL', True)
+ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D = env_bool('ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D', True)
 ONEDU_ADMIN_NOTIFICATION_EMAILS = env_list(
     'ONEDU_ADMIN_NOTIFICATION_EMAILS',
     'ONEDU_ADMIN_NOTIFICATION_EMAIL',

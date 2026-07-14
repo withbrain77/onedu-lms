@@ -9,6 +9,7 @@ param(
         "logs-worker",
         "logs-redis",
         "hls-status",
+        "expiry-notices",
         "restart-nginx",
         "restart-web",
         "restart-queue",
