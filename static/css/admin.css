@@ -1602,6 +1602,27 @@ body.onedu-admin-workspace #content {
   overflow: hidden;
 }
 
+.onedu-admin-menu-direct {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--dash-border);
+  border-radius: 14px;
+  color: var(--dash-ink) !important;
+  display: flex;
+  font-weight: 900;
+  gap: 0.65rem;
+  padding: 13px 14px;
+  text-decoration: none;
+}
+
+.onedu-admin-menu-direct:hover,
+.onedu-admin-menu-direct:focus,
+.onedu-admin-menu-direct.is-active {
+  background: #e4f2ef;
+  border-color: #cae5df;
+  color: var(--dash-teal-dark) !important;
+}
+
 .onedu-admin-menu-section summary {
   align-items: center;
   color: var(--dash-ink);

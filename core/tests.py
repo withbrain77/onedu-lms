@@ -205,6 +205,8 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '최근 활동')
         self.assertContains(response, '주의 접속')
         self.assertContains(response, '접속 보안 확인')
+        self.assertContains(response, 'onedu-admin-menu-direct')
+        self.assertNotContains(response, '운영 현황')
 
     def test_admin_model_pages_keep_operations_sidebar(self):
         admin_user = User.objects.create_superuser(

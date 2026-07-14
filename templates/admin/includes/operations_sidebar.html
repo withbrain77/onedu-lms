@@ -12,24 +12,33 @@
 
   <nav class="onedu-admin-menu">
     {% for section in dashboard.menu_sections %}
-      <details class="onedu-admin-menu-section" {% if section.is_active or section.is_dashboard %}open{% endif %}>
-        <summary>
-          <span class="onedu-admin-menu-icon" aria-hidden="true">{{ section.icon }}</span>
-          <span>{{ section.title }}</span>
-        </summary>
-        <ul>
-          {% for item in section.items %}
-            <li>
-              <a class="{% if item.is_active %}is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
-                <span>{{ item.label }}</span>
-              </a>
-              {% if item.can_add %}
-                <a class="onedu-admin-menu-add" href="{{ item.add_url }}" aria-label="{{ item.label }} 추가">+</a>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      </details>
+      {% if section.is_dashboard %}
+        {% with item=section.items.0 %}
+          <a class="onedu-admin-menu-direct {% if item.is_active %}is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
+            <span class="onedu-admin-menu-icon" aria-hidden="true">{{ section.icon }}</span>
+            <span>{{ section.title }}</span>
+          </a>
+        {% endwith %}
+      {% else %}
+        <details class="onedu-admin-menu-section" {% if section.is_active %}open{% endif %}>
+          <summary>
+            <span class="onedu-admin-menu-icon" aria-hidden="true">{{ section.icon }}</span>
+            <span>{{ section.title }}</span>
+          </summary>
+          <ul>
+            {% for item in section.items %}
+              <li>
+                <a class="{% if item.is_active %}is-active{% endif %}" href="{{ item.url }}" {% if item.is_active %}aria-current="page"{% endif %}>
+                  <span>{{ item.label }}</span>
+                </a>
+                {% if item.can_add %}
+                  <a class="onedu-admin-menu-add" href="{{ item.add_url }}" aria-label="{{ item.label }} 추가">+</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
     {% endfor %}
   </nav>
 </aside>
