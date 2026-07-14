@@ -3236,7 +3236,137 @@ body {
   margin-top: 0.75rem;
 }
 
+.privacy-consent-box {
+  background: linear-gradient(135deg, rgba(8, 117, 111, 0.07), rgba(255, 255, 255, 0.9));
+  border: 1px solid rgba(8, 117, 111, 0.16);
+  border-radius: 0.85rem;
+  padding: 1rem 1rem 1rem 2.75rem;
+}
+
+.privacy-consent-box .form-check-input {
+  margin-left: -1.65rem;
+  margin-top: 0.25rem;
+}
+
+.privacy-consent-box .form-check-label {
+  color: var(--onedu-ink);
+  font-weight: 800;
+}
+
+.privacy-consent-box .form-text {
+  color: var(--onedu-muted);
+  line-height: 1.55;
+}
+
+.privacy-policy-layout {
+  display: grid;
+  justify-content: center;
+}
+
+.privacy-policy-card {
+  background: #fff;
+  border: 1px solid rgba(8, 117, 111, 0.16);
+  border-radius: 1.2rem;
+  box-shadow: var(--onedu-shadow);
+  max-width: 920px;
+  overflow: hidden;
+}
+
+.privacy-policy-lead {
+  background:
+    radial-gradient(circle at top right, rgba(8, 117, 111, 0.14), transparent 34%),
+    linear-gradient(135deg, #f7fbfb 0%, #ffffff 70%);
+  border-bottom: 1px solid rgba(8, 117, 111, 0.12);
+  padding: 1.5rem;
+}
+
+.privacy-policy-lead span,
+.privacy-policy-section h2,
+.privacy-policy-contact h2 {
+  color: var(--onedu-primary);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.privacy-policy-lead strong {
+  color: var(--onedu-ink);
+  display: block;
+  font-size: 1.25rem;
+  line-height: 1.45;
+  margin: 0.55rem 0;
+}
+
+.privacy-policy-lead p,
+.privacy-policy-section p,
+.privacy-policy-section li {
+  color: var(--onedu-ink-soft);
+}
+
+.privacy-policy-section,
+.privacy-policy-contact {
+  border-bottom: 1px solid #edf2f5;
+  padding: 1.35rem 1.5rem;
+}
+
+.privacy-policy-section:last-child,
+.privacy-policy-contact:last-child {
+  border-bottom: 0;
+}
+
+.privacy-policy-section ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.15rem;
+}
+
+.privacy-policy-contact dl {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.85rem 0 0;
+}
+
+.privacy-policy-contact dl div {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.privacy-policy-contact dt {
+  color: var(--onedu-muted);
+  font-weight: 800;
+}
+
+.privacy-policy-contact dd {
+  margin: 0;
+  text-align: right;
+}
+
+.video-security-notice {
+  background: rgba(8, 117, 111, 0.06);
+  border: 1px solid rgba(8, 117, 111, 0.14);
+  border-radius: 0.75rem;
+  color: var(--onedu-ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  margin-bottom: 1rem;
+  padding: 0.8rem 0.9rem;
+}
+
 @media (max-width: 575.98px) {
+  .privacy-policy-contact dl div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .privacy-policy-contact dd {
+    text-align: left;
+  }
+
   .password-rule {
     align-items: start;
     grid-template-columns: 1.2rem minmax(0, 1fr);

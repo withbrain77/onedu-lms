@@ -95,6 +95,25 @@ class SignupPageTests(TestCase):
         self.assertContains(response, 'data-password-rule="similar"')
         self.assertContains(response, 'data-password-rule="match"')
         self.assertContains(response, 'signup_password_feedback.js')
+        self.assertContains(response, 'name="privacy_agreement"')
+        self.assertContains(response, reverse('privacy_policy'))
+
+    def test_signup_requires_privacy_agreement(self):
+        response = self.client.post(
+            reverse('accounts:signup'),
+            {
+                'username': 'privacy_student',
+                'name': 'Privacy Student',
+                'email': 'privacy@example.com',
+                'phone': '010-2222-3333',
+                'password1': 'StrongPass12345!',
+                'password2': 'StrongPass12345!',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '개인정보 처리방침 및 접속 기록 저장 안내에 동의해 주세요.')
+        self.assertFalse(User.objects.filter(username='privacy_student').exists())
 
     def test_signup_rejects_duplicate_email_case_insensitively(self):
         User.objects.create_user(
@@ -113,6 +132,7 @@ class SignupPageTests(TestCase):
                 'phone': '010-1234-5678',
                 'password1': 'StrongPass12345!',
                 'password2': 'StrongPass12345!',
+                'privacy_agreement': 'on',
             },
         )
 

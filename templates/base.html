@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Onedu LMS{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="{% static 'css/app.css' %}?v=20260714-learning-badge" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}?v=20260715-privacy-notice" rel="stylesheet">
 </head>
 <body>
   <div class="top-strip">
@@ -42,6 +42,7 @@
             <li class="nav-item"><a class="nav-link" href="{% url 'courses:list' %}">강의 목록</a></li>
           {% endif %}
           <li class="nav-item"><a class="nav-link" href="{% url 'certificates:verify' %}">수료증 검증</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'privacy_policy' %}">개인정보</a></li>
         </ul>
         <div class="d-flex align-items-lg-center gap-2 flex-column flex-lg-row">
           {% if user.is_authenticated %}

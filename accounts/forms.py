@@ -35,6 +35,14 @@ class BootstrapAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
 
 
 class StudentSignUpForm(BootstrapFormMixin, UserCreationForm):
+    privacy_agreement = forms.BooleanField(
+        label='개인정보 처리방침 및 접속 기록 저장 안내에 동의합니다.',
+        required=True,
+        error_messages={
+            'required': '개인정보 처리방침 및 접속 기록 저장 안내에 동의해 주세요.',
+        },
+    )
+
     class Meta:
         model = User
         fields = ('username', 'name', 'email', 'phone')

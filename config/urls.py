@@ -3,13 +3,14 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from core.views import home, ui_preview
+from core.views import home, privacy_policy, ui_preview
 from courses.views import short_course_redirect
 
 admin.site.index_template = 'admin/onedu_index.html'
 
 urlpatterns = [
     path('', home, name='home'),
+    path('privacy/', privacy_policy, name='privacy_policy'),
     path('c/<int:course_id>/', short_course_redirect, name='course_short_link'),
     path('ui-preview/', ui_preview, name='ui_preview'),
     path('admin/', admin.site.urls),

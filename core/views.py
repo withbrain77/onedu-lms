@@ -23,6 +23,10 @@ def home(request):
     )
 
 
+def privacy_policy(request):
+    return render(request, 'core/privacy_policy.html')
+
+
 @staff_member_required
 def ui_preview(request):
     return render(request, 'core/ui_preview.html')

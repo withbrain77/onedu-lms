@@ -37,6 +37,16 @@ class HomePageTests(TestCase):
         self.assertContains(response, reverse('accounts:login'))
         self.assertContains(response, reverse('accounts:signup'))
         self.assertContains(response, reverse('certificates:verify'))
+        self.assertContains(response, reverse('privacy_policy'))
+
+    def test_privacy_policy_is_public(self):
+        response = self.client.get(reverse('privacy_policy'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '개인정보 처리방침')
+        self.assertContains(response, '접속 기록')
+        self.assertContains(response, '부정 이용 방지')
+        self.assertContains(response, 'withbrain77@daum.net')
 
     def test_home_page_shows_two_recent_public_courses(self):
         old_course = Course.objects.create(
