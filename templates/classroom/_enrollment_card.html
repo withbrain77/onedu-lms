@@ -13,15 +13,15 @@
       {% endif %}
     </div>
     <div class="learning-card-body">
-      <div class="d-flex justify-content-between gap-2 mb-3">
+      <div class="learning-card-head d-flex justify-content-between gap-2 mb-3">
         <div>
           <div class="learning-card-label">나의 학습 과정</div>
           <h3 class="learning-card-title mb-0">{{ item.course.title }}</h3>
         </div>
         {% if item.enrollment.is_completed %}
-          <span class="badge text-bg-success flex-shrink-0">수료 완료</span>
+          <span class="badge text-bg-success flex-shrink-0 learning-status-badge">수료 완료</span>
         {% else %}
-          <span class="badge {{ item.status_class }} flex-shrink-0">{{ item.status_label }}</span>
+          <span class="badge {{ item.status_class }} flex-shrink-0 learning-status-badge">{{ item.status_label }}</span>
         {% endif %}
       </div>
       <dl class="learning-meta mb-3">

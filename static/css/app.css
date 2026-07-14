@@ -1574,12 +1574,28 @@ body {
   padding: 1.15rem;
 }
 
+.learning-card-head {
+  align-items: flex-start;
+}
+
 .learning-card-title {
   color: var(--onedu-ink);
   font-size: 1.08rem;
   font-weight: 850;
   line-height: 1.35;
   overflow-wrap: anywhere;
+}
+
+.learning-status-badge {
+  align-items: center;
+  align-self: flex-start;
+  display: inline-flex;
+  font-size: 0.74rem;
+  justify-content: center;
+  line-height: 1;
+  min-height: 1.75rem;
+  padding: 0.42rem 0.62rem;
+  white-space: nowrap;
 }
 
 .learning-meta,
