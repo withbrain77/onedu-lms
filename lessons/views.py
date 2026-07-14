@@ -9,6 +9,8 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from accounts.models import AccessLog
+from accounts.services import record_access_log
 from core.services.access import can_access_lesson
 from progress.models import WatchProgress
 
@@ -136,6 +138,7 @@ def lesson_detail(request, pk):
             lesson=lesson,
             defaults={'duration_seconds': lesson.duration_seconds},
         )
+    record_access_log(request, AccessLog.EventType.LESSON_VIEW, course=lesson.course, lesson=lesson)
 
     course_lessons = list(lesson.course.lessons.filter(is_public=True).order_by('order', 'id'))
     progress_by_lesson = {}
@@ -181,6 +184,7 @@ def lesson_detail(request, pk):
 @login_required
 def lesson_video(request, pk):
     lesson = _get_accessible_lesson_or_404(request.user, pk)
+    record_access_log(request, AccessLog.EventType.VIDEO_ACCESS, course=lesson.course, lesson=lesson)
 
     if not lesson.video_file:
         raise Http404('Video file not found')
@@ -193,6 +197,7 @@ def lesson_video(request, pk):
 @login_required
 def lesson_hls_playlist(request, pk):
     lesson = _get_accessible_lesson_or_404(request.user, pk)
+    record_access_log(request, AccessLog.EventType.HLS_PLAYLIST, course=lesson.course, lesson=lesson)
     playlist_path = _hls_playlist_path(lesson)
     playlist_text = playlist_path.read_text(encoding='utf-8')
     response = HttpResponse(
@@ -229,6 +234,7 @@ def lesson_hls_file(request, pk, filename):
 @login_required
 def lesson_attachment_download(request, pk, attachment_id):
     lesson = _get_accessible_lesson_or_404(request.user, pk)
+    record_access_log(request, AccessLog.EventType.ATTACHMENT_DOWNLOAD, course=lesson.course, lesson=lesson)
     attachment = get_object_or_404(
         LessonAttachment.objects.filter(lesson=lesson, is_public=True),
         pk=attachment_id,

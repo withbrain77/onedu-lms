@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import template
 from django.contrib.admin.models import LogEntry
 from django.db.models import Count, Q
@@ -5,7 +7,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 
-from accounts.models import User
+from accounts.models import AccessLog, User
 from certificates.models import Certificate
 from courses.models import Course
 from enrollments.models import Enrollment, ReEnrollmentRequest
@@ -16,6 +18,7 @@ register = template.Library()
 
 MODEL_LABELS = {
     ('accounts', 'user'): '사용자',
+    ('accounts', 'accesslog'): '접속 보안 로그',
     ('auth', 'group'): '그룹 및 권한',
     ('courses', 'course'): '강의',
     ('lessons', 'lesson'): '차시',
@@ -36,7 +39,7 @@ MENU_GROUPS = [
     {
         'title': '회원 관리',
         'icon': 'A',
-        'items': [('accounts', 'user'), ('auth', 'group')],
+        'items': [('accounts', 'user'), ('accounts', 'accesslog'), ('auth', 'group')],
     },
     {
         'title': '프로그램 관리',
@@ -258,6 +261,17 @@ def _build_stats(models):
             'url': models.get(('certificates', 'certificate'), {}).get('admin_url', ''),
             'icon': 'C',
         },
+        {
+            'label': '주의 접속',
+            'value': AccessLog.objects.filter(
+                is_suspicious=True,
+                created_at__gte=timezone.now() - timedelta(days=7),
+            ).count(),
+            'description': '최근 7일 다른 접속 환경 의심',
+            'url': (models.get(('accounts', 'accesslog'), {}).get('admin_url') or '') + '?is_suspicious__exact=1',
+            'icon': 'S',
+            'tone': 'warning',
+        },
     ]
     return stats
 
@@ -381,6 +395,17 @@ def _build_hls_summary(models):
     }
 
 
+def _build_access_log_summary(models):
+    access_log_url = models.get(('accounts', 'accesslog'), {}).get('admin_url', '')
+    suspicious_url = access_log_url + '?is_suspicious__exact=1' if access_log_url else ''
+    return {
+        'suspicious_count': _safe_count(AccessLog.objects.filter(is_suspicious=True)),
+        'recent_count': _safe_count(AccessLog.objects.filter(created_at__gte=timezone.now() - timedelta(days=1))),
+        'url': access_log_url,
+        'suspicious_url': suspicious_url,
+    }
+
+
 @register.simple_tag(takes_context=True)
 def onedu_admin_dashboard(context):
     request = context.get('request')
@@ -394,6 +419,7 @@ def onedu_admin_dashboard(context):
         'courses': _build_courses(models),
         'recent_activity': _build_recent_activity(),
         'hls': _build_hls_summary(models),
+        'access_logs': _build_access_log_summary(models),
         'reenrollment_pending_count': ReEnrollmentRequest.objects.filter(
             status=ReEnrollmentRequest.Status.PENDING
         ).count(),

@@ -31,7 +31,8 @@ from .forms import (
     StudentProfileForm,
     UsernameLookupForm,
 )
-from .models import User
+from .models import AccessLog, User
+from .services import record_access_log
 
 
 REMEMBER_USERNAME_COOKIE = 'onedu_remembered_username'
@@ -69,6 +70,7 @@ class LMSLoginView(LoginView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        record_access_log(self.request, AccessLog.EventType.LOGIN_SUCCESS)
         if form.cleaned_data.get('remember_username'):
             response.set_cookie(
                 REMEMBER_USERNAME_COOKIE,

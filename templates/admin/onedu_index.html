@@ -178,6 +178,10 @@
             <span class="onedu-admin-badge">{{ dashboard.reenrollment_pending_count }}</span>
             <strong>재수강 대기</strong>
           </a>
+          <a href="{{ dashboard.access_logs.suspicious_url|default:dashboard.access_logs.url|default:'#' }}">
+            <span class="onedu-admin-badge {% if dashboard.access_logs.suspicious_count %}is-warning{% endif %}">{{ dashboard.access_logs.suspicious_count }}</span>
+            <strong>접속 보안 확인</strong>
+          </a>
         </div>
       </section>
 

@@ -16,7 +16,7 @@ from django.utils import timezone
 from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 
-from accounts.models import User
+from accounts.models import AccessLog, User
 from courses.models import Course
 from enrollments.models import Enrollment
 
@@ -153,7 +153,48 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertEqual(file_response.status_code, 200)
         self.assertContains(page_response, self.video_url)
         self.assertContains(page_response, '1분 0초')
+        self.assertTrue(
+            AccessLog.objects.filter(
+                user=self.student,
+                event_type=AccessLog.EventType.LESSON_VIEW,
+                lesson_title=self.lesson.title,
+            ).exists()
+        )
+        self.assertTrue(
+            AccessLog.objects.filter(
+                user=self.student,
+                event_type=AccessLog.EventType.VIDEO_ACCESS,
+                lesson_title=self.lesson.title,
+            ).exists()
+        )
         file_response.close()
+
+    def test_lesson_access_log_marks_recent_other_environment_as_suspicious(self):
+        self.approve()
+        AccessLog.objects.create(
+            user=self.student,
+            event_type=AccessLog.EventType.LOGIN_SUCCESS,
+            ip_address='203.0.113.20',
+            user_agent='Other Browser',
+            device_summary='Other Device',
+            session_key='other-session',
+        )
+        self.client.force_login(self.student)
+
+        response = self.client.get(
+            self.watch_url,
+            HTTP_X_FORWARDED_FOR='198.51.100.30',
+            HTTP_USER_AGENT='Mozilla/5.0 Macintosh Safari/605.1',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        log = AccessLog.objects.filter(
+            user=self.student,
+            event_type=AccessLog.EventType.LESSON_VIEW,
+            lesson_title=self.lesson.title,
+        ).latest('created_at')
+        self.assertTrue(log.is_suspicious)
+        self.assertIn('다른 접속 환경', log.suspicious_reason)
 
     @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')
     def test_x_accel_redirect_header_can_be_used_for_private_video(self):

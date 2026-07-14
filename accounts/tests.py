@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.test.utils import override_settings
 
-from .models import User
+from .models import AccessLog, User
 from .views import REMEMBER_USERNAME_COOKIE
 
 
@@ -57,10 +57,15 @@ class LoginPageTests(TestCase):
                 'password': 'StrongPass12345!',
                 'remember_username': 'on',
             },
+            HTTP_X_FORWARDED_FOR='203.0.113.10',
+            HTTP_USER_AGENT='Mozilla/5.0 Windows Chrome/120.0',
         )
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.cookies[REMEMBER_USERNAME_COOKIE].value, 'student01')
+        log = AccessLog.objects.get(user__username='student01', event_type=AccessLog.EventType.LOGIN_SUCCESS)
+        self.assertEqual(log.ip_address, '203.0.113.10')
+        self.assertEqual(log.device_summary, 'Windows PC / Chrome')
 
     def test_successful_login_without_remembering_deletes_existing_username_cookie(self):
         User.objects.create_user(

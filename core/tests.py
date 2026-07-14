@@ -203,6 +203,8 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '운영 대시보드')
         self.assertContains(response, '빠른 작업')
         self.assertContains(response, '최근 활동')
+        self.assertContains(response, '주의 접속')
+        self.assertContains(response, '접속 보안 확인')
 
     def test_admin_model_pages_keep_operations_sidebar(self):
         admin_user = User.objects.create_superuser(
@@ -224,6 +226,7 @@ class AdminThemeTests(TestCase):
                 self.assertContains(response, 'onedu-admin-workspace')
                 self.assertContains(response, 'onedu-admin-sidebar')
                 self.assertContains(response, '운영 콘솔')
+                self.assertContains(response, '접속 보안 로그')
 
 
 class DeploymentConfigTests(TestCase):
