@@ -67,10 +67,10 @@ class WatchProgress(models.Model):
         watched_increment = max(int(watched_increment_seconds), 0)
         self.total_watched_seconds += watched_increment
         if self.duration_seconds:
-            self.total_watched_seconds = min(self.total_watched_seconds, self.duration_seconds)
             if self.last_position_seconds > self.duration_seconds:
                 self.last_position_seconds = self.duration_seconds
-            watched_percent = int((self.total_watched_seconds / self.duration_seconds) * 100)
+            progress_seconds = min(self.total_watched_seconds, self.duration_seconds)
+            watched_percent = int((progress_seconds / self.duration_seconds) * 100)
         else:
             watched_percent = 0
         self.progress_percent = min(watched_percent, 100)

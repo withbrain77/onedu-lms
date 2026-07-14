@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 
+from django.contrib.admin.sites import AdminSite
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -10,6 +11,7 @@ from courses.models import Course
 from enrollments.models import Enrollment
 from lessons.models import Lesson
 
+from .admin import WatchProgressAdmin
 from .models import WatchProgress
 
 
@@ -142,6 +144,24 @@ class SaveLessonProgressTests(TestCase):
         self.assertEqual(progress.progress_percent, 8)
         self.assertIsNone(progress.completed_at)
 
+    def test_total_watched_time_can_exceed_duration_for_rewatch_analysis(self):
+        enrollment = self.approve()
+        progress = WatchProgress.objects.create(
+            user=self.student,
+            enrollment=enrollment,
+            lesson=self.lesson,
+            duration_seconds=120,
+        )
+
+        progress.mark_position(120, duration_seconds=120, watched_increment_seconds=120, completed=True)
+        progress.mark_position(60, duration_seconds=120, watched_increment_seconds=330)
+        progress.save()
+
+        progress.refresh_from_db()
+        self.assertEqual(progress.total_watched_seconds, 450)
+        self.assertEqual(progress.progress_percent, 100)
+        self.assertTrue(progress.is_completed)
+
     def test_requested_student_cannot_save_progress(self):
         Enrollment.objects.create(user=self.student, course=self.course)
 
@@ -174,3 +194,57 @@ class SaveLessonProgressTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(WatchProgress.objects.exists())
+
+
+class WatchProgressAdminDisplayTests(TestCase):
+    def setUp(self):
+        self.today = timezone.localdate()
+        self.student = User.objects.create_user(
+            username='admin_progress_student',
+            password='pass12345',
+            name='Admin Progress Student',
+        )
+        self.course = Course.objects.create(title='Admin Progress Course', is_public=True)
+        self.lesson = Lesson.objects.create(
+            course=self.course,
+            title='Admin Progress Lesson',
+            order=1,
+            duration_seconds=5280,
+            is_public=True,
+        )
+        self.enrollment = Enrollment.objects.create(
+            user=self.student,
+            course=self.course,
+            status=Enrollment.Status.APPROVED,
+            start_date=self.today - timedelta(days=1),
+            end_date=self.today + timedelta(days=7),
+        )
+        self.admin = WatchProgressAdmin(WatchProgress, AdminSite())
+
+    def test_admin_displays_time_values_as_human_readable_duration_and_multiplier(self):
+        progress = WatchProgress.objects.create(
+            user=self.student,
+            enrollment=self.enrollment,
+            lesson=self.lesson,
+            duration_seconds=5280,
+            total_watched_seconds=4224,
+            last_position_seconds=4224,
+            progress_percent=80,
+        )
+
+        self.assertIn('1시간 10분 24초', str(self.admin.total_watched_display(progress)))
+        self.assertIn('(0.8배)', str(self.admin.total_watched_display(progress)))
+        self.assertEqual(self.admin.last_position_display(progress), '1시간 10분 24초')
+
+    def test_admin_multiplier_can_show_repeat_viewing_above_one(self):
+        progress = WatchProgress.objects.create(
+            user=self.student,
+            enrollment=self.enrollment,
+            lesson=self.lesson,
+            duration_seconds=5280,
+            total_watched_seconds=19536,
+            last_position_seconds=5280,
+            progress_percent=100,
+        )
+
+        self.assertIn('(3.7배)', str(self.admin.total_watched_display(progress)))
