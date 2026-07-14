@@ -184,3 +184,19 @@ powershell -ExecutionPolicy Bypass -File .\deploy\onedu-remote.ps1 hls-status
 6. 영향 범위에 따라 `python manage.py test`
 7. 커밋 및 `git push`
 8. 운영 반영이 필요하면 `deploy/onedu-remote.ps1 deploy`
+
+## 다음 대화에서 이렇게 요청하면 된다
+
+사용자가 다음 세션에서 프로젝트 맥락을 다시 확인하고 싶으면 아래처럼 말하면 된다.
+
+```text
+docs/14-project-memory.md 문서 읽고 현재 ONEDU LMS 프로젝트 상태를 요약해줘.
+```
+
+더 짧게는 아래처럼 말해도 된다.
+
+```text
+프로젝트 메모 읽고 이어서 작업하자.
+```
+
+이 요청을 받으면 먼저 `docs/14-project-memory.md`를 읽고, 현재 저장소 상태와 최근 커밋을 확인한 뒤 이어서 작업한다.
