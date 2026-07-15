@@ -79,6 +79,21 @@ class MVPFlowViewTests(TestCase):
 
         self.assertRedirects(response, self.course.get_absolute_url(), fetch_redirect_response=False)
 
+    def test_staff_can_preview_classroom_course_detail_without_enrollment(self):
+        admin_user = User.objects.create_superuser(
+            username='course_admin',
+            password='pass12345',
+            email='admin@example.com',
+            name='관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('enrollments:course_detail', kwargs={'course_id': self.course.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '관리자 미리보기로 접속 중입니다.')
+        self.assertContains(response, self.lesson.title)
+
     def test_short_course_link_ignores_private_courses(self):
         private_course = Course.objects.create(
             title='비공개 강의',

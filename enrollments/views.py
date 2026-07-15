@@ -148,14 +148,20 @@ def classroom_course_detail(request, course_id):
         )
 
     enrollment = access_result.enrollment
-    completion_status = evaluate_enrollment_completion(enrollment)
     lessons = list(course.lessons.filter(is_public=True).order_by('order'))
     progress_by_lesson = {}
     if enrollment:
+        completion_status = evaluate_enrollment_completion(enrollment)
         progress_by_lesson = {
             progress.lesson_id: progress
             for progress in WatchProgress.objects.filter(enrollment=enrollment, lesson__in=lessons)
         }
+        progress_percent = completion_status['progress_percent'] if completion_status else 0
+        quiz_items = get_course_quiz_items(request.user, course)
+    else:
+        completion_status = None
+        progress_percent = 0
+        quiz_items = []
 
     lesson_items = [
         {
@@ -173,8 +179,8 @@ def classroom_course_detail(request, course_id):
             'enrollment': enrollment,
             'access': access_result,
             'lesson_items': lesson_items,
-            'progress_percent': completion_status['progress_percent'] if completion_status else 0,
-            'quiz_items': get_course_quiz_items(request.user, course),
+            'progress_percent': progress_percent,
+            'quiz_items': quiz_items,
             'completion_status': completion_status,
         },
     )
