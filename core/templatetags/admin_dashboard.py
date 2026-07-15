@@ -127,6 +127,10 @@ def _build_menu(request, app_list, models):
         mobile_ops_url = reverse('admin_mobile_ops')
     except NoReverseMatch:
         mobile_ops_url = ''
+    try:
+        server_ops_url = reverse('admin_server_ops')
+    except NoReverseMatch:
+        server_ops_url = ''
     sections = [
         {
             'title': '대시보드',
@@ -156,6 +160,24 @@ def _build_menu(request, app_list, models):
                         'url': mobile_ops_url,
                         'add_url': '',
                         'is_active': mobile_ops_active,
+                        'can_add': False,
+                    }
+                ],
+            }
+        )
+    if server_ops_url:
+        server_ops_active = current_path.rstrip('/') == server_ops_url.rstrip('/')
+        sections.append(
+            {
+                'title': '서버 관리',
+                'icon': 'S',
+                'is_active': server_ops_active,
+                'items': [
+                    {
+                        'label': '서버 상태',
+                        'url': server_ops_url,
+                        'add_url': '',
+                        'is_active': server_ops_active,
                         'can_add': False,
                     }
                 ],

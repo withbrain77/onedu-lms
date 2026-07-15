@@ -1,0 +1,209 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}{{ block.super }} onedu-admin-dashboard-page onedu-admin-server-ops-page{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs onedu-admin-breadcrumbs">
+  <a href="{% url 'admin:index' %}">홈</a>
+  <span>›</span>
+  <span>서버 관리</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="onedu-admin-main onedu-server-ops">
+  <header class="onedu-admin-hero">
+    <div>
+      <p class="onedu-admin-kicker">SERVER MANAGEMENT</p>
+      <h1>서버 관리</h1>
+      <p>도메인, 저장소, 작업 큐, 영상 트래픽 흐름을 운영 관점에서 확인합니다.</p>
+    </div>
+    <div class="onedu-admin-hero__actions">
+      <span class="onedu-admin-status-pill is-{{ status.overall_tone }}">{{ status.overall_label }}</span>
+      <a class="button" href="{{ links.dashboard }}">대시보드</a>
+      <a class="button" href="{{ links.mobile }}">모바일 운영</a>
+      <a class="button" href="{{ request.path }}">새로고침</a>
+    </div>
+  </header>
+
+  <section class="onedu-admin-stats" aria-label="서버 운영 요약">
+    <div class="onedu-admin-stat is-{{ status.overall_tone }}">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">S</span>
+      <span class="onedu-admin-stat__body">
+        <span>전체 상태</span>
+        <strong>{{ status.overall_label }}</strong>
+        <small>{{ status.checked_at|date:"Y-m-d H:i:s" }} 기준</small>
+      </span>
+    </div>
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">A</span>
+      <span class="onedu-admin-stat__body">
+        <span>오늘 접속 기록</span>
+        <strong>{{ status.traffic.today_access_count }}</strong>
+        <small>최근 15분 {{ status.traffic.recent_access_count }}건</small>
+      </span>
+    </div>
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">U</span>
+      <span class="onedu-admin-stat__body">
+        <span>오늘 이용자</span>
+        <strong>{{ status.traffic.today_unique_users }}</strong>
+        <small>IP {{ status.traffic.today_unique_ips }}개</small>
+      </span>
+    </div>
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">V</span>
+      <span class="onedu-admin-stat__body">
+        <span>오늘 영상 시작</span>
+        <strong>{{ status.traffic.today_hls_starts }}</strong>
+        <small>영상 접근 {{ status.traffic.today_video_accesses }}건</small>
+      </span>
+    </div>
+    <div class="onedu-admin-stat {% if status.app.hls_failed %}is-warning{% endif %}">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">H</span>
+      <span class="onedu-admin-stat__body">
+        <span>HLS 작업</span>
+        <strong>{{ status.app.hls_running }}</strong>
+        <small>대기 {{ status.app.hls_pending }} · 실패 {{ status.app.hls_failed }}</small>
+      </span>
+    </div>
+    <div class="onedu-admin-stat {% if status.app.email_failed_24h %}is-warning{% endif %}">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">M</span>
+      <span class="onedu-admin-stat__body">
+        <span>메일 실패</span>
+        <strong>{{ status.app.email_failed_24h }}</strong>
+        <small>최근 24시간 기준</small>
+      </span>
+    </div>
+  </section>
+
+  <div class="onedu-admin-grid">
+    <section class="onedu-admin-card onedu-admin-card--wide" aria-labelledby="serverWarningTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">WARNINGS</p>
+          <h2 id="serverWarningTitle">운영 경고</h2>
+        </div>
+      </div>
+      <div class="onedu-server-warning-list">
+        {% for warning in status.warnings %}
+          <div class="onedu-server-warning is-{{ warning.tone }}">
+            <span aria-hidden="true">{% if warning.tone == 'danger' %}!{% elif warning.tone == 'warning' %}!{% else %}✓{% endif %}</span>
+            <strong>{{ warning.message }}</strong>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="onedu-admin-card" aria-labelledby="networkTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">NETWORK</p>
+          <h2 id="networkTitle">도메인 / IP</h2>
+        </div>
+        <span class="onedu-admin-badge {% if status.network.mismatch %}is-danger{% else %}is-success{% endif %}">
+          {% if status.network.mismatch %}불일치{% else %}확인{% endif %}
+        </span>
+      </div>
+      <div class="onedu-server-kv">
+        <div><span>도메인</span><strong>{{ status.network.domain }}</strong></div>
+        <div><span>DNS IP</span><strong>{{ status.network.dns_ips|join:", "|default:"-" }}</strong></div>
+        <div><span>현재 공인 IP</span><strong>{{ status.network.public_ip|default:"미확인" }}</strong></div>
+        <div><span>컨테이너 내부 IP</span><strong>{{ status.network.local_ip|default:"-" }}</strong></div>
+        <div><span>사이트 URL</span><strong>{{ status.network.site_url|default:"-" }}</strong></div>
+      </div>
+      <div class="onedu-admin-card__foot">
+        <p>{{ status.network.summary }}{% if status.network.public_ip_error %} {{ status.network.public_ip_error }}{% endif %}</p>
+      </div>
+    </section>
+
+    <section class="onedu-admin-card" aria-labelledby="serviceTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">SERVICES</p>
+          <h2 id="serviceTitle">서비스 상태</h2>
+        </div>
+      </div>
+      <div class="onedu-admin-ops-list">
+        {% for service in status.services %}
+          <div class="onedu-server-service is-{{ service.tone }}">
+            <span class="onedu-admin-badge {% if service.tone == 'danger' %}is-danger{% elif service.tone == 'warning' %}is-warning{% else %}is-success{% endif %}">{{ service.code }}</span>
+            <strong>{{ service.label }}</strong>
+            <small>{{ service.status_label }} · {{ service.detail }}</small>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="onedu-admin-card onedu-admin-card--wide" aria-labelledby="storageTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">STORAGE</p>
+          <h2 id="storageTitle">저장소 사용량</h2>
+        </div>
+      </div>
+      <div class="onedu-server-storage-list">
+        {% for disk in status.storage %}
+          <div class="onedu-server-storage is-{{ disk.tone }}">
+            <div>
+              <strong>{{ disk.label }}</strong>
+              <span>{{ disk.path }}</span>
+            </div>
+            <div class="onedu-server-meter" aria-label="{{ disk.label }} 사용량 {{ disk.used_percent }}%">
+              <span style="width: {{ disk.used_percent }}%"></span>
+            </div>
+            <div class="onedu-server-storage__meta">
+              <span>{{ disk.used_percent }}%</span>
+              <span>{{ disk.used_label }} / {{ disk.total_label }}</span>
+              <span>남음 {{ disk.free_label }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="onedu-admin-card" aria-labelledby="trafficTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">TRAFFIC</p>
+          <h2 id="trafficTitle">트래픽 지표</h2>
+        </div>
+      </div>
+      <div class="onedu-server-kv">
+        <div><span>최근 24시간 접속</span><strong>{{ status.traffic.last_24h_access_count }}건</strong></div>
+        <div><span>오늘 영상 시작</span><strong>{{ status.traffic.today_hls_starts }}건</strong></div>
+        <div><span>오늘 자료 다운로드</span><strong>{{ status.traffic.today_downloads }}건</strong></div>
+        <div><span>현재 수강 중</span><strong>{{ status.app.active_enrollments }}건</strong></div>
+        <div><span>접속 보안 주의</span><strong>{{ status.app.suspicious_24h }}건</strong></div>
+      </div>
+      <div class="onedu-admin-card__foot">
+        <p>{{ status.traffic.note }}</p>
+      </div>
+    </section>
+
+    <section class="onedu-admin-card onedu-admin-card--full" aria-labelledby="opsLinkTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">NEXT ACTIONS</p>
+          <h2 id="opsLinkTitle">바로 확인할 항목</h2>
+        </div>
+      </div>
+      <div class="onedu-admin-quick-actions">
+        <a href="{{ links.hls }}?status__exact=failed">
+          <strong>HLS 실패 작업</strong>
+          <span>영상 변환 실패나 장시간 대기 작업을 확인합니다.</span>
+        </a>
+        <a href="{{ links.email_logs }}?status__exact=failed">
+          <strong>메일 발송 실패</strong>
+          <span>수강 신청, 승인, 만료 알림 메일 실패를 확인합니다.</span>
+        </a>
+        <a href="{{ links.access_logs }}?is_suspicious__exact=1">
+          <strong>접속 보안 주의</strong>
+          <span>동일 계정의 다른 접속 환경 의심 기록을 확인합니다.</span>
+        </a>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -7,6 +7,24 @@ from accounts.models import AccessLog
 from enrollments.models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 from lessons.models import HLSConversionJob, LessonAttachmentDownload
 
+from .server_status import build_server_status
+
+
+@staff_member_required
+def server_operations(request):
+    context = {
+        'title': '서버 관리',
+        'status': build_server_status(request),
+        'links': {
+            'dashboard': reverse('admin:index'),
+            'mobile': reverse('admin_mobile_ops'),
+            'access_logs': reverse('admin:accounts_accesslog_changelist'),
+            'hls': reverse('admin:lessons_hlsconversionjob_changelist'),
+            'email_logs': reverse('admin:enrollments_emaildeliverylog_changelist'),
+        },
+    }
+    return render(request, 'admin/server_operations.html', context)
+
 
 @staff_member_required
 def mobile_operations(request):

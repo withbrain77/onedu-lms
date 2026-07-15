@@ -28,6 +28,13 @@ def env_int(name, default=0):
     return int(value)
 
 
+def env_float(name, default=0.0):
+    value = os.getenv(name)
+    if value is None or value == '':
+        return default
+    return float(value)
+
+
 def env_list(*names):
     for name in names:
         raw_value = os.getenv(name)
@@ -240,6 +247,9 @@ ONEDU_DEPOSIT_NOTICE = {
 }
 ONEDU_ACCESS_LOG_ENABLED = env_bool('ONEDU_ACCESS_LOG_ENABLED', True)
 ONEDU_ACCESS_LOG_CONCURRENCY_WINDOW_MINUTES = env_int('ONEDU_ACCESS_LOG_CONCURRENCY_WINDOW_MINUTES', 15)
+ONEDU_SERVER_STATUS_DOMAIN = os.getenv('ONEDU_SERVER_STATUS_DOMAIN', '').strip()
+ONEDU_PUBLIC_IP_CHECK_URL = os.getenv('ONEDU_PUBLIC_IP_CHECK_URL', '').strip()
+ONEDU_SERVER_STATUS_TIMEOUT_SECONDS = env_float('ONEDU_SERVER_STATUS_TIMEOUT_SECONDS', 1.0)
 
 SESSION_COOKIE_SECURE = env_bool('DJANGO_SESSION_COOKIE_SECURE', not DEBUG)
 CSRF_COOKIE_SECURE = env_bool('DJANGO_CSRF_COOKIE_SECURE', not DEBUG)

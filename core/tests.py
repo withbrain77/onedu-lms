@@ -206,8 +206,10 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '주의 접속')
         self.assertContains(response, '접속 보안 확인')
         self.assertContains(response, reverse('admin_mobile_ops'))
+        self.assertContains(response, reverse('admin_server_ops'))
         self.assertContains(response, '메일 발송 실패')
         self.assertContains(response, '오늘 자료 다운로드')
+        self.assertContains(response, '서버 관리')
         self.assertContains(response, 'onedu-admin-menu-direct')
         self.assertNotContains(response, '운영 현황')
 
@@ -249,6 +251,31 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '수강 승인 대기')
         self.assertContains(response, '메일 확인 필요')
         self.assertContains(response, '최근 자료 다운로드')
+
+    def test_staff_can_open_server_operations_page(self):
+        admin_user = User.objects.create_superuser(
+            username='server_admin',
+            password='pass12345',
+            email='server-admin@example.com',
+            name='서버 관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin_server_ops'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '서버 관리')
+        self.assertContains(response, '도메인 / IP')
+        self.assertContains(response, '서비스 상태')
+        self.assertContains(response, '저장소 사용량')
+        self.assertContains(response, '트래픽 지표')
+        self.assertContains(response, 'HLS 작업')
+
+    def test_server_operations_requires_staff_login(self):
+        response = self.client.get(reverse('admin_server_ops'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('admin:login'), response['Location'])
 
     def test_staff_can_open_student_learning_report(self):
         admin_user = User.objects.create_superuser(

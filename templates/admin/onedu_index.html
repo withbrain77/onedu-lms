@@ -23,6 +23,7 @@
       </div>
       <div class="onedu-admin-hero__actions">
         <span class="onedu-admin-user-chip">{{ request.user.get_username }}</span>
+        <a class="button" href="{% url 'admin_server_ops' %}">서버 관리</a>
         <a class="button" href="{% url 'admin_mobile_ops' %}">모바일 운영</a>
         <a class="button" href="/">사이트 보기</a>
         {% if dashboard.pending_enrollments.url %}
@@ -190,6 +191,10 @@
           <a href="{{ dashboard.downloads.url|default:'#' }}">
             <span class="onedu-admin-badge">{{ dashboard.downloads.recent_count }}</span>
             <strong>오늘 자료 다운로드</strong>
+          </a>
+          <a href="{% url 'admin_server_ops' %}">
+            <span class="onedu-admin-badge">S</span>
+            <strong>서버 관리</strong>
           </a>
         </div>
       </section>
