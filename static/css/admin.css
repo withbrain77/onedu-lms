@@ -2280,3 +2280,87 @@ body.onedu-admin-workspace #content {
     justify-content: flex-start;
   }
 }
+
+.onedu-report-summary {
+  border-bottom: 1px solid var(--dash-border);
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.onedu-report-summary div {
+  border-right: 1px solid var(--dash-border);
+  border-top: 1px solid var(--dash-border);
+  min-width: 0;
+  padding: 16px 18px;
+}
+
+.onedu-report-summary div:nth-child(3n) {
+  border-right: 0;
+}
+
+.onedu-report-summary span {
+  color: var(--dash-muted);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 850;
+  margin-bottom: 5px;
+}
+
+.onedu-report-summary strong {
+  color: var(--dash-ink);
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 950;
+}
+
+.onedu-report-summary small {
+  color: var(--dash-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.onedu-admin-empty.is-success {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #14532d;
+}
+
+.onedu-mobile-ops-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.onedu-mobile-ops .onedu-admin-card {
+  min-width: 0;
+}
+
+.onedu-mobile-ops .onedu-admin-ops-list a {
+  align-items: flex-start;
+}
+
+.onedu-mobile-ops .onedu-admin-ops-list small {
+  color: var(--dash-muted);
+  display: block;
+  font-weight: 750;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+
+@media (max-width: 1120px) {
+  .onedu-mobile-ops-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .onedu-report-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .onedu-report-summary div,
+  .onedu-report-summary div:nth-child(3n) {
+    border-right: 0;
+  }
+}

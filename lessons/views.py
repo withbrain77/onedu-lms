@@ -10,11 +10,11 @@ from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from accounts.models import AccessLog
-from accounts.services import record_access_log
+from accounts.services import get_client_ip, record_access_log, summarize_user_agent
 from core.services.access import can_access_lesson
 from progress.models import WatchProgress
 
-from .models import Lesson, LessonAttachment
+from .models import Lesson, LessonAttachment, LessonAttachmentDownload
 from .services.pdf_watermark import PDFWatermarkError, render_watermarked_pdf
 
 
@@ -79,6 +79,21 @@ def _protected_stream_response(stream, content_type, filename, disposition='atta
     response['Cache-Control'] = 'private, no-store'
     response['X-Content-Type-Options'] = 'nosniff'
     return response
+
+
+def _record_attachment_download(request, attachment):
+    user_agent = (request.META.get('HTTP_USER_AGENT', '') or '')[:1000]
+    LessonAttachmentDownload.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        attachment=attachment,
+        lesson=attachment.lesson,
+        course=attachment.lesson.course,
+        attachment_title=attachment.title,
+        filename=attachment.filename,
+        ip_address=get_client_ip(request),
+        user_agent=user_agent,
+        device_summary=summarize_user_agent(user_agent),
+    )
 
 
 def _get_accessible_lesson_or_404(user, pk):
@@ -250,10 +265,12 @@ def lesson_attachment_download(request, pk, attachment_id):
             watermarked_pdf = render_watermarked_pdf(file_path, request.user)
         except PDFWatermarkError:
             raise Http404('Attachment file not found')
+        _record_attachment_download(request, attachment)
         return _protected_stream_response(
             watermarked_pdf,
             'application/pdf',
             attachment.filename,
             disposition='attachment',
         )
+    _record_attachment_download(request, attachment)
     return _protected_file_response(file_path, content_type, attachment.filename, disposition='attachment')

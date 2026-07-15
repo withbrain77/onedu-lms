@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from courses.models import Course
-from enrollments.models import Enrollment
+from enrollments.models import EmailDeliveryLog, Enrollment
 from lessons.models import Lesson
 
 
@@ -154,6 +154,10 @@ class MVPFlowViewTests(TestCase):
         self.assertIn(self.course.title, message.body)
         self.assertIn(self.student.username, message.body)
         self.assertIn('https://onedu.withbrain.kr/admin/enrollments/enrollment/', message.body)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ENROLLMENT_REQUEST)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.SENT)
+        self.assertEqual(log.recipient_email, 'admin@example.com')
+        self.assertEqual(log.course_title, self.course.title)
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',

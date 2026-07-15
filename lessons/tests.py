@@ -21,7 +21,7 @@ from courses.models import Course
 from enrollments.models import Enrollment
 
 from .forms import LessonAdminForm, list_server_video_files, validate_server_video_file
-from .models import HLSConversionJob, Lesson, LessonAttachment
+from .models import HLSConversionJob, Lesson, LessonAttachment, LessonAttachmentDownload
 from .templatetags.lesson_time import duration_hms
 
 
@@ -260,12 +260,22 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.approve()
         self.client.force_login(self.student)
 
-        response = self.client.get(attachment.get_download_url())
+        response = self.client.get(
+            attachment.get_download_url(),
+            HTTP_X_FORWARDED_FOR='203.0.113.21',
+            HTTP_USER_AGENT='Mozilla/5.0 Windows Chrome/120.0',
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Disposition'].startswith('attachment;'))
         self.assertIn("filename*=UTF-8''", response['Content-Disposition'])
         self.assertEqual(response['Cache-Control'], 'private, no-store')
+        download = LessonAttachmentDownload.objects.get(attachment=attachment)
+        self.assertEqual(download.user, self.student)
+        self.assertEqual(download.attachment_title, attachment.title)
+        self.assertEqual(download.filename, '강의자료.pdf')
+        self.assertEqual(download.ip_address, '203.0.113.21')
+        self.assertEqual(download.device_summary, 'Windows PC / Chrome')
         response.close()
 
     @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')

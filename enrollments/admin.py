@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Enrollment, ReEnrollmentRequest
+from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 from .notifications import notify_enrollment_approved
 
 
@@ -129,3 +129,55 @@ class ReEnrollmentRequestAdmin(admin.ModelAdmin):
             if not obj.processed_by_id:
                 obj.processed_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(EmailDeliveryLog)
+class EmailDeliveryLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'created_at',
+        'kind',
+        'status',
+        'recipient_email',
+        'user_label',
+        'course_title',
+        'subject',
+        'sent_at',
+    )
+    list_filter = ('kind', 'status', 'created_at', 'sent_at')
+    search_fields = (
+        'recipient_email',
+        'subject',
+        'user_label',
+        'course_title',
+        'error_message',
+        'enrollment__user__username',
+        'enrollment__user__name',
+        'enrollment__course__title',
+    )
+    readonly_fields = (
+        'enrollment',
+        'kind',
+        'status',
+        'recipient_email',
+        'subject',
+        'user_id_value',
+        'user_label',
+        'course_id_value',
+        'course_title',
+        'error_message',
+        'sent_at',
+        'created_at',
+    )
+    fieldsets = (
+        ('메일 정보', {'fields': ('kind', 'status', 'recipient_email', 'subject')}),
+        ('관련 수강', {'fields': ('enrollment', 'user_id_value', 'user_label', 'course_id_value', 'course_title')}),
+        ('결과', {'fields': ('sent_at', 'error_message')}),
+        ('기록', {'fields': ('created_at',)}),
+    )
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)
+    list_select_related = ('enrollment', 'enrollment__user', 'enrollment__course')
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False

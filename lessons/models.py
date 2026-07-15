@@ -93,6 +93,62 @@ class LessonAttachment(models.Model):
         return Path(self.file.name).name
 
 
+class LessonAttachmentDownload(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='수강생',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lesson_attachment_downloads',
+    )
+    attachment = models.ForeignKey(
+        LessonAttachment,
+        verbose_name='학습 자료',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='download_logs',
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        verbose_name='차시',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='attachment_download_logs',
+    )
+    course = models.ForeignKey(
+        'courses.Course',
+        verbose_name='강의',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='attachment_download_logs',
+    )
+    attachment_title = models.CharField('자료명', max_length=200, blank=True)
+    filename = models.CharField('파일명', max_length=255, blank=True)
+    ip_address = models.GenericIPAddressField('IP 주소', blank=True, null=True)
+    user_agent = models.TextField('브라우저 원문', blank=True)
+    device_summary = models.CharField('기기 정보', max_length=160, blank=True)
+    downloaded_at = models.DateTimeField('다운로드 일시', auto_now_add=True)
+
+    class Meta:
+        verbose_name = '학습 자료 다운로드 이력'
+        verbose_name_plural = '학습 자료 다운로드 이력'
+        ordering = ['-downloaded_at']
+        indexes = [
+            models.Index(fields=['user', '-downloaded_at']),
+            models.Index(fields=['attachment', '-downloaded_at']),
+            models.Index(fields=['course', '-downloaded_at']),
+            models.Index(fields=['ip_address', '-downloaded_at']),
+        ]
+
+    def __str__(self):
+        user_label = self.user.display_name if self.user_id else '알 수 없는 사용자'
+        return f'{user_label} - {self.attachment_title or self.filename}'
+
+
 class HLSConversionJob(models.Model):
     class Status(models.TextChoices):
         PENDING = 'pending', '대기 중'

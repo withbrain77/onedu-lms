@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Enrollment
+from .models import EmailDeliveryLog, Enrollment
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,33 @@ def _price_label(course):
     return f'{course.price_krw:,}원'
 
 
+def _record_email_log(kind, enrollment, recipients, subject, status, error_message=''):
+    recipients = recipients or []
+    if isinstance(recipients, str):
+        recipient_label = recipients
+    else:
+        recipient_label = ', '.join([item for item in recipients if item])
+    sent_at = timezone.now() if status == EmailDeliveryLog.Status.SENT else None
+    user = getattr(enrollment, 'user', None)
+    course = getattr(enrollment, 'course', None)
+    try:
+        EmailDeliveryLog.objects.create(
+            enrollment=enrollment,
+            kind=kind,
+            status=status,
+            recipient_email=recipient_label[:500],
+            subject=(subject or '')[:255],
+            user_id_value=user.pk if user else None,
+            user_label=f'{user.display_name} ({user.username})' if user else '',
+            course_id_value=course.pk if course else None,
+            course_title=course.title if course else '',
+            error_message=error_message,
+            sent_at=sent_at,
+        )
+    except Exception:
+        logger.exception('Failed to record ONEDU email delivery log.')
+
+
 def notify_enrollment_request(enrollment):
     if not getattr(settings, 'ONEDU_NOTIFY_ENROLLMENT_REQUEST', True):
         return False
@@ -49,8 +76,17 @@ def notify_enrollment_request(enrollment):
         return False
 
     recipients = _notification_recipients()
+    subject = '[ONEDU] 새 수강 신청이 접수되었습니다'
     if not recipients:
         logger.warning('Enrollment request notification skipped because no admin recipient email is configured.')
+        _record_email_log(
+            EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
+            enrollment,
+            [],
+            subject,
+            EmailDeliveryLog.Status.SKIPPED,
+            '관리자 알림 수신자 이메일이 설정되어 있지 않습니다.',
+        )
         return False
 
     requested_at = timezone.localtime(enrollment.created_at).strftime('%Y-%m-%d %H:%M')
@@ -58,7 +94,6 @@ def notify_enrollment_request(enrollment):
     user = enrollment.user
     course = enrollment.course
 
-    subject = '[ONEDU] 새 수강 신청이 접수되었습니다'
     message = (
         '새 수강 신청이 접수되었습니다.\n\n'
         f'수강생: {user.display_name} ({user.username})\n'
@@ -79,8 +114,23 @@ def notify_enrollment_request(enrollment):
         )
     except Exception:
         logger.exception('Failed to send enrollment request notification email.')
+        _record_email_log(
+            EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
+            enrollment,
+            recipients,
+            subject,
+            EmailDeliveryLog.Status.FAILED,
+            '메일 발송 중 오류가 발생했습니다. 서버 로그를 확인해 주세요.',
+        )
         return False
 
+    _record_email_log(
+        EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
+        enrollment,
+        recipients,
+        subject,
+        EmailDeliveryLog.Status.SENT,
+    )
     return True
 
 
@@ -91,10 +141,19 @@ def notify_enrollment_approved(enrollment):
         return False
 
     recipient = (enrollment.user.email or '').strip()
+    subject = '[ONEDU] 수강 신청이 승인되었습니다'
     if not recipient:
         logger.warning(
             'Enrollment approval notification skipped because student %s has no email address.',
             enrollment.user_id,
+        )
+        _record_email_log(
+            EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL,
+            enrollment,
+            [],
+            subject,
+            EmailDeliveryLog.Status.SKIPPED,
+            '수강생 이메일 주소가 비어 있습니다.',
         )
         return False
 
@@ -108,7 +167,6 @@ def notify_enrollment_approved(enrollment):
     else:
         period = '관리자가 별도로 안내하거나 추후 배정'
 
-    subject = '[ONEDU] 수강 신청이 승인되었습니다'
     message = (
         f'안녕하세요, {user.display_name}님.\n\n'
         '수강 신청이 승인되었습니다.\n\n'
@@ -131,8 +189,23 @@ def notify_enrollment_approved(enrollment):
         )
     except Exception:
         logger.exception('Failed to send enrollment approval notification email.')
+        _record_email_log(
+            EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL,
+            enrollment,
+            [recipient],
+            subject,
+            EmailDeliveryLog.Status.FAILED,
+            '메일 발송 중 오류가 발생했습니다. 서버 로그를 확인해 주세요.',
+        )
         return False
 
+    _record_email_log(
+        EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL,
+        enrollment,
+        [recipient],
+        subject,
+        EmailDeliveryLog.Status.SENT,
+    )
     return True
 
 
@@ -147,10 +220,19 @@ def notify_enrollment_expiry_7d(enrollment):
         return False
 
     recipient = (enrollment.user.email or '').strip()
+    subject = '[ONEDU] 수강 기간 종료 7일 전 안내'
     if not recipient:
         logger.warning(
             'Enrollment expiry notification skipped because student %s has no email address.',
             enrollment.user_id,
+        )
+        _record_email_log(
+            EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D,
+            enrollment,
+            [],
+            subject,
+            EmailDeliveryLog.Status.SKIPPED,
+            '수강생 이메일 주소가 비어 있습니다.',
         )
         return False
 
@@ -159,7 +241,6 @@ def notify_enrollment_expiry_7d(enrollment):
     user = enrollment.user
     course = enrollment.course
 
-    subject = '[ONEDU] 수강 기간 종료 7일 전 안내'
     message = (
         f'안녕하세요, {user.display_name}님.\n\n'
         '수강 중인 강의의 수강 기간이 7일 후 종료됩니다.\n\n'
@@ -182,6 +263,21 @@ def notify_enrollment_expiry_7d(enrollment):
         )
     except Exception:
         logger.exception('Failed to send enrollment expiry notification email.')
+        _record_email_log(
+            EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D,
+            enrollment,
+            [recipient],
+            subject,
+            EmailDeliveryLog.Status.FAILED,
+            '메일 발송 중 오류가 발생했습니다. 서버 로그를 확인해 주세요.',
+        )
         return False
 
+    _record_email_log(
+        EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D,
+        enrollment,
+        [recipient],
+        subject,
+        EmailDeliveryLog.Status.SENT,
+    )
     return True

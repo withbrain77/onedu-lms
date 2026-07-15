@@ -1,0 +1,187 @@
+{% extends "admin/base_site.html" %}
+{% load i18n lesson_time %}
+
+{% block bodyclass %}{{ block.super }} onedu-admin-dashboard-page onedu-admin-report-page{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs onedu-admin-breadcrumbs">
+  <a href="{% url 'admin:index' %}">홈</a>
+  <span>›</span>
+  <a href="{% url 'admin:accounts_user_changelist' %}">사용자</a>
+  <span>›</span>
+  <span>학습 리포트</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="onedu-admin-main">
+  <header class="onedu-admin-hero">
+    <div>
+      <p class="onedu-admin-kicker">STUDENT REPORT</p>
+      <h1>{{ student.display_name }} 학습 리포트</h1>
+      <p>{{ student.username }}{% if student.email %} · {{ student.email }}{% endif %}</p>
+    </div>
+    <div class="onedu-admin-hero__actions">
+      <a class="button" href="{% url 'admin:accounts_user_change' student.pk %}">사용자 정보</a>
+      <a class="button" href="{% url 'admin:enrollments_enrollment_changelist' %}?q={{ student.username|urlencode }}">수강 이력</a>
+    </div>
+  </header>
+
+  <section class="onedu-admin-stats" aria-label="수강생 요약">
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">E</span>
+      <span class="onedu-admin-stat__body"><span>전체 수강</span><strong>{{ report.summary.enrollment_count }}</strong><small>신청 및 수강 기록</small></span>
+    </div>
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">L</span>
+      <span class="onedu-admin-stat__body"><span>현재 수강 중</span><strong>{{ report.summary.active_count }}</strong><small>오늘 기준 접근 가능</small></span>
+    </div>
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">C</span>
+      <span class="onedu-admin-stat__body"><span>수료</span><strong>{{ report.summary.completed_count }}</strong><small>수료 처리된 강의</small></span>
+    </div>
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">T</span>
+      <span class="onedu-admin-stat__body">
+        <span>총 시청 시간</span>
+        <strong>{{ report.summary.total_watched_label }}</strong>
+        <small>{% if report.summary.watch_multiplier != None %}전체 기준 {{ report.summary.watch_multiplier }}배{% else %}영상 길이 없음{% endif %}</small>
+      </span>
+    </div>
+    <div class="onedu-admin-stat {% if report.summary.suspicious_access_count %}is-warning{% endif %}">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">S</span>
+      <span class="onedu-admin-stat__body"><span>주의 접속</span><strong>{{ report.summary.suspicious_access_count }}</strong><small>다른 접속 환경 의심</small></span>
+    </div>
+    <div class="onedu-admin-stat">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">D</span>
+      <span class="onedu-admin-stat__body"><span>자료 다운로드</span><strong>{{ report.summary.download_count }}</strong><small>학습 자료 다운로드</small></span>
+    </div>
+  </section>
+
+  <div class="onedu-admin-grid">
+    {% for item in report.enrollments %}
+      <section class="onedu-admin-card onedu-admin-card--full" aria-labelledby="enrollmentReport{{ item.enrollment.pk }}">
+        <div class="onedu-admin-card__head">
+          <div>
+            <p class="onedu-admin-kicker">COURSE REPORT</p>
+            <h2 id="enrollmentReport{{ item.enrollment.pk }}">{{ item.course.title }}</h2>
+          </div>
+          <span class="onedu-admin-badge {% if item.enrollment.is_completed %}is-success{% elif item.suspicious_access_count %}is-warning{% endif %}">
+            {{ item.enrollment.get_status_display }}{% if item.enrollment.is_completed %} · 수료{% endif %}
+          </span>
+        </div>
+
+        <div class="onedu-report-summary">
+          <div><span>수강 기간</span><strong>{% if item.enrollment.start_date and item.enrollment.end_date %}{{ item.enrollment.start_date }} ~ {{ item.enrollment.end_date }}{% else %}미설정{% endif %}</strong></div>
+          <div><span>진도율</span><strong>{{ item.progress_percent }}%</strong></div>
+          <div><span>총 시청</span><strong>{{ item.total_watched_label }}{% if item.watch_multiplier != None %} <small>({{ item.watch_multiplier }}배)</small>{% endif %}</strong></div>
+          <div><span>자료 다운로드</span><strong>{{ item.download_count }}회</strong></div>
+          <div><span>접속 주의</span><strong>{{ item.suspicious_access_count }}건</strong></div>
+          <div><span>최근 접속</span><strong>{% if item.last_access %}{{ item.last_access.created_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</strong></div>
+        </div>
+
+        {% if item.completion.missing %}
+          <div class="onedu-admin-empty compact">
+            <strong>수료 조건 미충족</strong>
+            <span>{% for missing in item.completion.missing %}{{ missing }}{% if not forloop.last %} · {% endif %}{% endfor %}</span>
+          </div>
+        {% elif item.enrollment.is_completed %}
+          <div class="onedu-admin-empty compact is-success">
+            <strong>수료 완료</strong>
+            <span>{% if item.certificate %}수료증 {{ item.certificate.certificate_no }} 발급{% else %}수료 상태입니다.{% endif %}</span>
+          </div>
+        {% endif %}
+
+        <div class="onedu-admin-table-wrap">
+          <table class="onedu-admin-table">
+            <thead>
+              <tr>
+                <th>차시</th>
+                <th>진도</th>
+                <th>영상 길이</th>
+                <th>총 시청</th>
+                <th>마지막 위치</th>
+                <th>완료</th>
+                <th>마지막 시청</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for progress in item.progresses %}
+                <tr>
+                  <td><strong>{{ progress.lesson.title }}</strong><small>{{ progress.lesson.course.title }}</small></td>
+                  <td>{{ progress.progress_percent }}%</td>
+                  <td>{{ progress.duration_seconds|default:progress.lesson.duration_seconds|duration_hms }}</td>
+                  <td>{{ progress.total_watched_seconds|duration_hms }}</td>
+                  <td>{{ progress.last_position_seconds|duration_hms }}</td>
+                  <td>{% if progress.is_completed %}<span class="onedu-admin-badge is-success">완료</span>{% else %}<span class="onedu-admin-badge">진행</span>{% endif %}</td>
+                  <td>{{ progress.last_watched_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="7">아직 시청 진도가 없습니다.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="onedu-admin-card__foot">
+          <p>반복 시청 배수는 해당 강의의 총 시청 시간 / 영상 길이 합계로 계산합니다. 계정 공유 판단의 참고 지표로만 사용하세요.</p>
+          <a class="button" href="{{ item.admin_change_url }}">수강 신청 관리</a>
+        </div>
+      </section>
+    {% empty %}
+      <section class="onedu-admin-card onedu-admin-card--full">
+        <div class="onedu-admin-empty">
+          <strong>수강 이력이 없습니다.</strong>
+          <span>수강 신청 또는 승인 후 리포트에 강의별 현황이 표시됩니다.</span>
+        </div>
+      </section>
+    {% endfor %}
+
+    <section class="onedu-admin-card onedu-admin-card--wide" aria-labelledby="recentAccessTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">SECURITY</p>
+          <h2 id="recentAccessTitle">최근 접속 기록</h2>
+        </div>
+      </div>
+      <div class="onedu-admin-activity-list">
+        {% for log in report.recent_access_logs %}
+          <div class="onedu-admin-activity">
+            <span class="onedu-admin-activity__mark {% if log.is_suspicious %}is-change{% endif %}" aria-hidden="true">S</span>
+            <div>
+              <div class="onedu-admin-activity__title">
+                <strong>{{ log.get_event_type_display }}</strong>
+                {% if log.is_suspicious %}<span class="onedu-admin-badge is-warning">주의</span>{% endif %}
+              </div>
+              <p>{{ log.created_at|date:"Y-m-d H:i" }} · {{ log.ip_address|default:"IP 없음" }} · {{ log.device_summary }}{% if log.course_title %} · {{ log.course_title }}{% endif %}</p>
+            </div>
+          </div>
+        {% empty %}
+          <div class="onedu-admin-empty compact">접속 기록이 없습니다.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="onedu-admin-card" aria-labelledby="recentDownloadTitle">
+      <div class="onedu-admin-card__head">
+        <div>
+          <p class="onedu-admin-kicker">DOWNLOADS</p>
+          <h2 id="recentDownloadTitle">자료 다운로드</h2>
+        </div>
+      </div>
+      <div class="onedu-admin-ops-list">
+        {% for download in report.recent_downloads %}
+          <a href="{% url 'admin:lessons_lessonattachmentdownload_change' download.pk %}">
+            <span class="onedu-admin-badge">D</span>
+            <strong>{{ download.attachment_title }}</strong>
+            <small>{{ download.downloaded_at|date:"Y-m-d H:i" }} · {{ download.ip_address|default:"IP 없음" }}</small>
+          </a>
+        {% empty %}
+          <div class="onedu-admin-empty compact">다운로드 이력이 없습니다.</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

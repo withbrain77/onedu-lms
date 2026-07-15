@@ -10,8 +10,8 @@ from django.utils import timezone
 from accounts.models import AccessLog, User
 from certificates.models import Certificate
 from courses.models import Course
-from enrollments.models import Enrollment, ReEnrollmentRequest
-from lessons.models import HLSConversionJob, Lesson
+from enrollments.models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
+from lessons.models import HLSConversionJob, Lesson, LessonAttachmentDownload
 
 register = template.Library()
 
@@ -23,9 +23,11 @@ MODEL_LABELS = {
     ('courses', 'course'): '강의',
     ('lessons', 'lesson'): '차시',
     ('lessons', 'lessonattachment'): '학습 자료',
+    ('lessons', 'lessonattachmentdownload'): '자료 다운로드 이력',
     ('lessons', 'hlsconversionjob'): 'HLS 변환 작업',
     ('enrollments', 'enrollment'): '수강 신청',
     ('enrollments', 'reenrollmentrequest'): '재수강 신청',
+    ('enrollments', 'emaildeliverylog'): '메일 발송 로그',
     ('progress', 'watchprogress'): '시청 진도',
     ('quizzes', 'quiz'): '시험',
     ('quizzes', 'question'): '문제',
@@ -48,6 +50,7 @@ MENU_GROUPS = [
             ('courses', 'course'),
             ('lessons', 'lesson'),
             ('lessons', 'lessonattachment'),
+            ('lessons', 'lessonattachmentdownload'),
             ('lessons', 'hlsconversionjob'),
         ],
     },
@@ -57,6 +60,7 @@ MENU_GROUPS = [
         'items': [
             ('enrollments', 'enrollment'),
             ('enrollments', 'reenrollmentrequest'),
+            ('enrollments', 'emaildeliverylog'),
             ('progress', 'watchprogress'),
         ],
     },
@@ -119,6 +123,10 @@ def _safe_count(queryset):
 def _build_menu(request, app_list, models):
     current_path = request.path if request else ''
     dashboard_active = current_path.rstrip('/') == reverse('admin:index').rstrip('/')
+    try:
+        mobile_ops_url = reverse('admin_mobile_ops')
+    except NoReverseMatch:
+        mobile_ops_url = ''
     sections = [
         {
             'title': '대시보드',
@@ -135,6 +143,24 @@ def _build_menu(request, app_list, models):
             ],
         }
     ]
+    if mobile_ops_url:
+        mobile_ops_active = current_path.rstrip('/') == mobile_ops_url.rstrip('/')
+        sections.append(
+            {
+                'title': '모바일 운영',
+                'icon': 'M',
+                'is_active': mobile_ops_active,
+                'items': [
+                    {
+                        'label': '간편 운영 화면',
+                        'url': mobile_ops_url,
+                        'add_url': '',
+                        'is_active': mobile_ops_active,
+                        'can_add': False,
+                    }
+                ],
+            }
+        )
     assigned = set()
     for group in MENU_GROUPS:
         items = []
@@ -406,6 +432,27 @@ def _build_access_log_summary(models):
     }
 
 
+def _build_email_summary(models):
+    email_log_url = models.get(('enrollments', 'emaildeliverylog'), {}).get('admin_url', '')
+    return {
+        'failed_count': _safe_count(EmailDeliveryLog.objects.filter(status=EmailDeliveryLog.Status.FAILED)),
+        'skipped_count': _safe_count(EmailDeliveryLog.objects.filter(status=EmailDeliveryLog.Status.SKIPPED)),
+        'recent_count': _safe_count(EmailDeliveryLog.objects.filter(created_at__gte=timezone.now() - timedelta(days=1))),
+        'url': email_log_url,
+        'failed_url': email_log_url + '?status__exact=failed' if email_log_url else '',
+    }
+
+
+def _build_download_summary(models):
+    download_url = models.get(('lessons', 'lessonattachmentdownload'), {}).get('admin_url', '')
+    return {
+        'recent_count': _safe_count(
+            LessonAttachmentDownload.objects.filter(downloaded_at__gte=timezone.now() - timedelta(days=1))
+        ),
+        'url': download_url,
+    }
+
+
 @register.simple_tag(takes_context=True)
 def onedu_admin_dashboard(context):
     request = context.get('request')
@@ -420,6 +467,8 @@ def onedu_admin_dashboard(context):
         'recent_activity': _build_recent_activity(),
         'hls': _build_hls_summary(models),
         'access_logs': _build_access_log_summary(models),
+        'email_logs': _build_email_summary(models),
+        'downloads': _build_download_summary(models),
         'reenrollment_pending_count': ReEnrollmentRequest.objects.filter(
             status=ReEnrollmentRequest.Status.PENDING
         ).count(),

@@ -23,6 +23,7 @@
       </div>
       <div class="onedu-admin-hero__actions">
         <span class="onedu-admin-user-chip">{{ request.user.get_username }}</span>
+        <a class="button" href="{% url 'admin_mobile_ops' %}">모바일 운영</a>
         <a class="button" href="/">사이트 보기</a>
         {% if dashboard.pending_enrollments.url %}
           <a class="button default" href="{{ dashboard.pending_enrollments.url }}">승인 대기 {{ dashboard.pending_enrollments.count }}건</a>
@@ -181,6 +182,14 @@
           <a href="{{ dashboard.access_logs.suspicious_url|default:dashboard.access_logs.url|default:'#' }}">
             <span class="onedu-admin-badge {% if dashboard.access_logs.suspicious_count %}is-warning{% endif %}">{{ dashboard.access_logs.suspicious_count }}</span>
             <strong>접속 보안 확인</strong>
+          </a>
+          <a href="{{ dashboard.email_logs.failed_url|default:dashboard.email_logs.url|default:'#' }}">
+            <span class="onedu-admin-badge {% if dashboard.email_logs.failed_count %}is-danger{% endif %}">{{ dashboard.email_logs.failed_count }}</span>
+            <strong>메일 발송 실패</strong>
+          </a>
+          <a href="{{ dashboard.downloads.url|default:'#' }}">
+            <span class="onedu-admin-badge">{{ dashboard.downloads.recent_count }}</span>
+            <strong>오늘 자료 다운로드</strong>
           </a>
         </div>
       </section>

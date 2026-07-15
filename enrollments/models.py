@@ -204,3 +204,48 @@ class ReEnrollmentRequest(models.Model):
         super().save(*args, **kwargs)
         if self.status == self.Status.APPROVED:
             self.apply_extension_to_enrollment()
+
+
+class EmailDeliveryLog(models.Model):
+    class Kind(models.TextChoices):
+        ENROLLMENT_REQUEST = 'enrollment_request', '수강 신청 관리자 알림'
+        ENROLLMENT_APPROVAL = 'enrollment_approval', '수강 승인 수강생 알림'
+        ENROLLMENT_EXPIRY_7D = 'enrollment_expiry_7d', '수강 종료 7일 전 알림'
+
+    class Status(models.TextChoices):
+        SENT = 'sent', '발송 완료'
+        FAILED = 'failed', '발송 실패'
+        SKIPPED = 'skipped', '발송 생략'
+
+    enrollment = models.ForeignKey(
+        Enrollment,
+        verbose_name='수강',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='email_logs',
+    )
+    kind = models.CharField('메일 유형', max_length=40, choices=Kind.choices)
+    status = models.CharField('상태', max_length=20, choices=Status.choices)
+    recipient_email = models.CharField('수신자', max_length=500, blank=True)
+    subject = models.CharField('제목', max_length=255, blank=True)
+    user_id_value = models.PositiveBigIntegerField('수강생 ID', null=True, blank=True)
+    user_label = models.CharField('수강생', max_length=160, blank=True)
+    course_id_value = models.PositiveBigIntegerField('강의 ID', null=True, blank=True)
+    course_title = models.CharField('강의명', max_length=200, blank=True)
+    error_message = models.TextField('오류/처리 메모', blank=True)
+    sent_at = models.DateTimeField('발송일시', null=True, blank=True)
+    created_at = models.DateTimeField('기록일시', auto_now_add=True)
+
+    class Meta:
+        verbose_name = '메일 발송 로그'
+        verbose_name_plural = '메일 발송 로그'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['kind', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['recipient_email', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.get_kind_display()} / {self.get_status_display()} / {self.recipient_email or "-"}'

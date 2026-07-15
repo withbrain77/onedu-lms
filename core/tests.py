@@ -205,6 +205,9 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '최근 활동')
         self.assertContains(response, '주의 접속')
         self.assertContains(response, '접속 보안 확인')
+        self.assertContains(response, reverse('admin_mobile_ops'))
+        self.assertContains(response, '메일 발송 실패')
+        self.assertContains(response, '오늘 자료 다운로드')
         self.assertContains(response, 'onedu-admin-menu-direct')
         self.assertNotContains(response, '운영 현황')
 
@@ -229,6 +232,47 @@ class AdminThemeTests(TestCase):
                 self.assertContains(response, 'onedu-admin-sidebar')
                 self.assertContains(response, '운영 콘솔')
                 self.assertContains(response, '접속 보안 로그')
+
+    def test_staff_can_open_mobile_operations_page(self):
+        admin_user = User.objects.create_superuser(
+            username='mobile_admin',
+            password='pass12345',
+            email='mobile-admin@example.com',
+            name='모바일 관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin_mobile_ops'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '모바일 운영')
+        self.assertContains(response, '수강 승인 대기')
+        self.assertContains(response, '메일 확인 필요')
+        self.assertContains(response, '최근 자료 다운로드')
+
+    def test_staff_can_open_student_learning_report(self):
+        admin_user = User.objects.create_superuser(
+            username='report_admin',
+            password='pass12345',
+            email='report-admin@example.com',
+            name='리포트 관리자',
+        )
+        student = User.objects.create_user(
+            username='report_student',
+            password='pass12345',
+            email='report-student@example.com',
+            name='리포트 수강생',
+        )
+        course = Course.objects.create(title='리포트 강의', is_public=True)
+        Enrollment.objects.create(user=student, course=course, status=Enrollment.Status.REQUESTED)
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:accounts_user_learning_report', args=[student.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '리포트 수강생 학습 리포트')
+        self.assertContains(response, '리포트 강의')
+        self.assertContains(response, '총 시청 시간')
 
 
 class DeploymentConfigTests(TestCase):

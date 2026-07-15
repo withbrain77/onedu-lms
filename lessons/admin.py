@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.urls import path, reverse
 
 from .forms import LessonAdminForm
-from .models import HLSConversionJob, Lesson, LessonAttachment
+from .models import HLSConversionJob, Lesson, LessonAttachment, LessonAttachmentDownload
 from .services.hls import refresh_lesson_duration_seconds
 from .tasks import convert_lesson_hls_task
 
@@ -212,6 +212,57 @@ class LessonAttachmentAdmin(admin.ModelAdmin):
     @admin.display(description='강의', ordering='lesson__course__title')
     def course_title(self, obj):
         return obj.lesson.course.title
+
+
+@admin.register(LessonAttachmentDownload)
+class LessonAttachmentDownloadAdmin(admin.ModelAdmin):
+    list_display = (
+        'downloaded_at',
+        'user',
+        'attachment_title',
+        'filename',
+        'course',
+        'lesson',
+        'ip_address',
+        'device_summary',
+    )
+    list_filter = ('course', 'lesson', 'downloaded_at')
+    search_fields = (
+        'user__username',
+        'user__name',
+        'user__email',
+        'attachment_title',
+        'filename',
+        'course__title',
+        'lesson__title',
+        'ip_address',
+        'device_summary',
+        'user_agent',
+    )
+    readonly_fields = (
+        'user',
+        'attachment',
+        'lesson',
+        'course',
+        'attachment_title',
+        'filename',
+        'ip_address',
+        'device_summary',
+        'user_agent',
+        'downloaded_at',
+    )
+    fieldsets = (
+        ('다운로드 정보', {'fields': ('downloaded_at', 'user', 'attachment', 'attachment_title', 'filename')}),
+        ('학습 대상', {'fields': ('course', 'lesson')}),
+        ('접속 환경', {'fields': ('ip_address', 'device_summary', 'user_agent')}),
+    )
+    date_hierarchy = 'downloaded_at'
+    ordering = ('-downloaded_at',)
+    list_select_related = ('user', 'attachment', 'lesson', 'course')
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(HLSConversionJob)
