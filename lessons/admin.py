@@ -46,11 +46,11 @@ class LessonAdmin(admin.ModelAdmin):
     ordering = ('course', 'order')
     list_select_related = ('course',)
     list_per_page = 50
-    readonly_fields = ('hls_converted_at',)
+    readonly_fields = ('duration_display', 'hls_converted_at')
     actions = ('refresh_duration_seconds', 'queue_hls_conversion', 'queue_hls_reconversion')
     fieldsets = (
         ('기본 정보', {'fields': ('course', 'title', 'description')}),
-        ('영상', {'fields': ('video_file', 'server_video_file', 'duration_seconds')}),
+        ('영상', {'fields': ('video_file', 'server_video_file', 'duration_display')}),
         (
             'HLS 스트리밍',
             {

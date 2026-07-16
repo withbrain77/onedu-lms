@@ -72,6 +72,22 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(response, 'data-course-share-url="http://testserver')
         self.assertContains(response, 'course_share.js')
 
+    def test_course_admin_lesson_inline_shows_duration_as_readonly_label(self):
+        admin_user = User.objects.create_superuser(
+            username='course_admin_duration',
+            password='pass12345',
+            email='course-admin-duration@example.com',
+        )
+        self.lesson.duration_seconds = 3661
+        self.lesson.save(update_fields=['duration_seconds'])
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:courses_course_change', args=[self.course.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1시간 1분 1초')
+        self.assertNotContains(response, 'name="lessons-0-duration_seconds"')
+
     def test_short_course_link_redirects_to_course_detail(self):
         short_path = reverse('course_short_link', kwargs={'course_id': self.course.pk})
 

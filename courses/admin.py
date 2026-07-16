@@ -3,6 +3,7 @@ from django.db.models import Count
 
 from lessons.forms import LessonAdminForm
 from lessons.models import Lesson
+from lessons.templatetags.lesson_time import duration_hms
 
 from .models import Course
 
@@ -16,15 +17,23 @@ class LessonInline(admin.TabularInline):
         'title',
         'video_file',
         'server_video_file',
-        'duration_seconds',
+        'duration_display',
         'hls_ready',
         'hls_job_status',
         'hls_playlist_path',
         'is_public',
     )
-    readonly_fields = ('hls_ready', 'hls_job_status', 'hls_playlist_path')
+    readonly_fields = ('duration_display', 'hls_ready', 'hls_job_status', 'hls_playlist_path')
     ordering = ('order',)
     show_change_link = True
+
+    @admin.display(description='영상 길이')
+    def duration_display(self, obj):
+        if not obj.pk:
+            return '-'
+        if not obj.duration_seconds:
+            return '미확인'
+        return duration_hms(obj.duration_seconds)
 
     @admin.display(description='HLS 작업')
     def hls_job_status(self, obj):

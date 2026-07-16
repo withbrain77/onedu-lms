@@ -479,6 +479,23 @@ class LessonAdminServerVideoFormTests(TestCase):
         self.assertContains(response, 'HLS 변환 요청')
         self.assertContains(response, 'HLS 재변환')
 
+    def test_admin_change_page_shows_duration_as_readonly_label(self):
+        admin = User.objects.create_user(
+            username='lesson_admin_duration',
+            password='pass12345',
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.lesson.duration_seconds = 3661
+        self.lesson.save(update_fields=['duration_seconds'])
+        self.client.force_login(admin)
+
+        response = self.client.get(f'/admin/lessons/lesson/{self.lesson.pk}/change/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1시간 1분 1초')
+        self.assertNotContains(response, 'name="duration_seconds"')
+
     def test_admin_changelist_displays_video_duration_as_human_readable_time(self):
         admin = User.objects.create_superuser(
             username='lesson_list_admin',
