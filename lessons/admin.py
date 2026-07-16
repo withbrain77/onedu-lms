@@ -8,6 +8,7 @@ from .forms import LessonAdminForm
 from .models import HLSConversionJob, Lesson, LessonAttachment, LessonAttachmentDownload
 from .services.hls import refresh_lesson_duration_seconds
 from .tasks import convert_lesson_hls_task
+from .templatetags.lesson_time import duration_hms
 
 
 ACTIVE_HLS_JOB_STATUSES = (
@@ -68,7 +69,7 @@ class LessonAdmin(admin.ModelAdmin):
     def duration_display(self, obj):
         if not obj.duration_seconds:
             return '미확인'
-        return f'{obj.duration_seconds:,}초'
+        return duration_hms(obj.duration_seconds)
 
     @admin.display(description='HLS')
     def hls_status(self, obj):
@@ -162,7 +163,7 @@ class LessonAdmin(admin.ModelAdmin):
             force='video_file' in form.changed_data or 'server_video_file' in form.changed_data,
         )
         if duration_seconds:
-            self.message_user(request, f'영상 길이를 {duration_seconds:,}초로 갱신했습니다.', messages.SUCCESS)
+            self.message_user(request, f'영상 길이를 {duration_hms(duration_seconds)}로 갱신했습니다.', messages.SUCCESS)
 
     def _queue_lesson_hls_conversion(self, request, lesson, *, force=False, transcode=False, emit_success=True):
         if not lesson.video_file:
@@ -306,7 +307,10 @@ class HLSConversionJobAdmin(admin.ModelAdmin):
         if obj.status == HLSConversionJob.Status.SUCCEEDED:
             return '100%'
         if obj.progress_total_seconds:
-            return f'{obj.progress_percent}% ({obj.progress_current_seconds}/{obj.progress_total_seconds}초)'
+            return (
+                f'{obj.progress_percent}% '
+                f'({duration_hms(obj.progress_current_seconds)} / {duration_hms(obj.progress_total_seconds)})'
+            )
         if obj.progress_current_seconds:
-            return f'{obj.progress_current_seconds}초 처리'
+            return f'{duration_hms(obj.progress_current_seconds)} 처리'
         return f'{obj.progress_percent}%'

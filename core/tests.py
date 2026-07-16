@@ -303,6 +303,21 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '리포트 강의')
         self.assertContains(response, '총 시청 시간')
 
+    def test_user_changelist_learning_report_link_uses_visible_button_style(self):
+        admin_user = User.objects.create_superuser(
+            username='report_link_admin',
+            password='pass12345',
+            email='report-link-admin@example.com',
+            name='리포트 링크 관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:accounts_user_changelist'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'onedu-admin-inline-button')
+        self.assertContains(response, '학습 리포트')
+
 
 class DeploymentConfigTests(TestCase):
     def test_compose_passes_enrollment_notification_env_to_web_container(self):

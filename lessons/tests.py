@@ -479,6 +479,22 @@ class LessonAdminServerVideoFormTests(TestCase):
         self.assertContains(response, 'HLS 변환 요청')
         self.assertContains(response, 'HLS 재변환')
 
+    def test_admin_changelist_displays_video_duration_as_human_readable_time(self):
+        admin = User.objects.create_superuser(
+            username='lesson_list_admin',
+            password='pass12345',
+            email='lesson-list-admin@example.com',
+        )
+        self.lesson.duration_seconds = 3661
+        self.lesson.save(update_fields=['duration_seconds'])
+        self.client.force_login(admin)
+
+        response = self.client.get(reverse('admin:lessons_lesson_changelist'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '1시간 1분 1초')
+        self.assertNotContains(response, '3,661초')
+
     @patch('lessons.admin.convert_lesson_hls_task.apply_async')
     def test_admin_hls_queue_uses_video_queue_and_stores_task_id(self, mocked_apply_async):
         admin = User.objects.create_user(

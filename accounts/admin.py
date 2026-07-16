@@ -38,7 +38,7 @@ class UserAdmin(BaseUserAdmin):
         if not obj.pk:
             return '-'
         url = reverse('admin:accounts_user_learning_report', args=[obj.pk])
-        return format_html('<a class="button" href="{}">보기</a>', url)
+        return format_html('<a class="onedu-admin-inline-button" href="{}">보기</a>', url)
 
     def get_urls(self):
         custom_urls = [
