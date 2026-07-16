@@ -1067,65 +1067,28 @@ form .help {
 
 .inline-group .tabular tr.has_original td,
 .inline-group .tabular tr.has_original th {
-  padding-top: 48px;
+  padding-top: 13px;
 }
 
 .inline-group .tabular td.original {
-  overflow: visible;
-  padding-left: 12px;
-  position: relative;
-  width: 0;
+  width: 1px;
 }
 
 .inline-group .tabular td.original p {
-  align-items: center;
-  background: rgba(244, 251, 250, 0.96);
-  border: 1px solid #cfe5e2;
-  border-radius: 999px;
-  color: #475569;
-  display: inline-flex;
-  font-size: 0.78rem;
-  font-weight: 800;
-  gap: 8px;
-  left: 10px;
-  line-height: 1.25;
-  margin: 0;
-  max-width: min(720px, calc(100vw - 520px));
-  overflow: hidden;
-  padding: 6px 10px;
-  position: absolute;
-  text-overflow: ellipsis;
-  top: 10px;
-  white-space: nowrap;
-  z-index: 3;
+  display: none !important;
 }
 
-.inline-group .tabular td.original p a,
-.inline-group .tabular td.original p a:link,
-.inline-group .tabular td.original p a:visited {
-  background: #fff;
-  border: 1px solid #c5dfdc;
-  border-radius: 999px;
-  color: #0f766e !important;
-  flex: 0 0 auto;
-  font-size: 0.72rem;
-  font-weight: 900;
-  line-height: 1;
-  padding: 4px 8px;
-  text-decoration: none;
+body.app-quizzes.model-quiz.change-form .inline-group .tabular .field-text {
+  min-width: 30rem;
+  width: 44rem;
 }
 
-.inline-group .tabular td.original p a:hover,
-.inline-group .tabular td.original p a:focus {
-  background: #0f766e;
-  border-color: #0f766e;
-  color: #fff !important;
-}
-
-@media (max-width: 900px) {
-  .inline-group .tabular td.original p {
-    max-width: 68vw;
-  }
+body.app-quizzes.model-quiz.change-form .inline-group .tabular textarea.onedu-admin-question-textarea,
+body.app-quizzes.model-quiz.change-form .inline-group .tabular .field-text textarea {
+  height: 84px !important;
+  min-height: 84px;
+  resize: vertical;
+  width: min(42rem, 100%);
 }
 
 body.app-lessons.model-lesson.change-list #result_list {

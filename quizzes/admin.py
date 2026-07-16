@@ -1,10 +1,26 @@
+from django import forms
 from django.contrib import admin
 
 from .models import AnswerChoice, Question, Quiz, QuizAttempt, QuizAttemptAnswer
 
 
+class QuestionInlineForm(forms.ModelForm):
+    class Meta:
+        model = Question
+        fields = '__all__'
+        widgets = {
+            'text': forms.Textarea(
+                attrs={
+                    'rows': 3,
+                    'class': 'vLargeTextField onedu-admin-question-textarea',
+                }
+            ),
+        }
+
+
 class QuestionInline(admin.TabularInline):
     model = Question
+    form = QuestionInlineForm
     extra = 0
     fields = ('order', 'type', 'text', 'points')
     ordering = ('order',)
