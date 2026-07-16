@@ -1105,6 +1105,61 @@ body.app-enrollments.model-enrollment.change-list #result_list .field-end_date i
   max-width: 8.8rem;
 }
 
+body.app-enrollments.model-enrollment.change-form .form-row.field-end_date {
+  align-items: center;
+}
+
+.onedu-admin-period-shortcuts {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.onedu-admin-period-shortcut {
+  background: #fff !important;
+  border: 1px solid #17304a !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+  color: #0f172a !important;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 850;
+  line-height: 1;
+  min-height: 38px;
+  padding: 9px 15px;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  white-space: nowrap;
+}
+
+.onedu-admin-period-shortcut:hover,
+.onedu-admin-period-shortcut:focus {
+  background: #e8f6f3 !important;
+  border-color: #0f766e !important;
+  color: #0b5f59 !important;
+}
+
+.onedu-admin-period-shortcuts__help {
+  color: #c24141;
+  display: none;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.onedu-admin-period-shortcuts.is-invalid .onedu-admin-period-shortcuts__help {
+  display: inline;
+}
+
+@media (max-width: 900px) {
+  .onedu-admin-period-shortcuts {
+    display: flex;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}
+
 body.app-enrollments.model-enrollment.change-list #result_list .column-remaining_days,
 body.app-enrollments.model-enrollment.change-list #result_list .field-remaining_days,
 body.app-enrollments.model-enrollment.change-list #result_list .column-is_completed,

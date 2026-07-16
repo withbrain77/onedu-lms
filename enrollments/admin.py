@@ -37,6 +37,9 @@ class EnrollmentAdmin(admin.ModelAdmin):
         ('기록', {'fields': ('created_at', 'updated_at')}),
     )
 
+    class Media:
+        js = ('js/admin_enrollment_period_shortcuts.js',)
+
     @admin.display(description='아이디', ordering='user__username')
     def student_username(self, obj):
         return obj.user.username

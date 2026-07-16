@@ -307,6 +307,36 @@ class AdminEnrollmentNotificationTests(TestCase):
         )
 
 
+class AdminEnrollmentPeriodShortcutTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='period_admin',
+            password='pass12345',
+            email='period-admin@example.com',
+        )
+        self.student = User.objects.create_user(
+            username='period_student',
+            password='pass12345',
+            name='Period Student',
+        )
+        self.course = Course.objects.create(title='Period Course', is_public=True)
+        self.enrollment = Enrollment.objects.create(
+            user=self.student,
+            course=self.course,
+            status=Enrollment.Status.REQUESTED,
+        )
+
+    def test_enrollment_change_form_loads_period_shortcut_script(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse('admin:enrollments_enrollment_change', args=[self.enrollment.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'admin_enrollment_period_shortcuts.js')
+        self.assertContains(response, 'id_start_date')
+        self.assertContains(response, 'id_end_date')
+
+
 class EnrollmentApprovalEmailTests(TestCase):
     def setUp(self):
         self.today = timezone.localdate()
