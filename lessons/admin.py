@@ -4,7 +4,7 @@ from django.conf import settings
 from django.shortcuts import redirect
 from django.urls import path, reverse
 
-from .forms import LessonAdminForm
+from .forms import LessonAdminForm, LessonAttachmentAdminForm
 from .models import HLSConversionJob, Lesson, LessonAttachment, LessonAttachmentDownload
 from .services.hls import refresh_lesson_duration_seconds
 from .tasks import convert_lesson_hls_task
@@ -19,6 +19,7 @@ ACTIVE_HLS_JOB_STATUSES = (
 
 class LessonAttachmentInline(admin.TabularInline):
     model = LessonAttachment
+    form = LessonAttachmentAdminForm
     extra = 0
     fields = ('order', 'title', 'file', 'description', 'is_public')
     ordering = ('order', 'id')
@@ -202,6 +203,7 @@ class LessonAdmin(admin.ModelAdmin):
 
 @admin.register(LessonAttachment)
 class LessonAttachmentAdmin(admin.ModelAdmin):
+    form = LessonAttachmentAdminForm
     list_display = ('title', 'lesson', 'course_title', 'order', 'is_public', 'updated_at')
     list_filter = ('is_public', 'lesson__course')
     search_fields = ('title', 'description', 'lesson__title', 'lesson__course__title')

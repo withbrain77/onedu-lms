@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import Lesson
+from .models import Lesson, LessonAttachment
 
 
 SERVER_VIDEO_FOLDER = 'lesson_videos'
@@ -25,6 +25,23 @@ class PrivateVideoFileInput(forms.FileInput):
             '<code>{}</code>'
             '</div>{}'
             '<div class="help">보호 영상은 직접 링크로 열리지 않습니다. 새 파일을 선택하면 기존 연결이 교체됩니다.</div>',
+            current_name,
+            mark_safe(input_html),
+        )
+
+
+class PrivateAttachmentFileInput(forms.FileInput):
+    def render(self, name, value, attrs=None, renderer=None):
+        input_html = super().render(name, value, attrs, renderer)
+        current_name = getattr(value, 'name', '') if value else ''
+        if not current_name:
+            return input_html
+        return format_html(
+            '<div class="private-attachment-current">'
+            '<span class="help">현재 연결된 보호 자료 파일</span><br>'
+            '<code>{}</code>'
+            '</div>{}'
+            '<div class="help">학습 자료는 직접 링크로 열리지 않습니다. 새 파일을 선택하면 기존 연결이 교체됩니다.</div>',
             current_name,
             mark_safe(input_html),
         )
@@ -127,3 +144,12 @@ class LessonAdminForm(forms.ModelForm):
             instance.save()
             self.save_m2m()
         return instance
+
+
+class LessonAttachmentAdminForm(forms.ModelForm):
+    class Meta:
+        model = LessonAttachment
+        fields = '__all__'
+        widgets = {
+            'file': PrivateAttachmentFileInput,
+        }

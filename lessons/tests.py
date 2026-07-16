@@ -496,6 +496,51 @@ class LessonAdminServerVideoFormTests(TestCase):
         self.assertContains(response, '1시간 1분 1초')
         self.assertNotContains(response, 'name="duration_seconds"')
 
+    def test_admin_change_page_renders_private_attachment_without_public_url(self):
+        admin = User.objects.create_user(
+            username='lesson_admin_attachment',
+            password='pass12345',
+            is_staff=True,
+            is_superuser=True,
+        )
+        LessonAttachment.objects.create(
+            lesson=self.lesson,
+            title='1강 PDF 교재',
+            file='lesson_attachments/1강_리듬_타이밍의_뇌과학.pdf',
+            order=1,
+            is_public=True,
+        )
+        self.client.force_login(admin)
+
+        response = self.client.get(f'/admin/lessons/lesson/{self.lesson.pk}/change/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '현재 연결된 보호 자료 파일')
+        self.assertContains(response, 'lesson_attachments/1강_리듬_타이밍의_뇌과학.pdf')
+        self.assertNotContains(response, 'href="/media/')
+
+    def test_attachment_admin_change_page_renders_private_file_without_public_url(self):
+        admin = User.objects.create_user(
+            username='attachment_admin',
+            password='pass12345',
+            is_staff=True,
+            is_superuser=True,
+        )
+        attachment = LessonAttachment.objects.create(
+            lesson=self.lesson,
+            title='2강 PDF 교재',
+            file='lesson_attachments/2강_IM_tPBM_시너지.pdf',
+            order=1,
+            is_public=True,
+        )
+        self.client.force_login(admin)
+
+        response = self.client.get(f'/admin/lessons/lessonattachment/{attachment.pk}/change/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '현재 연결된 보호 자료 파일')
+        self.assertNotContains(response, 'href="/media/')
+
     def test_admin_changelist_displays_video_duration_as_human_readable_time(self):
         admin = User.objects.create_superuser(
             username='lesson_list_admin',
