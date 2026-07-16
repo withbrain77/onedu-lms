@@ -13,7 +13,7 @@ from .server_status import build_server_status
 @staff_member_required
 def server_operations(request):
     context = {
-        'title': '서버 관리',
+        'title': '서버 상태',
         'status': build_server_status(request),
         'links': {
             'dashboard': reverse('admin:index'),

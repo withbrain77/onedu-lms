@@ -209,7 +209,8 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, reverse('admin_server_ops'))
         self.assertContains(response, '메일 발송 실패')
         self.assertContains(response, '오늘 자료 다운로드')
-        self.assertContains(response, '서버 관리')
+        self.assertContains(response, '운영 설정')
+        self.assertContains(response, '서버 상태')
         self.assertContains(response, 'onedu-admin-menu-direct')
         self.assertNotContains(response, '운영 현황')
 
@@ -264,7 +265,8 @@ class AdminThemeTests(TestCase):
         response = self.client.get(reverse('admin_server_ops'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '서버 관리')
+        self.assertContains(response, '서버 상태')
+        self.assertContains(response, '운영 설정')
         self.assertContains(response, '도메인 / IP')
         self.assertContains(response, '서비스 상태')
         self.assertContains(response, '저장소 사용량')

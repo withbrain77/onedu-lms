@@ -165,24 +165,7 @@ def _build_menu(request, app_list, models):
                 ],
             }
         )
-    if server_ops_url:
-        server_ops_active = current_path.rstrip('/') == server_ops_url.rstrip('/')
-        sections.append(
-            {
-                'title': '서버 관리',
-                'icon': 'S',
-                'is_active': server_ops_active,
-                'items': [
-                    {
-                        'label': '서버 상태',
-                        'url': server_ops_url,
-                        'add_url': '',
-                        'is_active': server_ops_active,
-                        'can_add': False,
-                    }
-                ],
-            }
-        )
+    server_ops_active = bool(server_ops_url and current_path.rstrip('/') == server_ops_url.rstrip('/'))
     assigned = set()
     for group in MENU_GROUPS:
         items = []
@@ -236,19 +219,32 @@ def _build_menu(request, app_list, models):
             }
         )
 
+    operations_items = []
+    if server_ops_url:
+        operations_items.append(
+            {
+                'label': '서버 상태',
+                'url': server_ops_url,
+                'add_url': '',
+                'is_active': server_ops_active,
+                'can_add': False,
+            }
+        )
+    operations_items.append(
+        {
+            'label': '사이트 보기',
+            'url': '/',
+            'add_url': '',
+            'is_active': False,
+            'can_add': False,
+        }
+    )
     sections.append(
         {
             'title': '운영 설정',
             'icon': 'S',
-            'items': [
-                {
-                    'label': '사이트 보기',
-                    'url': '/',
-                    'add_url': '',
-                    'is_active': False,
-                    'can_add': False,
-                }
-            ],
+            'is_active': server_ops_active,
+            'items': operations_items,
         }
     )
     return sections
