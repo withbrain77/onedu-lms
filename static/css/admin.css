@@ -1065,6 +1065,69 @@ form .help {
   box-shadow: 0 10px 24px rgba(23, 32, 51, 0.06);
 }
 
+.inline-group .tabular tr.has_original td,
+.inline-group .tabular tr.has_original th {
+  padding-top: 48px;
+}
+
+.inline-group .tabular td.original {
+  overflow: visible;
+  padding-left: 12px;
+  position: relative;
+  width: 0;
+}
+
+.inline-group .tabular td.original p {
+  align-items: center;
+  background: rgba(244, 251, 250, 0.96);
+  border: 1px solid #cfe5e2;
+  border-radius: 999px;
+  color: #475569;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 8px;
+  left: 10px;
+  line-height: 1.25;
+  margin: 0;
+  max-width: min(720px, calc(100vw - 520px));
+  overflow: hidden;
+  padding: 6px 10px;
+  position: absolute;
+  text-overflow: ellipsis;
+  top: 10px;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.inline-group .tabular td.original p a,
+.inline-group .tabular td.original p a:link,
+.inline-group .tabular td.original p a:visited {
+  background: #fff;
+  border: 1px solid #c5dfdc;
+  border-radius: 999px;
+  color: #0f766e !important;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 4px 8px;
+  text-decoration: none;
+}
+
+.inline-group .tabular td.original p a:hover,
+.inline-group .tabular td.original p a:focus {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff !important;
+}
+
+@media (max-width: 900px) {
+  .inline-group .tabular td.original p {
+    max-width: 68vw;
+  }
+}
+
 body.app-lessons.model-lesson.change-list #result_list {
   min-width: 1280px;
 }
