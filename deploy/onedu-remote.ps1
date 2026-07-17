@@ -95,7 +95,7 @@ function Sync-Source {
 }
 
 function Ensure-RemoteDataDirs {
-    Invoke-Remote "mkdir -p '$AppDir/data/static' '$AppDir/data/media' '$AppDir/data/private_media' '$AppDir/data/logs' '$AppDir/data/postgres' '$AppDir/data/redis'"
+    Invoke-Remote "mkdir -p '$AppDir/data/static' '$AppDir/data/media' '$AppDir/data/private_media' '$AppDir/data/logs' '$AppDir/data/postgres' '$AppDir/data/redis' '$AppDir/backups'"
 }
 
 function Invoke-Ops {

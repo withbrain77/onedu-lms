@@ -7,19 +7,20 @@ STATIC_DIR="${STATIC_ROOT:-/vol/web/static}"
 MEDIA_DIR="${MEDIA_ROOT:-/vol/web/media}"
 PRIVATE_MEDIA_DIR="${PRIVATE_MEDIA_ROOT:-/vol/web/private_media}"
 LOG_DIR="${ONEDU_LOG_DIR:-/vol/web/logs}"
+BACKUP_DIR="${ONEDU_BACKUP_ROOT:-/vol/web/backups}"
 
 fix_runtime_permissions() {
   if [ "${ONEDU_FIX_VOLUME_OWNERSHIP:-1}" != "1" ]; then
     return
   fi
 
-  mkdir -p "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR"
+  mkdir -p "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR" "$BACKUP_DIR"
   touch "$LOG_DIR/onedu.log"
 
-  chown "$APP_USER:$APP_GROUP" "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR"
-  chown -R "$APP_USER:$APP_GROUP" "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR"
-  chmod u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR"
-  chmod -R u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR"
+  chown "$APP_USER:$APP_GROUP" "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR" "$BACKUP_DIR"
+  chown -R "$APP_USER:$APP_GROUP" "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR" "$BACKUP_DIR"
+  chmod u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR" "$BACKUP_DIR"
+  chmod -R u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR" "$BACKUP_DIR"
   chmod -R a+rX "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR"
 
   if [ "${ONEDU_FIX_HLS_OWNERSHIP:-1}" = "1" ]; then

@@ -23,7 +23,8 @@ ensure_data_dirs() {
     "$APP_DIR/data/private_media" \
     "$APP_DIR/data/logs" \
     "$APP_DIR/data/postgres" \
-    "$APP_DIR/data/redis"
+    "$APP_DIR/data/redis" \
+    "$APP_DIR/backups"
 }
 
 usage() {
@@ -122,14 +123,20 @@ case "${1:-help}" in
     ls -lh "$backup_file"
     ;;
   backup-check)
-    mkdir -p "$BACKUP_ROOT/db" "$BACKUP_ROOT/media" "$BACKUP_ROOT/private_media"
+    mkdir -p "$BACKUP_ROOT/db" "$BACKUP_ROOT/media" "$BACKUP_ROOT/private_nonvideo"
     echo "Backup root: $BACKUP_ROOT"
     echo
     echo "Recent DB backups:"
     ls -lht "$BACKUP_ROOT/db" 2>/dev/null | head -10 || true
     echo
+    echo "Recent public media backups:"
+    ls -lht "$BACKUP_ROOT/media" 2>/dev/null | head -10 || true
+    echo
+    echo "Recent private non-video backups:"
+    ls -lht "$BACKUP_ROOT/private_nonvideo" 2>/dev/null | head -10 || true
+    echo
     echo "Data directory sizes:"
-    du -sh "$APP_DIR/data/postgres" "$APP_DIR/data/media" "$APP_DIR/data/private_media" 2>/dev/null || true
+    du -sh "$APP_DIR/data/postgres" "$APP_DIR/data/media" "$APP_DIR/data/private_media" "$BACKUP_ROOT" 2>/dev/null || true
     ;;
   hls-status)
     compose exec -T web python manage.py shell <<'PY'

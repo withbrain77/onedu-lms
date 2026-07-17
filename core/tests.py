@@ -1,5 +1,6 @@
 from datetime import timedelta
 import hashlib
+import tarfile
 import tempfile
 from io import StringIO
 from pathlib import Path
@@ -15,6 +16,7 @@ from accounts.models import AccessLog, User
 from accounts.reports import build_student_learning_report
 from core.models import Notice, ServerWarningAcknowledgement
 from core.services.access import can_access_course
+from core.tasks import create_nonvideo_backup_task
 from courses.models import Course
 from enrollments.models import Enrollment
 
@@ -489,6 +491,55 @@ class DeploymentConfigTests(TestCase):
         self.assertIn('ONEDU_NOTIFY_ENROLLMENT_REQUEST', compose)
         self.assertIn('ONEDU_ADMIN_NOTIFICATION_EMAIL:', compose)
         self.assertIn('ONEDU_ADMIN_NOTIFICATION_EMAILS:', compose)
+
+    def test_compose_enables_nonvideo_backup_volume_and_schedule_env(self):
+        compose = (Path(settings.BASE_DIR) / 'docker-compose.yml').read_text(encoding='utf-8')
+
+        self.assertIn('ONEDU_AUTOMATED_BACKUP_ENABLED', compose)
+        self.assertIn('ONEDU_BACKUP_RETENTION_DAYS', compose)
+        self.assertIn('${ONEDU_BACKUP_DIR:-./backups}:/vol/web/backups', compose)
+
+    def test_nonvideo_backup_command_archives_media_and_private_attachments_without_videos(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            media_root = temp_path / 'media'
+            private_media_root = temp_path / 'private_media'
+            backup_root = temp_path / 'backups'
+            media_root.mkdir()
+            private_media_root.mkdir()
+            (media_root / 'guide.pdf').write_text('public guide', encoding='utf-8')
+            (private_media_root / 'lesson_attachments').mkdir()
+            (private_media_root / 'lesson_attachments' / 'slide.pdf').write_text('private slide', encoding='utf-8')
+            (private_media_root / 'lesson_videos').mkdir()
+            (private_media_root / 'lesson_videos' / 'lecture.mp4').write_text('video', encoding='utf-8')
+
+            output = StringIO()
+            with override_settings(
+                MEDIA_ROOT=media_root,
+                PRIVATE_MEDIA_ROOT=private_media_root,
+                ONEDU_BACKUP_ROOT=backup_root,
+                ONEDU_BACKUP_INCLUDE_PUBLIC_MEDIA=True,
+                ONEDU_BACKUP_INCLUDE_PRIVATE_NONVIDEO=True,
+                ONEDU_BACKUP_RETENTION_DAYS=30,
+            ):
+                call_command('create_nonvideo_backup', skip_db=True, stdout=output)
+
+            media_archives = list((backup_root / 'media').glob('onedu_media_*.tar.gz'))
+            self.assertEqual(len(media_archives), 1)
+            with tarfile.open(media_archives[0], 'r:gz') as archive:
+                names = archive.getnames()
+            self.assertIn('media/guide.pdf', names)
+
+            private_archives = list((backup_root / 'private_nonvideo').glob('onedu_private_nonvideo_*.tar.gz'))
+            self.assertEqual(len(private_archives), 1)
+            with tarfile.open(private_archives[0], 'r:gz') as archive:
+                private_names = archive.getnames()
+            self.assertIn('private_media/lesson_attachments/slide.pdf', private_names)
+            self.assertNotIn('private_media/lesson_videos/lecture.mp4', private_names)
+
+    def test_nonvideo_backup_task_respects_disabled_setting(self):
+        with override_settings(ONEDU_AUTOMATED_BACKUP_ENABLED=False):
+            self.assertEqual(create_nonvideo_backup_task.run(), 'disabled')
 
     def test_ops_readiness_command_reports_operational_summary(self):
         with tempfile.TemporaryDirectory() as temp_dir:

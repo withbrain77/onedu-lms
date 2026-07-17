@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends fonts-nanum curl ffmpeg gosu \
+    && apt-get install -y --no-install-recommends fonts-nanum curl ffmpeg gosu postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system --gid 10001 onedu \
@@ -19,7 +19,7 @@ COPY . /app/
 COPY deploy/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh \
-    && mkdir -p /vol/web/static /vol/web/media /vol/web/private_media /vol/web/private_media/lesson_hls /vol/web/logs \
+    && mkdir -p /vol/web/static /vol/web/media /vol/web/private_media /vol/web/private_media/lesson_hls /vol/web/logs /vol/web/backups \
     && chown -R onedu:onedu /app /vol/web
 
 ENTRYPOINT ["/entrypoint.sh"]

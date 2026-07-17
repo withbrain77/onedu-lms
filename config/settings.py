@@ -205,10 +205,18 @@ CELERY_VIDEO_QUEUE = os.getenv('CELERY_VIDEO_QUEUE', 'video')
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_EXPIRY_NOTICE_HOUR = env_int('CELERY_EXPIRY_NOTICE_HOUR', 9)
 CELERY_EXPIRY_NOTICE_MINUTE = env_int('CELERY_EXPIRY_NOTICE_MINUTE', 0)
+ONEDU_AUTOMATED_BACKUP_ENABLED = env_bool('ONEDU_AUTOMATED_BACKUP_ENABLED', False)
+ONEDU_BACKUP_ROOT = env_path('ONEDU_BACKUP_ROOT', BASE_DIR / 'backups')
+ONEDU_BACKUP_RETENTION_DAYS = env_int('ONEDU_BACKUP_RETENTION_DAYS', 30)
+ONEDU_BACKUP_HOUR = env_int('ONEDU_BACKUP_HOUR', 3)
+ONEDU_BACKUP_MINUTE = env_int('ONEDU_BACKUP_MINUTE', 20)
+ONEDU_BACKUP_INCLUDE_PUBLIC_MEDIA = env_bool('ONEDU_BACKUP_INCLUDE_PUBLIC_MEDIA', True)
+ONEDU_BACKUP_INCLUDE_PRIVATE_NONVIDEO = env_bool('ONEDU_BACKUP_INCLUDE_PRIVATE_NONVIDEO', True)
 CELERY_TASK_ROUTES = {
     'lessons.tasks.convert_lesson_hls_task': {'queue': CELERY_VIDEO_QUEUE},
     'enrollments.tasks.send_expiry_notices_task': {'queue': CELERY_TASK_DEFAULT_QUEUE},
     'enrollments.tasks.send_queued_email_task': {'queue': CELERY_TASK_DEFAULT_QUEUE},
+    'core.tasks.create_nonvideo_backup_task': {'queue': CELERY_TASK_DEFAULT_QUEUE},
 }
 CELERY_BEAT_SCHEDULE = {
     'send-enrollment-expiry-notices-daily': {
@@ -217,6 +225,12 @@ CELERY_BEAT_SCHEDULE = {
         'options': {'queue': CELERY_TASK_DEFAULT_QUEUE},
     },
 }
+if ONEDU_AUTOMATED_BACKUP_ENABLED:
+    CELERY_BEAT_SCHEDULE['create-nonvideo-backup-daily'] = {
+        'task': 'core.tasks.create_nonvideo_backup_task',
+        'schedule': crontab(hour=ONEDU_BACKUP_HOUR, minute=ONEDU_BACKUP_MINUTE),
+        'options': {'queue': CELERY_TASK_DEFAULT_QUEUE},
+    }
 
 DEFAULT_FROM_EMAIL = os.getenv('DJANGO_DEFAULT_FROM_EMAIL', 'Onedu LMS <no-reply@example.com>')
 SERVER_EMAIL = os.getenv('DJANGO_SERVER_EMAIL', DEFAULT_FROM_EMAIL)
