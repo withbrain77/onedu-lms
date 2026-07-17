@@ -2,6 +2,7 @@ from datetime import timedelta
 import hashlib
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase, override_settings
@@ -51,7 +52,8 @@ class HomePageTests(TestCase):
         self.assertContains(response, '부정 이용 방지')
         self.assertContains(response, 'withbrain77@daum.net')
 
-    def test_home_page_shows_two_recent_public_courses(self):
+    @patch('core.views.random.sample')
+    def test_home_page_shows_two_random_public_courses(self, mocked_sample):
         old_course = Course.objects.create(
             title='Old Public Program',
             description='Old public program.',
@@ -70,13 +72,15 @@ class HomePageTests(TestCase):
         Course.objects.filter(pk=old_course.pk).update(created_at=timezone.now() - timedelta(days=2))
         Course.objects.filter(pk=middle_course.pk).update(created_at=timezone.now() - timedelta(days=1))
         Course.objects.filter(pk=newest_course.pk).update(created_at=timezone.now())
+        mocked_sample.return_value = [old_course.pk, newest_course.pk]
 
         response = self.client.get(reverse('home'))
 
         self.assertEqual(response.status_code, 200)
+        mocked_sample.assert_called_once()
         self.assertContains(response, 'Newest Public Program')
-        self.assertContains(response, 'Middle Public Program')
-        self.assertNotContains(response, 'Old Public Program')
+        self.assertContains(response, 'Old Public Program')
+        self.assertNotContains(response, 'Middle Public Program')
         self.assertContains(response, '전체 프로그램 더보기')
         self.assertContains(response, reverse('courses:list'))
 
