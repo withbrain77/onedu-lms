@@ -4,13 +4,15 @@ from django.contrib import admin
 from django.urls import include, path
 
 from core.admin_views import acknowledge_server_warning, mobile_operations, server_logs, server_operations
-from core.views import home, privacy_policy, ui_preview
+from core.views import home, notice_detail, notice_list, privacy_policy, ui_preview
 from courses.views import short_course_redirect
 
 admin.site.index_template = 'admin/onedu_index.html'
 
 urlpatterns = [
     path('', home, name='home'),
+    path('notices/', notice_list, name='notice_list'),
+    path('notices/<int:notice_id>/', notice_detail, name='notice_detail'),
     path('privacy/', privacy_policy, name='privacy_policy'),
     path('c/<int:course_id>/', short_course_redirect, name='course_short_link'),
     path('ui-preview/', ui_preview, name='ui_preview'),

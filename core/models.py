@@ -1,5 +1,40 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+
+
+class Notice(models.Model):
+    title = models.CharField('제목', max_length=160)
+    content = models.TextField('내용')
+    course = models.ForeignKey(
+        'courses.Course',
+        verbose_name='관련 강의',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notices',
+    )
+    is_published = models.BooleanField('공개 여부', default=True)
+    is_pinned = models.BooleanField('상단 고정', default=False)
+    published_at = models.DateTimeField('공개일시', default=timezone.now)
+    created_at = models.DateTimeField('생성일시', auto_now_add=True)
+    updated_at = models.DateTimeField('수정일시', auto_now=True)
+
+    class Meta:
+        verbose_name = '공지사항'
+        verbose_name_plural = '공지사항'
+        ordering = ['-is_pinned', '-published_at', '-created_at']
+        indexes = [
+            models.Index(fields=['is_published', '-published_at']),
+            models.Index(fields=['course', 'is_published', '-published_at']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def scope_label(self):
+        return self.course.title if self.course_id else '전체 공지'
 
 
 class ServerWarningAcknowledgement(models.Model):

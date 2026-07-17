@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -10,6 +11,7 @@ from django.utils import timezone
 
 from core.services.access import can_access_course, get_latest_enrollment
 from core.services.completion import evaluate_enrollment_completion
+from core.models import Notice
 from enrollments.models import Enrollment
 from enrollments.notifications import notify_enrollment_request
 from progress.models import WatchProgress
@@ -143,6 +145,13 @@ def course_detail(request, slug):
 
     status_label, status_class = _status_for(enrollment, access_result)
     short_course_path = reverse('course_short_link', kwargs={'course_id': course.pk})
+    notices = (
+        Notice.objects
+        .filter(is_published=True, published_at__lte=timezone.now())
+        .filter(Q(course__isnull=True) | Q(course=course))
+        .select_related('course')
+        .order_by('-is_pinned', '-published_at', '-created_at')[:5]
+    )
     return render(
         request,
         'courses/course_detail.html',
@@ -160,6 +169,7 @@ def course_detail(request, slug):
             'completion_status': completion_status,
             'short_course_path': short_course_path,
             'short_course_url': _absolute_site_url(request, short_course_path),
+            'notices': notices,
         },
     )
 
@@ -196,13 +206,18 @@ def apply_course(request, slug):
             user=request.user,
             course=course,
             status=Enrollment.Status.APPROVED,
+            payment_status=Enrollment.PaymentStatus.NOT_REQUIRED,
             start_date=today,
             end_date=today + timedelta(days=course.default_enrollment_days),
         )
         messages.success(request, '무료 강의 신청이 완료되었습니다. 바로 학습을 시작할 수 있습니다.')
         return redirect('enrollments:course_detail', course_id=enrollment.course_id)
 
-    enrollment = Enrollment.objects.create(user=request.user, course=course)
+    enrollment = Enrollment.objects.create(
+        user=request.user,
+        course=course,
+        payment_status=Enrollment.PaymentStatus.PENDING,
+    )
     notify_enrollment_request(enrollment)
     deposit = settings.ONEDU_DEPOSIT_NOTICE
     messages.success(

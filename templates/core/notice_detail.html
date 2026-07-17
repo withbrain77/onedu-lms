@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ notice.title }} | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header student-hero d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
+  <div>
+    <div class="hero-kicker">NOTICE</div>
+    <h1>{{ notice.title }}</h1>
+    <p>
+      {% if notice.course %}{{ notice.course.title }} · {% endif %}
+      {{ notice.published_at|date:"Y.m.d H:i" }}
+    </p>
+  </div>
+  <a class="btn btn-primary page-header-cta" href="{% url 'notice_list' %}">공지 목록 보기</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<article class="notice-detail-card">
+  <div class="notice-detail-meta">
+    <span class="badge {% if notice.is_pinned %}text-bg-warning{% else %}text-bg-light border{% endif %}">
+      {% if notice.is_pinned %}중요{% else %}공지{% endif %}
+    </span>
+    <span>{{ notice.scope_label }}</span>
+  </div>
+  <div class="notice-detail-content">
+    {{ notice.content|linebreaks }}
+  </div>
+</article>
+{% endblock %}

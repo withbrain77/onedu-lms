@@ -41,6 +41,29 @@
   </div>
 </section>
 
+{% if notices %}
+  <section class="course-notice-panel mb-4" aria-labelledby="courseNoticeTitle">
+    <div class="course-notice-head">
+      <div>
+        <span class="learning-card-label">NOTICE</span>
+        <h2 id="courseNoticeTitle">공지사항</h2>
+      </div>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'notice_list' %}">전체 보기</a>
+    </div>
+    <div class="course-notice-list">
+      {% for notice in notices %}
+        <a href="{% url 'notice_detail' notice.id %}">
+          <span class="badge {% if notice.is_pinned %}text-bg-warning{% else %}text-bg-light border{% endif %}">
+            {% if notice.is_pinned %}중요{% else %}공지{% endif %}
+          </span>
+          <strong>{{ notice.title }}</strong>
+          <time datetime="{{ notice.published_at|date:'c' }}">{{ notice.published_at|date:"Y.m.d" }}</time>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
 <div class="row g-4">
   <div class="col-12 col-lg-8">
     <div class="timeline-panel">
@@ -131,6 +154,9 @@
         <dl class="detail-meta">
           <div><dt>상태</dt><dd>{% if enrollment and enrollment.is_completed %}<span class="badge text-bg-success">수료 완료</span>{% else %}<span class="badge {{ status_class }}">{{ status_label }}</span>{% endif %}</dd></div>
           <div><dt>이용료</dt><dd>{{ course.price_label }}</dd></div>
+          {% if course.is_paid and enrollment %}
+            <div><dt>입금 상태</dt><dd><span class="badge text-bg-light border">{{ enrollment.get_payment_status_display }}</span></dd></div>
+          {% endif %}
           <div><dt>승인 방식</dt><dd>{{ course.approval_policy_label }}</dd></div>
           <div><dt>수강 기간</dt><dd>{{ period_text }}</dd></div>
           <div><dt>남은 기간</dt><dd>{{ remaining_text }}</dd></div>

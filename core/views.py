@@ -1,9 +1,19 @@
 import random
 
 from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 
 from courses.models import Course
+from .models import Notice
+
+
+def _published_notices():
+    return Notice.objects.filter(
+        is_published=True,
+        published_at__lte=timezone.now(),
+    ).filter(Q(course__isnull=True) | Q(course__is_public=True))
 
 
 def home(request):
@@ -22,10 +32,24 @@ def home(request):
         {
             'featured_course': featured_course,
             'courses': courses,
+            'notices': _published_notices().filter(course__isnull=True)[:3],
             'course_count': len(public_course_ids),
             'lesson_count': sum(course.lesson_count for course in courses),
         },
     )
+
+
+def notice_list(request):
+    notices = _published_notices().select_related('course')
+    return render(request, 'core/notice_list.html', {'notices': notices})
+
+
+def notice_detail(request, notice_id):
+    notice = get_object_or_404(
+        _published_notices().select_related('course'),
+        pk=notice_id,
+    )
+    return render(request, 'core/notice_detail.html', {'notice': notice})
 
 
 def privacy_policy(request):

@@ -14,6 +14,12 @@ class Enrollment(models.Model):
         REJECTED = 'rejected', '반려됨'
         CANCELLED = 'cancelled', '취소됨'
 
+    class PaymentStatus(models.TextChoices):
+        NOT_REQUIRED = 'not_required', '입금 불필요'
+        PENDING = 'pending', '입금 대기'
+        CONFIRMED = 'confirmed', '입금 확인'
+        WAIVED = 'waived', '면제'
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name='수강생',
@@ -32,6 +38,22 @@ class Enrollment(models.Model):
         choices=Status.choices,
         default=Status.REQUESTED,
     )
+    payment_status = models.CharField(
+        '입금 상태',
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.NOT_REQUIRED,
+    )
+    payment_confirmed_at = models.DateTimeField('입금 확인일시', null=True, blank=True)
+    payment_confirmed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='입금 확인 관리자',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='payment_confirmed_enrollments',
+    )
+    payment_note = models.TextField('입금 메모', blank=True)
     start_date = models.DateField('수강 시작일', null=True, blank=True)
     end_date = models.DateField('수강 종료일', null=True, blank=True)
     approved_by = models.ForeignKey(
@@ -71,6 +93,8 @@ class Enrollment(models.Model):
     def save(self, *args, **kwargs):
         if self.status == self.Status.APPROVED and self.approved_at is None:
             self.approved_at = timezone.now()
+        if self.payment_status == self.PaymentStatus.CONFIRMED and self.payment_confirmed_at is None:
+            self.payment_confirmed_at = timezone.now()
         super().save(*args, **kwargs)
 
     @property
@@ -84,6 +108,11 @@ class Enrollment(models.Model):
     @property
     def is_rejected(self):
         return self.status == self.Status.REJECTED
+
+    @property
+    def is_payment_required(self):
+        course = getattr(self, 'course', None)
+        return bool(course and course.is_paid)
 
     def is_within_period(self, today=None):
         if self.status != self.Status.APPROVED:

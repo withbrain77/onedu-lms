@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
+from core.models import Notice
 from courses.models import Course
 from enrollments.models import EmailDeliveryLog, Enrollment
 from lessons.models import Lesson
@@ -72,6 +73,20 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(response, short_path)
         self.assertContains(response, 'data-course-share-url="http://testserver')
         self.assertContains(response, 'course_share.js')
+
+    def test_course_detail_shows_course_notice(self):
+        Notice.objects.create(
+            title='교재 확인 안내',
+            content='수강 전 교재를 확인해 주세요.',
+            course=self.course,
+            is_published=True,
+        )
+
+        response = self.client.get(self.course.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '공지사항')
+        self.assertContains(response, '교재 확인 안내')
 
     def test_course_admin_lesson_inline_shows_duration_as_readonly_label(self):
         admin_user = User.objects.create_superuser(
@@ -153,6 +168,7 @@ class MVPFlowViewTests(TestCase):
 
         enrollment = Enrollment.objects.get(user=self.student, course=self.course)
         self.assertEqual(enrollment.status, Enrollment.Status.REQUESTED)
+        self.assertEqual(enrollment.payment_status, Enrollment.PaymentStatus.PENDING)
 
         classroom = self.client.get(reverse('enrollments:classroom'))
         self.assertContains(classroom, 'page-header-cta')
@@ -167,6 +183,7 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(course_list, self.course.get_absolute_url())
         self.assertContains(course_list, '상세 보기')
         self.assertContains(course_list, '승인 대기 중')
+        self.assertContains(course_list, '입금 대기')
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
@@ -335,6 +352,7 @@ class MVPFlowViewTests(TestCase):
 
         enrollment = Enrollment.objects.get(user=self.student, course=free_course)
         self.assertEqual(enrollment.status, Enrollment.Status.APPROVED)
+        self.assertEqual(enrollment.payment_status, Enrollment.PaymentStatus.NOT_REQUIRED)
         self.assertEqual(enrollment.start_date, self.today)
         self.assertEqual(enrollment.end_date, self.today + timedelta(days=14))
         self.assertRedirects(response, reverse('enrollments:course_detail', kwargs={'course_id': free_course.pk}))

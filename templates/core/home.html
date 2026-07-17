@@ -120,6 +120,27 @@
     </div>
   </section>
 
+  {% if notices %}
+    <section class="portal-shell portal-notice-section" aria-labelledby="noticeTitle">
+      <div class="portal-section-title">
+        <div>
+          <span>NOTICE</span>
+          <h2 id="noticeTitle">공지사항</h2>
+        </div>
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'notice_list' %}">전체 공지 보기</a>
+      </div>
+      <div class="portal-notice-list">
+        {% for notice in notices %}
+          <a class="portal-notice-item" href="{% url 'notice_detail' notice.id %}">
+            <span>{% if notice.is_pinned %}중요{% else %}공지{% endif %}</span>
+            <strong>{{ notice.title }}</strong>
+            <time datetime="{{ notice.published_at|date:'c' }}">{{ notice.published_at|date:"Y.m.d" }}</time>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
   <section class="portal-shell portal-main-grid">
     <div class="portal-programs" aria-labelledby="programTitle">
       <div class="portal-section-title">

@@ -75,7 +75,12 @@
                     </td>
                     <td>{{ enrollment.course_title }}</td>
                     <td><time datetime="{{ enrollment.created_at|date:'c' }}">{{ enrollment.created_at|date:"Y-m-d H:i" }}</time></td>
-                    <td><span class="onedu-admin-badge">{{ enrollment.request_type }}</span></td>
+                    <td>
+                      <span class="onedu-admin-badge">{{ enrollment.request_type }}</span>
+                      {% if enrollment.payment_status %}
+                        <span class="onedu-admin-badge is-warning">{{ enrollment.payment_status }}</span>
+                      {% endif %}
+                    </td>
                     <td>
                       <div class="onedu-admin-row-actions">
                         <a href="{{ enrollment.change_url }}">상세</a>
@@ -166,6 +171,10 @@
           <a href="{{ dashboard.pending_enrollments.url|default:'#' }}">
             <span class="onedu-admin-badge is-warning">{{ dashboard.pending_enrollments.count }}</span>
             <strong>수강 승인 대기</strong>
+          </a>
+          <a href="{% url 'admin:enrollments_enrollment_changelist' %}?status__exact=requested&payment_status__exact=pending">
+            <span class="onedu-admin-badge is-warning">{{ dashboard.payment_pending_count }}</span>
+            <strong>입금 확인 대기</strong>
           </a>
           <a href="{% if dashboard.hls.url %}{{ dashboard.hls.url }}?status__exact=running{% else %}#{% endif %}">
             <span class="onedu-admin-badge">{{ dashboard.hls.running }}</span>

@@ -21,6 +21,7 @@ MODEL_LABELS = {
     ('accounts', 'accountwithdrawalrequest'): '계정 탈퇴 요청',
     ('accounts', 'accesslog'): '접속 보안 로그',
     ('auth', 'group'): '그룹 및 권한',
+    ('core', 'notice'): '공지사항',
     ('courses', 'course'): '강의',
     ('lessons', 'lesson'): '차시',
     ('lessons', 'lessonattachment'): '학습 자료',
@@ -53,6 +54,7 @@ MENU_GROUPS = [
             ('lessons', 'lessonattachment'),
             ('lessons', 'lessonattachmentdownload'),
             ('lessons', 'hlsconversionjob'),
+            ('core', 'notice'),
         ],
     },
     {
@@ -87,6 +89,7 @@ QUICK_ACTIONS = [
     ('프로그램 등록', ('courses', 'course'), 'add_url', '새 강의/프로그램을 등록합니다.'),
     ('차시 등록', ('lessons', 'lesson'), 'add_url', '영상 차시를 추가합니다.'),
     ('학습 자료 등록', ('lessons', 'lessonattachment'), 'add_url', '교재와 슬라이드 자료를 등록합니다.'),
+    ('공지사항 등록', ('core', 'notice'), 'add_url', '전체 또는 강의별 공지를 등록합니다.'),
     ('수강 신청 관리', ('enrollments', 'enrollment'), 'admin_url', '승인 대기와 수강 기간을 확인합니다.'),
     ('회원 검색', ('accounts', 'user'), 'admin_url', '수강생과 관리자 계정을 검색합니다.'),
     ('수료증 관리', ('certificates', 'certificate'), 'admin_url', '발급 상태와 검증 정보를 확인합니다.'),
@@ -295,6 +298,18 @@ def _build_stats(models):
             'tone': 'warning',
         },
         {
+            'label': '입금 대기',
+            'value': Enrollment.objects.filter(
+                status=Enrollment.Status.REQUESTED,
+                course__pricing_type=Course.PricingType.PAID,
+                payment_status=Enrollment.PaymentStatus.PENDING,
+            ).count(),
+            'description': '입금 확인이 필요한 유료 신청',
+            'url': (models.get(('enrollments', 'enrollment'), {}).get('admin_url') or '') + '?status__exact=requested&payment_status__exact=pending',
+            'icon': '₩',
+            'tone': 'warning',
+        },
+        {
             'label': '현재 수강 중',
             'value': active_enrollments.values('user_id').distinct().count(),
             'description': '수강 기간 내 승인 수강생',
@@ -361,6 +376,7 @@ def _build_pending_enrollments(models, limit=5):
                 'created_at': enrollment.created_at,
                 'status_label': enrollment.get_status_display(),
                 'request_type': '무료 과정' if enrollment.course.is_free else '유료 과정',
+                'payment_status': enrollment.get_payment_status_display(),
                 'change_url': change_url,
             }
         )
@@ -504,6 +520,11 @@ def onedu_admin_dashboard(context):
         'access_logs': _build_access_log_summary(models),
         'email_logs': _build_email_summary(models),
         'downloads': _build_download_summary(models),
+        'payment_pending_count': Enrollment.objects.filter(
+            status=Enrollment.Status.REQUESTED,
+            course__pricing_type=Course.PricingType.PAID,
+            payment_status=Enrollment.PaymentStatus.PENDING,
+        ).count(),
         'reenrollment_pending_count': ReEnrollmentRequest.objects.filter(
             status=ReEnrollmentRequest.Status.PENDING
         ).count(),

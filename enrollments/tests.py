@@ -401,6 +401,10 @@ class EnrollmentApprovalEmailTests(TestCase):
             'user': self.student.pk,
             'course': self.course.pk,
             'status': status,
+            'payment_status': Enrollment.PaymentStatus.PENDING,
+            'payment_confirmed_by': '',
+            'payment_confirmed_at': '',
+            'payment_note': '',
             'start_date': self.today,
             'end_date': self.today + timedelta(days=30),
             'approved_by': '',
@@ -434,6 +438,9 @@ class EnrollmentApprovalEmailTests(TestCase):
         self.enrollment.refresh_from_db()
         self.assertEqual(self.enrollment.status, Enrollment.Status.APPROVED)
         self.assertEqual(self.enrollment.approved_by, self.admin_user)
+        self.assertEqual(self.enrollment.payment_status, Enrollment.PaymentStatus.CONFIRMED)
+        self.assertEqual(self.enrollment.payment_confirmed_by, self.admin_user)
+        self.assertIsNotNone(self.enrollment.payment_confirmed_at)
         self.assertEqual(len(mail.outbox), 1)
 
         message = mail.outbox[0]

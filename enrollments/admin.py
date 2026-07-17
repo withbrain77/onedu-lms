@@ -121,6 +121,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         'student_account_status',
         'course_title',
         'status',
+        'payment_status',
         'start_date',
         'end_date',
         'remaining_days',
@@ -129,17 +130,34 @@ class EnrollmentAdmin(admin.ModelAdmin):
         'expiry_notice_7d_sent_at',
         'created_at',
     )
-    list_filter = ('status', 'is_completed', 'user__is_active', 'course', 'start_date', 'end_date', 'created_at')
+    list_filter = (
+        'status',
+        'payment_status',
+        'is_completed',
+        'user__is_active',
+        'course',
+        'start_date',
+        'end_date',
+        'created_at',
+    )
     search_fields = ('user__username', 'user__name', 'user__email', 'course__title')
-    list_editable = ('status', 'start_date', 'end_date')
-    autocomplete_fields = ('user', 'course', 'approved_by')
-    readonly_fields = ('approved_at', 'created_at', 'updated_at', 'completed_at', 'expiry_notice_7d_sent_at')
+    list_editable = ('status', 'payment_status', 'start_date', 'end_date')
+    autocomplete_fields = ('user', 'course', 'approved_by', 'payment_confirmed_by')
+    readonly_fields = (
+        'approved_at',
+        'payment_confirmed_at',
+        'created_at',
+        'updated_at',
+        'completed_at',
+        'expiry_notice_7d_sent_at',
+    )
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
-    list_select_related = ('user', 'course', 'approved_by')
+    list_select_related = ('user', 'course', 'approved_by', 'payment_confirmed_by')
     list_per_page = 50
     fieldsets = (
         ('신청 정보', {'fields': ('user', 'course', 'status')}),
+        ('입금 확인', {'fields': ('payment_status', 'payment_confirmed_by', 'payment_confirmed_at', 'payment_note')}),
         ('수강 기간', {'fields': ('start_date', 'end_date')}),
         ('승인/반려', {'fields': ('approved_by', 'approved_at', 'rejected_reason')}),
         ('수료', {'fields': ('is_completed', 'completed_at', 'completion_progress_percent', 'completion_note')}),
@@ -188,6 +206,20 @@ class EnrollmentAdmin(admin.ModelAdmin):
         )
         if obj.status == Enrollment.Status.APPROVED and not obj.approved_by_id:
             obj.approved_by = request.user
+        if obj.course_id and obj.course.is_free:
+            obj.payment_status = Enrollment.PaymentStatus.NOT_REQUIRED
+            obj.payment_confirmed_by = None
+            obj.payment_confirmed_at = None
+        elif obj.status == Enrollment.Status.APPROVED and obj.payment_status in (
+            Enrollment.PaymentStatus.NOT_REQUIRED,
+            Enrollment.PaymentStatus.PENDING,
+        ):
+            obj.payment_status = Enrollment.PaymentStatus.CONFIRMED
+        if obj.payment_status == Enrollment.PaymentStatus.CONFIRMED and not obj.payment_confirmed_by_id:
+            obj.payment_confirmed_by = request.user
+        if obj.payment_status != Enrollment.PaymentStatus.CONFIRMED:
+            obj.payment_confirmed_by = None
+            obj.payment_confirmed_at = None
         super().save_model(request, obj, form, change)
         if should_notify_approval:
             notify_enrollment_approved(obj)

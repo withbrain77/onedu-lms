@@ -37,6 +37,9 @@
             <p class="card-text text-muted line-clamp">{{ item.course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
             <dl class="course-meta small mb-3">
               <div><dt>이용료</dt><dd>{{ item.course.price_label }}</dd></div>
+              {% if item.course.is_paid and item.enrollment %}
+                <div><dt>입금 상태</dt><dd>{{ item.enrollment.get_payment_status_display }}</dd></div>
+              {% endif %}
               <div><dt>승인 방식</dt><dd>{{ item.course.approval_policy_label }}</dd></div>
               <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
               <div><dt>남은 기간</dt><dd>{{ item.remaining_text }}</dd></div>

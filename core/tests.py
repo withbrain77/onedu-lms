@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
-from core.models import ServerWarningAcknowledgement
+from core.models import Notice, ServerWarningAcknowledgement
 from core.services.access import can_access_course
 from courses.models import Course
 from enrollments.models import Enrollment
@@ -83,6 +83,63 @@ class HomePageTests(TestCase):
         self.assertNotContains(response, 'Middle Public Program')
         self.assertContains(response, '전체 프로그램 더보기')
         self.assertContains(response, reverse('courses:list'))
+
+    def test_home_page_shows_latest_global_notice(self):
+        Notice.objects.create(
+            title='운영 점검 안내',
+            content='주말 점검이 예정되어 있습니다.',
+            is_published=True,
+            is_pinned=True,
+        )
+        Course.objects.create(title='Notice Course', is_public=True)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '공지사항')
+        self.assertContains(response, '운영 점검 안내')
+        self.assertContains(response, reverse('notice_list'))
+
+    def test_notice_list_and_detail_are_public(self):
+        notice = Notice.objects.create(
+            title='수강 안내',
+            content='승인 후 수강할 수 있습니다.',
+            is_published=True,
+        )
+
+        list_response = self.client.get(reverse('notice_list'))
+        detail_response = self.client.get(reverse('notice_detail', kwargs={'notice_id': notice.pk}))
+
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, '수강 안내')
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, '승인 후 수강할 수 있습니다.')
+
+    def test_unpublished_notice_is_hidden(self):
+        notice = Notice.objects.create(
+            title='비공개 공지',
+            content='숨김',
+            is_published=False,
+        )
+
+        response = self.client.get(reverse('notice_detail', kwargs={'notice_id': notice.pk}))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_private_course_notice_is_hidden_from_public_notice_pages(self):
+        private_course = Course.objects.create(title='Private Notice Course', is_public=False)
+        notice = Notice.objects.create(
+            title='비공개 강의 공지',
+            content='숨김',
+            course=private_course,
+            is_published=True,
+        )
+
+        list_response = self.client.get(reverse('notice_list'))
+        detail_response = self.client.get(reverse('notice_detail', kwargs={'notice_id': notice.pk}))
+
+        self.assertNotContains(list_response, '비공개 강의 공지')
+        self.assertEqual(detail_response.status_code, 404)
 
     def test_student_home_shows_home_page(self):
         course = Course.objects.create(

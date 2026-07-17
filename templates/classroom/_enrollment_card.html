@@ -27,6 +27,9 @@
       <dl class="learning-meta mb-3">
         <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
         <div><dt>남은 기간</dt><dd>{{ item.remaining_text }}</dd></div>
+        {% if item.course.is_paid %}
+          <div><dt>입금 상태</dt><dd>{{ item.enrollment.get_payment_status_display }}</dd></div>
+        {% endif %}
       </dl>
       <div class="mb-3">
         <div class="d-flex justify-content-between small text-muted mb-2">
