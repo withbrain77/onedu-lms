@@ -200,7 +200,7 @@ class AdminThemeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ONEDU LMS 관리자')
         self.assertContains(response, 'css/admin.css')
-        self.assertContains(response, '20260718-warning-actions')
+        self.assertContains(response, '20260718-warning-buttons')
         self.assertContains(response, 'onedu-admin-workspace')
         self.assertContains(response, 'onedu-admin-sidebar')
         self.assertContains(response, '운영 대시보드')
@@ -292,6 +292,8 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, 'value="app:x_accel_disabled"')
         self.assertContains(response, '#serviceTitle')
         self.assertContains(response, 'onedu-server-warning__button')
+        self.assertContains(response, 'is-primary')
+        self.assertContains(response, 'is-secondary')
         self.assertContains(response, '확인 완료')
 
         message = '운영 환경에서 X-Accel-Redirect 영상 보호 설정을 확인하세요.'

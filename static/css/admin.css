@@ -2584,10 +2584,10 @@ a.onedu-server-warning__message:focus {
 
 .onedu-server-warning__actions {
   align-items: center;
-  display: flex !important;
-  flex-direction: row !important;
+  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
   justify-content: flex-start;
 }
 
@@ -2595,42 +2595,54 @@ a.onedu-server-warning__message:focus {
   margin: 0;
 }
 
-.onedu-server-warning__actions .onedu-server-warning__button,
-.onedu-server-warning__actions a.onedu-server-warning__button,
-.onedu-server-warning__actions button.onedu-server-warning__button {
+.onedu-server-warning__button {
   align-items: center;
-  border-radius: 10px;
-  box-shadow: none !important;
-  display: inline-flex !important;
+  appearance: none;
+  border-radius: 999px;
+  box-shadow: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-flex;
   flex: 0 0 auto;
-  font-size: 0.78rem !important;
+  font-size: 0.76rem;
   font-weight: 900;
-  height: 34px !important;
+  height: 32px;
   justify-content: center;
-  line-height: 1 !important;
-  margin: 0 !important;
-  max-width: max-content !important;
-  min-height: 34px !important;
-  min-width: 0 !important;
-  padding: 7px 12px !important;
-  width: auto !important;
+  line-height: 1;
+  margin: 0;
+  min-width: 0;
+  padding: 0 12px;
+  text-decoration: none;
+  text-shadow: none;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+  width: auto;
 }
 
-.onedu-server-warning__actions a.onedu-server-warning__button {
-  vertical-align: middle !important;
+.onedu-server-warning__button.is-primary {
+  background: #e8f6f4;
+  border: 1px solid #b9dfdc;
+  color: #075f5a;
 }
 
-.onedu-admin-button-secondary {
-  background: #ffffff !important;
-  border: 1px solid #cfe1e5 !important;
-  color: var(--dash-ink) !important;
+.onedu-server-warning__button.is-primary:hover,
+.onedu-server-warning__button.is-primary:focus {
+  background: #d9f0ed;
+  border-color: #84c5bf;
+  color: #044844;
 }
 
-.onedu-admin-button-secondary:hover,
-.onedu-admin-button-secondary:focus {
-  background: #eef8f7 !important;
-  border-color: #9ccdc8 !important;
-  color: var(--dash-primary) !important;
+.onedu-server-warning__button.is-secondary {
+  background: #ffffff;
+  border: 1px solid #e0c98b;
+  color: #785400;
+}
+
+.onedu-server-warning__button.is-secondary:hover,
+.onedu-server-warning__button.is-secondary:focus {
+  background: #fff8e6;
+  border-color: #d2ad4c;
+  color: #5c3d00;
 }
 
 .onedu-admin-error-detail {
