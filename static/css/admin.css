@@ -2595,8 +2595,9 @@ a.onedu-server-warning__message:focus {
   margin: 0;
 }
 
-.onedu-server-warning__actions .button,
-.onedu-server-warning__actions button.button {
+.onedu-server-warning__actions .onedu-server-warning__button,
+.onedu-server-warning__actions a.onedu-server-warning__button,
+.onedu-server-warning__actions button.onedu-server-warning__button {
   align-items: center;
   border-radius: 10px;
   box-shadow: none !important;
@@ -2608,10 +2609,15 @@ a.onedu-server-warning__message:focus {
   justify-content: center;
   line-height: 1 !important;
   margin: 0 !important;
+  max-width: max-content !important;
   min-height: 34px !important;
   min-width: 0 !important;
   padding: 7px 12px !important;
   width: auto !important;
+}
+
+.onedu-server-warning__actions a.onedu-server-warning__button {
+  vertical-align: middle !important;
 }
 
 .onedu-admin-button-secondary {

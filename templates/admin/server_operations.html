@@ -101,7 +101,7 @@
               {% if warning.tone != 'ok' %}
                 <div class="onedu-server-warning__actions">
                   {% if warning.target_url %}
-                    <a class="button" href="{{ warning.target_url }}">{{ warning.target_label }}</a>
+                    <a class="button onedu-server-warning__button" href="{{ warning.target_url }}">{{ warning.target_label }}</a>
                   {% endif %}
                   <form method="post" action="{{ links.ack_warning }}">
                     {% csrf_token %}
@@ -109,7 +109,7 @@
                     <input type="hidden" name="message_hash" value="{{ warning.message_hash }}">
                     <input type="hidden" name="message" value="{{ warning.message }}">
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit" class="button onedu-admin-button-secondary">확인 완료</button>
+                    <button type="submit" class="button onedu-server-warning__button onedu-admin-button-secondary">확인 완료</button>
                   </form>
                 </div>
               {% endif %}
