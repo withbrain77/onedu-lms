@@ -14,7 +14,10 @@ param(
         "restart-web",
         "restart-queue",
         "sync",
-        "deploy"
+        "deploy",
+        "readiness",
+        "backup-db",
+        "backup-check"
     )]
     [string]$Action = "health",
 

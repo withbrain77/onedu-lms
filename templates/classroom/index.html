@@ -29,6 +29,33 @@
   </div>
 </div>
 
+{% if waiting_cards %}
+  <div class="learning-guidance-panel mb-4">
+    <div>
+      <span class="learning-card-label">NEXT STEP</span>
+      <h2>신청이 접수되었습니다.</h2>
+      <p>
+        유료 프로그램은 입금 확인 후 관리자가 수강 기간을 배정합니다.
+        입금자명은 수강생 이름과 동일하게 입력해 주세요.
+      </p>
+    </div>
+    <div class="learning-guidance-meta">
+      <span>{{ onedu_deposit_notice.bank }}</span>
+      <strong>{{ onedu_deposit_notice.account }}</strong>
+      <small>예금주 {{ onedu_deposit_notice.holder }}</small>
+    </div>
+  </div>
+{% elif active_cards %}
+  <div class="learning-guidance-panel mb-4 is-active">
+    <div>
+      <span class="learning-card-label">LEARNING TIP</span>
+      <h2>수강 기간 안에 학습을 마무리하세요.</h2>
+      <p>영상 시청 진도, 시험 결과, 수료 여부는 자동으로 기록됩니다. 수강 종료 전 남은 차시를 확인해 주세요.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{% url 'courses:list' %}">다른 프로그램 보기</a>
+  </div>
+{% endif %}
+
 <section class="mb-5">
   <div class="section-title learning-section-title">
     <div>

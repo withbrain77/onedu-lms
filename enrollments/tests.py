@@ -3,6 +3,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from django.contrib.admin.sites import AdminSite
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core import mail
 from django.core.management import call_command
 from django.test import Client, TestCase
@@ -13,7 +14,7 @@ from django.utils import timezone
 from accounts.models import AccountWithdrawalRequest, User
 from courses.models import Course
 
-from .admin import EnrollmentAdmin, EnrollmentAdminForm, ReEnrollmentRequestAdminForm
+from .admin import EmailDeliveryLogAdmin, EnrollmentAdmin, EnrollmentAdminForm, ReEnrollmentRequestAdminForm
 from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 
 
@@ -427,6 +428,11 @@ class EnrollmentApprovalEmailTests(TestCase):
         self.model_admin.save_model(self.request, enrollment, form=None, change=True)
         return enrollment
 
+    def attach_messages(self, request):
+        request.session = {}
+        request._messages = FallbackStorage(request)
+        return request
+
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
         ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True,
@@ -451,6 +457,75 @@ class EnrollmentApprovalEmailTests(TestCase):
         self.assertIn(str(self.today), message.body)
         self.assertIn('https://onedu.withbrain.kr/classroom/', message.body)
         self.assertIn(f'https://onedu.withbrain.kr/classroom/{self.course.pk}/', message.body)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True,
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_admin_bulk_action_approves_with_default_period_and_payment_confirmation(self):
+        request = self.attach_messages(RequestFactory().post('/admin/enrollments/enrollment/'))
+        request.user = self.admin_user
+
+        self.model_admin.approve_selected_with_default_period(
+            request,
+            Enrollment.objects.filter(pk=self.enrollment.pk),
+        )
+
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.status, Enrollment.Status.APPROVED)
+        self.assertEqual(self.enrollment.start_date, self.today)
+        self.assertEqual(self.enrollment.end_date, self.today + timedelta(days=self.course.default_enrollment_days))
+        self.assertEqual(self.enrollment.approved_by, self.admin_user)
+        self.assertEqual(self.enrollment.payment_status, Enrollment.PaymentStatus.CONFIRMED)
+        self.assertEqual(self.enrollment.payment_confirmed_by, self.admin_user)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_admin_bulk_payment_confirmation_marks_paid_enrollment(self):
+        request = self.attach_messages(RequestFactory().post('/admin/enrollments/enrollment/'))
+        request.user = self.admin_user
+
+        self.model_admin.confirm_selected_payments(
+            request,
+            Enrollment.objects.filter(pk=self.enrollment.pk),
+        )
+
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.payment_status, Enrollment.PaymentStatus.CONFIRMED)
+        self.assertEqual(self.enrollment.payment_confirmed_by, self.admin_user)
+        self.assertIsNotNone(self.enrollment.payment_confirmed_at)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_admin_email_log_retry_action_resends_failed_enrollment_request_email(self):
+        log = EmailDeliveryLog.objects.create(
+            enrollment=self.enrollment,
+            kind=EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
+            status=EmailDeliveryLog.Status.FAILED,
+            recipient_email='admin@example.com',
+            subject='[ONEDU] 새 수강 신청이 접수되었습니다',
+            user_id_value=self.student.pk,
+            user_label=f'{self.student.display_name} ({self.student.username})',
+            course_id_value=self.course.pk,
+            course_title=self.course.title,
+            error_message='SMTP timeout',
+        )
+        request = self.attach_messages(RequestFactory().post('/admin/enrollments/emaildeliverylog/'))
+        request.user = self.admin_user
+        log_admin = EmailDeliveryLogAdmin(EmailDeliveryLog, AdminSite())
+
+        log_admin.retry_selected_email_logs(
+            request,
+            EmailDeliveryLog.objects.filter(pk=log.pk),
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.course.title, mail.outbox[0].body)
+        self.assertEqual(EmailDeliveryLog.objects.filter(status=EmailDeliveryLog.Status.SENT).count(), 1)
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',

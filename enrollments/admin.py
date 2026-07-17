@@ -1,11 +1,18 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib import admin
+from django.utils import timezone
 from django.utils.html import format_html
 
 from accounts.models import AccountWithdrawalRequest
 
 from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
-from .notifications import notify_enrollment_approved
+from .notifications import (
+    notify_enrollment_approved,
+    notify_enrollment_expiry_7d,
+    notify_enrollment_request,
+)
 
 
 BLOCKING_WITHDRAWAL_STATUSES = (
@@ -115,6 +122,7 @@ class ReEnrollmentRequestAdminForm(forms.ModelForm):
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):
     form = EnrollmentAdminForm
+    actions = ('confirm_selected_payments', 'approve_selected_with_default_period')
     list_display = (
         'student_username',
         'student_name',
@@ -224,6 +232,69 @@ class EnrollmentAdmin(admin.ModelAdmin):
         if should_notify_approval:
             notify_enrollment_approved(obj)
 
+    @admin.action(description='선택한 유료 신청 입금 확인 처리')
+    def confirm_selected_payments(self, request, queryset):
+        now = timezone.now()
+        confirmed = 0
+        skipped = 0
+        for enrollment in queryset.select_related('course'):
+            if not enrollment.course.is_paid:
+                skipped += 1
+                continue
+            enrollment.payment_status = Enrollment.PaymentStatus.CONFIRMED
+            enrollment.payment_confirmed_at = enrollment.payment_confirmed_at or now
+            enrollment.payment_confirmed_by = enrollment.payment_confirmed_by or request.user
+            enrollment.save(update_fields=[
+                'payment_status',
+                'payment_confirmed_at',
+                'payment_confirmed_by',
+                'updated_at',
+            ])
+            confirmed += 1
+        self.message_user(request, f'{confirmed}건의 입금을 확인 처리했습니다. 무료 강의 등 {skipped}건은 건너뛰었습니다.')
+
+    @admin.action(description='선택한 신청 입금 확인 후 승인(기본 기간)')
+    def approve_selected_with_default_period(self, request, queryset):
+        today = timezone.localdate()
+        now = timezone.now()
+        approved = 0
+        skipped = 0
+        blocked = 0
+
+        for enrollment in queryset.select_related('user', 'course'):
+            if enrollment.status != Enrollment.Status.REQUESTED:
+                skipped += 1
+                continue
+
+            reason = _approval_block_reason_for_user(enrollment.user, object_label='수강 신청')
+            if reason:
+                blocked += 1
+                continue
+
+            start_date = enrollment.start_date or today
+            end_date = enrollment.end_date or start_date + timedelta(days=enrollment.course.default_enrollment_days)
+            enrollment.status = Enrollment.Status.APPROVED
+            enrollment.start_date = start_date
+            enrollment.end_date = end_date
+            enrollment.approved_by = enrollment.approved_by or request.user
+            enrollment.approved_at = enrollment.approved_at or now
+            if enrollment.course.is_paid:
+                enrollment.payment_status = Enrollment.PaymentStatus.CONFIRMED
+                enrollment.payment_confirmed_by = enrollment.payment_confirmed_by or request.user
+                enrollment.payment_confirmed_at = enrollment.payment_confirmed_at or now
+            else:
+                enrollment.payment_status = Enrollment.PaymentStatus.NOT_REQUIRED
+                enrollment.payment_confirmed_by = None
+                enrollment.payment_confirmed_at = None
+            enrollment.save()
+            notify_enrollment_approved(enrollment)
+            approved += 1
+
+        self.message_user(
+            request,
+            f'{approved}건을 승인했습니다. 이미 처리된 신청 {skipped}건, 승인 차단 계정 {blocked}건은 건너뛰었습니다.',
+        )
+
 
 @admin.register(ReEnrollmentRequest)
 class ReEnrollmentRequestAdmin(admin.ModelAdmin):
@@ -296,6 +367,7 @@ class ReEnrollmentRequestAdmin(admin.ModelAdmin):
 
 @admin.register(EmailDeliveryLog)
 class EmailDeliveryLogAdmin(admin.ModelAdmin):
+    actions = ('retry_selected_email_logs',)
     list_display = (
         'created_at',
         'kind',
@@ -344,6 +416,38 @@ class EmailDeliveryLogAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    @admin.action(description='선택한 실패/대기 메일 재발송')
+    def retry_selected_email_logs(self, request, queryset):
+        retried = 0
+        skipped = 0
+        for log in queryset.select_related('enrollment', 'enrollment__user', 'enrollment__course'):
+            if log.status not in (EmailDeliveryLog.Status.FAILED, EmailDeliveryLog.Status.QUEUED):
+                skipped += 1
+                continue
+            if not log.enrollment_id:
+                skipped += 1
+                continue
+
+            if log.kind == EmailDeliveryLog.Kind.ENROLLMENT_REQUEST:
+                if notify_enrollment_request(log.enrollment):
+                    retried += 1
+                else:
+                    skipped += 1
+            elif log.kind == EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL:
+                if notify_enrollment_approved(log.enrollment):
+                    retried += 1
+                else:
+                    skipped += 1
+            elif log.kind == EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D:
+                if notify_enrollment_expiry_7d(log.enrollment):
+                    retried += 1
+                else:
+                    skipped += 1
+            else:
+                skipped += 1
+
+        self.message_user(request, f'{retried}건의 메일을 재발송 요청했습니다. {skipped}건은 재발송 대상이 아니어서 건너뛰었습니다.')
 
     @admin.display(description='오류 상세 / 서버 로그 요약')
     def error_detail(self, obj):

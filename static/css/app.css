@@ -3570,6 +3570,57 @@ body {
   line-height: 1.8;
 }
 
+.learning-guidance-panel {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(255, 255, 255, 0.96));
+  border: 1px solid rgba(220, 167, 0, 0.26);
+  border-radius: 0.9rem;
+  box-shadow: 0 1rem 2.5rem rgba(10, 32, 45, 0.07);
+  display: flex;
+  gap: 1.25rem;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+}
+
+.learning-guidance-panel.is-active {
+  background: linear-gradient(135deg, rgba(8, 117, 111, 0.09), rgba(255, 255, 255, 0.96));
+  border-color: rgba(8, 117, 111, 0.18);
+}
+
+.learning-guidance-panel h2 {
+  color: var(--onedu-ink);
+  font-size: 1.2rem;
+  font-weight: 900;
+  margin: 0.2rem 0 0.35rem;
+}
+
+.learning-guidance-panel p {
+  color: var(--onedu-ink-soft);
+  margin: 0;
+}
+
+.learning-guidance-meta {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(8, 117, 111, 0.15);
+  border-radius: 0.75rem;
+  display: grid;
+  flex: 0 0 18rem;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+}
+
+.learning-guidance-meta span,
+.learning-guidance-meta small {
+  color: var(--onedu-muted);
+  font-weight: 800;
+}
+
+.learning-guidance-meta strong {
+  color: var(--onedu-primary);
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
 @media (max-width: 991.98px) {
   .portal-notice-list,
   .notice-list-page {
@@ -3590,5 +3641,14 @@ body {
 
   .course-notice-list strong {
     white-space: normal;
+  }
+
+  .learning-guidance-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .learning-guidance-meta {
+    flex-basis: auto;
   }
 }

@@ -1,15 +1,18 @@
 from datetime import timedelta
 import hashlib
 import tempfile
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
 from django.conf import settings
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import User
+from accounts.models import AccessLog, User
+from accounts.reports import build_student_learning_report
 from core.models import Notice, ServerWarningAcknowledgement
 from core.services.access import can_access_course
 from courses.models import Course
@@ -433,6 +436,26 @@ class AdminThemeTests(TestCase):
         )
         course = Course.objects.create(title='리포트 강의', is_public=True)
         Enrollment.objects.create(user=student, course=course, status=Enrollment.Status.REQUESTED)
+        AccessLog.objects.create(
+            user=student,
+            event_type=AccessLog.EventType.LOGIN_SUCCESS,
+            ip_address='203.0.113.10',
+            device_summary='Chrome / Windows',
+        )
+        AccessLog.objects.create(
+            user=student,
+            event_type=AccessLog.EventType.LESSON_VIEW,
+            ip_address='203.0.113.11',
+            device_summary='Safari / iPhone',
+            course_id_value=course.pk,
+            course_title=course.title,
+            is_suspicious=True,
+            suspicious_reason='다른 접속 환경',
+        )
+        report = build_student_learning_report(student)
+        self.assertEqual(report['summary']['distinct_ip_count'], 2)
+        self.assertEqual(report['summary']['distinct_device_count'], 2)
+        self.assertEqual(report['summary']['watch_risk_label'], '주의')
         self.client.force_login(admin_user)
 
         response = self.client.get(reverse('admin:accounts_user_learning_report', args=[student.pk]))
@@ -441,6 +464,7 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '리포트 수강생 학습 리포트')
         self.assertContains(response, '리포트 강의')
         self.assertContains(response, '총 시청 시간')
+        self.assertContains(response, '이용 패턴')
 
     def test_user_changelist_learning_report_link_uses_visible_button_style(self):
         admin_user = User.objects.create_superuser(
@@ -465,6 +489,29 @@ class DeploymentConfigTests(TestCase):
         self.assertIn('ONEDU_NOTIFY_ENROLLMENT_REQUEST', compose)
         self.assertIn('ONEDU_ADMIN_NOTIFICATION_EMAIL:', compose)
         self.assertIn('ONEDU_ADMIN_NOTIFICATION_EMAILS:', compose)
+
+    def test_ops_readiness_command_reports_operational_summary(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            output = StringIO()
+            with override_settings(
+                STATIC_ROOT=temp_path / 'static',
+                MEDIA_ROOT=temp_path / 'media',
+                PRIVATE_MEDIA_ROOT=temp_path / 'private_media',
+                ONEDU_LOG_DIR=temp_path / 'logs',
+            ):
+                for path in (
+                    settings.STATIC_ROOT,
+                    settings.MEDIA_ROOT,
+                    settings.PRIVATE_MEDIA_ROOT,
+                    settings.ONEDU_LOG_DIR,
+                ):
+                    Path(path).mkdir(parents=True, exist_ok=True)
+                call_command('ops_readiness', stdout=output)
+
+        rendered = output.getvalue()
+        self.assertIn('ONEDU 운영 점검', rendered)
+        self.assertIn('입금 확인 대기', rendered)
 
 
 class UIPreviewTests(TestCase):

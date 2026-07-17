@@ -65,6 +65,9 @@ Actions:
   logs                           Show recent web/nginx logs
   deploy                         Build/start services through onedu-ops
   health                         Run service and HTTP health checks
+  readiness                      Run ONEDU operational readiness checks
+  backup-db                      Create a DB backup on the NAS
+  backup-check                   Show backup and data directory status
   restart-nginx                  Restart nginx through onedu-ops
   restart-queue                  Recreate redis and restart queue services
   hls-status                     Show recent HLS conversion jobs
@@ -99,6 +102,15 @@ EOF
     ;;
   health)
     ops health
+    ;;
+  readiness)
+    ops readiness
+    ;;
+  backup-db)
+    ops backup-db
+    ;;
+  backup-check)
+    ops backup-check
     ;;
   restart-nginx)
     ops restart-nginx

@@ -9,6 +9,7 @@ APP_DIR="${ONEDU_APP_DIR:-/volume1/wbinstitute/docker/onedu/app}"
 PROJECT="${ONEDU_COMPOSE_PROJECT:-onedu}"
 DOCKER_BIN="${ONEDU_DOCKER_BIN:-/usr/local/bin/docker}"
 BASE_URL="${ONEDU_BASE_URL:-http://127.0.0.1:8080}"
+BACKUP_ROOT="${ONEDU_BACKUP_ROOT:-$APP_DIR/backups}"
 
 compose() {
   cd "$APP_DIR"
@@ -44,6 +45,9 @@ Actions:
   restart-queue   Recreate redis and restart web/worker
   deploy          Build/start all services and run Django check
   health          Show status, check, and local HTTP headers
+  readiness       Run ONEDU operational readiness checks
+  backup-db       Create a PostgreSQL dump under backups/db
+  backup-check    Show backup and data directory status
   hls-status      Show recent HLS conversion jobs
   hls-reset-stuck Mark pending jobs without task IDs as failed
   expiry-notices  Send 7-day enrollment expiry notice emails
@@ -106,6 +110,26 @@ case "${1:-help}" in
       curl -I "$BASE_URL/" || true
       curl -I "$BASE_URL/admin/" || true
     fi
+    ;;
+  readiness)
+    compose exec -T web python manage.py ops_readiness
+    ;;
+  backup-db)
+    mkdir -p "$BACKUP_ROOT/db"
+    backup_file="$BACKUP_ROOT/db/onedu_$(date +%Y%m%d_%H%M%S).sql"
+    compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "$backup_file"
+    chmod 0600 "$backup_file"
+    ls -lh "$backup_file"
+    ;;
+  backup-check)
+    mkdir -p "$BACKUP_ROOT/db" "$BACKUP_ROOT/media" "$BACKUP_ROOT/private_media"
+    echo "Backup root: $BACKUP_ROOT"
+    echo
+    echo "Recent DB backups:"
+    ls -lht "$BACKUP_ROOT/db" 2>/dev/null | head -10 || true
+    echo
+    echo "Data directory sizes:"
+    du -sh "$APP_DIR/data/postgres" "$APP_DIR/data/media" "$APP_DIR/data/private_media" 2>/dev/null || true
     ;;
   hls-status)
     compose exec -T web python manage.py shell <<'PY'

@@ -53,6 +53,14 @@
       <span class="onedu-admin-stat__icon" aria-hidden="true">S</span>
       <span class="onedu-admin-stat__body"><span>주의 접속</span><strong>{{ report.summary.suspicious_access_count }}</strong><small>다른 접속 환경 의심</small></span>
     </div>
+    <div class="onedu-admin-stat {% if report.summary.watch_risk_label != '정상' %}is-warning{% endif %}">
+      <span class="onedu-admin-stat__icon" aria-hidden="true">R</span>
+      <span class="onedu-admin-stat__body">
+        <span>이용 패턴</span>
+        <strong>{{ report.summary.watch_risk_label }}</strong>
+        <small>IP {{ report.summary.distinct_ip_count }}개 · 기기 {{ report.summary.distinct_device_count }}개</small>
+      </span>
+    </div>
     <div class="onedu-admin-stat">
       <span class="onedu-admin-stat__icon" aria-hidden="true">D</span>
       <span class="onedu-admin-stat__body"><span>자료 다운로드</span><strong>{{ report.summary.download_count }}</strong><small>학습 자료 다운로드</small></span>
@@ -78,6 +86,8 @@
           <div><span>총 시청</span><strong>{{ item.total_watched_label }}{% if item.watch_multiplier != None %} <small>({{ item.watch_multiplier }}배)</small>{% endif %}</strong></div>
           <div><span>자료 다운로드</span><strong>{{ item.download_count }}회</strong></div>
           <div><span>접속 주의</span><strong>{{ item.suspicious_access_count }}건</strong></div>
+          <div><span>접속 환경</span><strong>IP {{ item.distinct_ip_count }}개 · 기기 {{ item.distinct_device_count }}개</strong></div>
+          <div><span>패턴 판정</span><strong>{{ item.watch_risk_label }}</strong></div>
           <div><span>최근 접속</span><strong>{% if item.last_access %}{{ item.last_access.created_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</strong></div>
         </div>
 
@@ -125,7 +135,7 @@
         </div>
 
         <div class="onedu-admin-card__foot">
-          <p>반복 시청 배수는 해당 강의의 총 시청 시간 / 영상 길이 합계로 계산합니다. 계정 공유 판단의 참고 지표로만 사용하세요.</p>
+          <p>반복 시청 배수, IP 수, 기기 수, 주의 접속 기록은 계정 공유 의심을 확인하기 위한 참고 지표입니다. 실제 부정 이용 판단은 수강생 문의와 함께 확인하세요.</p>
           <a class="button" href="{{ item.admin_change_url }}">수강 신청 관리</a>
         </div>
       </section>
