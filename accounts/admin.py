@@ -2,9 +2,10 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.shortcuts import get_object_or_404, render
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import AccessLog, User
+from .models import AccessLog, AccountWithdrawalRequest, User
 from .reports import build_student_learning_report
 
 
@@ -120,3 +121,131 @@ class AccessLogAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(AccountWithdrawalRequest)
+class AccountWithdrawalRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'requested_at',
+        'user_label',
+        'email_snapshot',
+        'short_reason',
+        'status',
+        'processed_at',
+        'processed_by',
+    )
+    list_filter = ('status', 'requested_at', 'processed_at')
+    search_fields = (
+        'username_snapshot',
+        'name_snapshot',
+        'email_snapshot',
+        'phone_snapshot',
+        'reason',
+        'admin_note',
+        'user__username',
+        'user__email',
+        'user__name',
+    )
+    readonly_fields = (
+        'user',
+        'username_snapshot',
+        'name_snapshot',
+        'email_snapshot',
+        'phone_snapshot',
+        'reason',
+        'requested_at',
+        'processed_at',
+        'processed_by',
+    )
+    fieldsets = (
+        ('요청 정보', {
+            'fields': (
+                'user',
+                'username_snapshot',
+                'name_snapshot',
+                'email_snapshot',
+                'phone_snapshot',
+                'reason',
+                'requested_at',
+            )
+        }),
+        ('처리', {
+            'fields': (
+                'status',
+                'processed_at',
+                'processed_by',
+                'admin_note',
+            )
+        }),
+    )
+    actions = ('mark_processing', 'complete_and_deactivate_users', 'cancel_requests')
+    date_hierarchy = 'requested_at'
+    ordering = ('-requested_at',)
+    list_per_page = 50
+
+    @admin.display(description='사용자')
+    def user_label(self, obj):
+        return obj.name_snapshot or obj.username_snapshot or '-'
+
+    @admin.display(description='요청 사유')
+    def short_reason(self, obj):
+        if not obj.reason:
+            return '-'
+        if len(obj.reason) <= 40:
+            return obj.reason
+        return f'{obj.reason[:40]}...'
+
+    def has_add_permission(self, request):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        previous_status = None
+        if change and obj.pk:
+            previous_status = AccountWithdrawalRequest.objects.filter(pk=obj.pk).values_list('status', flat=True).first()
+
+        if obj.status in (obj.Status.COMPLETED, obj.Status.CANCELED) and previous_status != obj.status:
+            obj.processed_at = timezone.now()
+            obj.processed_by = request.user
+        elif obj.status == obj.Status.PROCESSING and previous_status != obj.status:
+            obj.processed_by = request.user
+
+        super().save_model(request, obj, form, change)
+
+        if obj.status == obj.Status.COMPLETED:
+            self._deactivate_user(obj)
+
+    def _deactivate_user(self, obj):
+        user = obj.user
+        if user and user.is_active and not user.is_staff and not user.is_superuser:
+            user.is_active = False
+            user.save(update_fields=['is_active'])
+
+    @admin.action(description='처리 중으로 변경')
+    def mark_processing(self, request, queryset):
+        updated = queryset.filter(status=AccountWithdrawalRequest.Status.REQUESTED).update(
+            status=AccountWithdrawalRequest.Status.PROCESSING,
+            processed_by_id=request.user.pk,
+        )
+        self.message_user(request, f'{updated}건을 처리 중으로 변경했습니다.')
+
+    @admin.action(description='처리 완료 및 일반 계정 비활성화')
+    def complete_and_deactivate_users(self, request, queryset):
+        completed = 0
+        now = timezone.now()
+        for withdrawal_request in queryset.exclude(status=AccountWithdrawalRequest.Status.COMPLETED):
+            withdrawal_request.status = AccountWithdrawalRequest.Status.COMPLETED
+            withdrawal_request.processed_at = now
+            withdrawal_request.processed_by = request.user
+            withdrawal_request.save(update_fields=['status', 'processed_at', 'processed_by'])
+            self._deactivate_user(withdrawal_request)
+            completed += 1
+        self.message_user(request, f'{completed}건을 처리 완료했습니다.')
+
+    @admin.action(description='요청 취소로 변경')
+    def cancel_requests(self, request, queryset):
+        updated = queryset.exclude(status=AccountWithdrawalRequest.Status.CANCELED).update(
+            status=AccountWithdrawalRequest.Status.CANCELED,
+            processed_at=timezone.now(),
+            processed_by_id=request.user.pk,
+        )
+        self.message_user(request, f'{updated}건을 요청 취소로 변경했습니다.')

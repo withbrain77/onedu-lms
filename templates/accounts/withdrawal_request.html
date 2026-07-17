@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}계정 탈퇴 요청 | Onedu LMS{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div class="hero-kicker">ACCOUNT REQUEST</div>
+  <h1>계정 탈퇴 요청</h1>
+  <p>요청이 접수되면 운영자가 수강 이력과 수료 기록을 확인한 뒤 처리합니다.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4 p-lg-5">
+        {% if active_withdrawal_request %}
+          <div class="alert alert-info mb-4">
+            이미 계정 탈퇴 요청이 접수되어 있습니다.
+            현재 상태는 <strong>{{ active_withdrawal_request.get_status_display }}</strong>입니다.
+          </div>
+          <a class="btn btn-primary" href="{% url 'accounts:profile' %}">내 정보로 이동</a>
+        {% else %}
+          <div class="alert alert-warning">
+            탈퇴 요청 후에도 처리 완료 전까지는 계정이 즉시 삭제되지 않습니다.
+            수강 이력, 수료증 발급 기록, 운영 문의 대응에 필요한 정보는 개인정보 처리방침에 따라 일정 기간 보관될 수 있습니다.
+          </div>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="mb-3">
+              <label class="form-label" for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+              {{ form.reason }}
+              <div class="form-text">사유 입력은 선택사항입니다.</div>
+              {% for error in form.reason.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-check privacy-consent-box mb-4{% if form.confirm.errors %} privacy-consent-box-invalid{% endif %}">
+              {{ form.confirm }}
+              <label class="form-check-label" for="{{ form.confirm.id_for_label }}">
+                {{ form.confirm.label }}
+              </label>
+              {% for error in form.confirm.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row gap-2">
+              <button class="btn btn-danger" type="submit">탈퇴 요청 접수</button>
+              <a class="btn btn-outline-secondary" href="{% url 'accounts:profile' %}">취소</a>
+            </div>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm account-side-card">
+      <div class="card-body p-4">
+        <div class="learning-card-label">PROCESS</div>
+        <h2 class="h5 mb-3">처리 안내</h2>
+        <ol class="small text-muted ps-3 mb-0">
+          <li class="mb-2">수강생이 탈퇴 요청을 접수합니다.</li>
+          <li class="mb-2">운영자가 수강 이력과 수료 기록을 확인합니다.</li>
+          <li class="mb-2">필요한 안내 후 계정 이용 중지 또는 개인정보 정리를 진행합니다.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

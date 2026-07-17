@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    AccountWithdrawalRequestView,
     LMSLoginView,
     LMSPasswordChangeDoneView,
     LMSPasswordChangeView,
@@ -20,6 +21,7 @@ urlpatterns = [
     path('signup/', SignUpView.as_view(), name='signup'),
     path('login/', LMSLoginView.as_view(), name='login'),
     path('profile/', ProfileUpdateView.as_view(), name='profile'),
+    path('withdrawal-request/', AccountWithdrawalRequestView.as_view(), name='withdrawal_request'),
     path('find-username/', UsernameLookupView.as_view(), name='find_username'),
     path('password-change/', LMSPasswordChangeView.as_view(), name='password_change'),
     path('password-change/done/', LMSPasswordChangeDoneView.as_view(), name='password_change_done'),

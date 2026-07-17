@@ -7,7 +7,7 @@ from django.contrib.auth.forms import (
     UserCreationForm,
 )
 
-from .models import User
+from .models import AccountWithdrawalRequest, User
 
 
 class BootstrapFormMixin:
@@ -141,3 +141,32 @@ class BootstrapPasswordChangeForm(BootstrapFormMixin, PasswordChangeForm):
         self.fields['old_password'].widget.attrs.setdefault('autocomplete', 'current-password')
         self.fields['new_password1'].widget.attrs.setdefault('autocomplete', 'new-password')
         self.fields['new_password2'].widget.attrs.setdefault('autocomplete', 'new-password')
+
+
+class AccountWithdrawalRequestForm(BootstrapFormMixin, forms.ModelForm):
+    confirm = forms.BooleanField(
+        label='계정 탈퇴 요청 안내를 확인했습니다.',
+        required=True,
+        error_messages={
+            'required': '계정 탈퇴 요청 안내를 확인해 주세요.',
+        },
+    )
+
+    class Meta:
+        model = AccountWithdrawalRequest
+        fields = ('reason',)
+        labels = {
+            'reason': '요청 사유',
+        }
+        widgets = {
+            'reason': forms.Textarea(
+                attrs={
+                    'rows': 4,
+                    'placeholder': '운영자가 확인할 수 있도록 필요한 내용을 입력해 주세요. 사유 입력은 선택사항입니다.',
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_bootstrap()

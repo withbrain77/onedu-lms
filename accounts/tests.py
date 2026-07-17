@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.test.utils import override_settings
 
-from .models import AccessLog, User
+from .models import AccessLog, AccountWithdrawalRequest, User
 from .views import REMEMBER_USERNAME_COOKIE
 
 
@@ -182,6 +182,7 @@ class ProfileManagementTests(TestCase):
         self.assertContains(response, 'old@example.com')
         self.assertContains(response, reverse('accounts:password_change'))
         self.assertContains(response, reverse('accounts:profile'))
+        self.assertContains(response, reverse('accounts:withdrawal_request'))
 
     def test_user_can_update_profile(self):
         self.client.force_login(self.user)
@@ -245,6 +246,75 @@ class ProfileManagementTests(TestCase):
 
         profile_response = self.client.get(reverse('accounts:profile'))
         self.assertEqual(profile_response.status_code, 200)
+
+    def test_withdrawal_request_requires_login(self):
+        response = self.client.get(reverse('accounts:withdrawal_request'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('accounts:login'), response['Location'])
+
+    def test_user_can_submit_account_withdrawal_request(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('accounts:withdrawal_request'),
+            {
+                'reason': '강의 이용이 끝났습니다.',
+                'confirm': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accounts:profile'))
+        withdrawal_request = AccountWithdrawalRequest.objects.get(user=self.user)
+        self.assertEqual(withdrawal_request.status, AccountWithdrawalRequest.Status.REQUESTED)
+        self.assertEqual(withdrawal_request.reason, '강의 이용이 끝났습니다.')
+        self.assertEqual(withdrawal_request.username_snapshot, self.user.username)
+        self.assertEqual(withdrawal_request.email_snapshot, self.user.email)
+
+        profile_response = self.client.get(reverse('accounts:profile'))
+        self.assertContains(profile_response, '처리 대기 중')
+
+    def test_withdrawal_request_requires_confirmation(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('accounts:withdrawal_request'),
+            {'reason': '확인 체크 없음'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '계정 탈퇴 요청 안내를 확인해 주세요.')
+        self.assertFalse(AccountWithdrawalRequest.objects.filter(user=self.user).exists())
+
+    def test_user_cannot_submit_duplicate_active_withdrawal_request(self):
+        AccountWithdrawalRequest.objects.create(user=self.user, reason='첫 요청')
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('accounts:withdrawal_request'),
+            {
+                'reason': '두 번째 요청',
+                'confirm': 'on',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(AccountWithdrawalRequest.objects.filter(user=self.user).count(), 1)
+
+    def test_admin_can_view_withdrawal_requests(self):
+        AccountWithdrawalRequest.objects.create(user=self.user, reason='관리자 확인 요청')
+        admin_user = User.objects.create_superuser(
+            username='withdrawal_admin',
+            password='pass12345',
+            email='admin@example.com',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:accounts_accountwithdrawalrequest_changelist'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '관리자 확인 요청')
 
 
 class AccountRecoveryTests(TestCase):

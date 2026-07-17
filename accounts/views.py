@@ -23,6 +23,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, FormView, UpdateView
 
 from .forms import (
+    AccountWithdrawalRequestForm,
     BootstrapAuthenticationForm,
     BootstrapPasswordChangeForm,
     BootstrapPasswordResetForm,
@@ -31,7 +32,7 @@ from .forms import (
     StudentProfileForm,
     UsernameLookupForm,
 )
-from .models import AccessLog, User
+from .models import AccessLog, AccountWithdrawalRequest, User
 from .services import record_access_log
 
 
@@ -93,10 +94,67 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         return self.request.user
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_withdrawal_request'] = (
+            AccountWithdrawalRequest.objects
+            .filter(
+                user=self.request.user,
+                status__in=[
+                    AccountWithdrawalRequest.Status.REQUESTED,
+                    AccountWithdrawalRequest.Status.PROCESSING,
+                ],
+            )
+            .order_by('-requested_at')
+            .first()
+        )
+        return context
+
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, '내 정보가 저장되었습니다.')
         return response
+
+
+class AccountWithdrawalRequestView(LoginRequiredMixin, FormView):
+    form_class = AccountWithdrawalRequestForm
+    template_name = 'accounts/withdrawal_request.html'
+    success_url = reverse_lazy('accounts:profile')
+
+    def get_active_request(self):
+        return (
+            AccountWithdrawalRequest.objects
+            .filter(
+                user=self.request.user,
+                status__in=[
+                    AccountWithdrawalRequest.Status.REQUESTED,
+                    AccountWithdrawalRequest.Status.PROCESSING,
+                ],
+            )
+            .order_by('-requested_at')
+            .first()
+        )
+
+    def dispatch(self, request, *args, **kwargs):
+        self.active_request = self.get_active_request() if request.user.is_authenticated else None
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_withdrawal_request'] = self.active_request
+        return context
+
+    def form_valid(self, form):
+        if self.active_request:
+            messages.info(self.request, '이미 처리 대기 중인 계정 탈퇴 요청이 있습니다.')
+            return redirect('accounts:profile')
+
+        AccountWithdrawalRequest.objects.create(
+            user=self.request.user,
+            reason=form.cleaned_data.get('reason', '').strip(),
+        )
+        messages.success(self.request, '계정 탈퇴 요청이 접수되었습니다. 운영자가 확인 후 처리합니다.')
+        return redirect(self.get_success_url())
 
 
 class UsernameLookupView(FormView):

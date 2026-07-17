@@ -18,6 +18,7 @@ register = template.Library()
 
 MODEL_LABELS = {
     ('accounts', 'user'): '사용자',
+    ('accounts', 'accountwithdrawalrequest'): '계정 탈퇴 요청',
     ('accounts', 'accesslog'): '접속 보안 로그',
     ('auth', 'group'): '그룹 및 권한',
     ('courses', 'course'): '강의',
@@ -41,7 +42,7 @@ MENU_GROUPS = [
     {
         'title': '회원 관리',
         'icon': 'A',
-        'items': [('accounts', 'user'), ('accounts', 'accesslog'), ('auth', 'group')],
+        'items': [('accounts', 'user'), ('accounts', 'accountwithdrawalrequest'), ('accounts', 'accesslog'), ('auth', 'group')],
     },
     {
         'title': '프로그램 관리',

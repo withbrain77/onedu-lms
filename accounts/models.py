@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -72,3 +73,64 @@ class AccessLog(models.Model):
     def __str__(self):
         created = timezone.localtime(self.created_at).strftime('%Y-%m-%d %H:%M')
         return f'{self.user} / {self.get_event_type_display()} / {created}'
+
+
+class AccountWithdrawalRequest(models.Model):
+    class Status(models.TextChoices):
+        REQUESTED = 'requested', '요청 접수'
+        PROCESSING = 'processing', '처리 중'
+        COMPLETED = 'completed', '처리 완료'
+        CANCELED = 'canceled', '요청 취소'
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='사용자',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='withdrawal_requests',
+    )
+    status = models.CharField('상태', max_length=20, choices=Status.choices, default=Status.REQUESTED, db_index=True)
+    reason = models.TextField('요청 사유', blank=True)
+    username_snapshot = models.CharField('아이디', max_length=150, blank=True)
+    name_snapshot = models.CharField('이름', max_length=100, blank=True)
+    email_snapshot = models.EmailField('이메일', blank=True)
+    phone_snapshot = models.CharField('연락처', max_length=30, blank=True)
+    requested_at = models.DateTimeField('요청일시', auto_now_add=True, db_index=True)
+    processed_at = models.DateTimeField('처리일시', null=True, blank=True)
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='처리 관리자',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='processed_withdrawal_requests',
+    )
+    admin_note = models.TextField('관리자 메모', blank=True)
+
+    class Meta:
+        verbose_name = '계정 탈퇴 요청'
+        verbose_name_plural = '계정 탈퇴 요청'
+        ordering = ['-requested_at']
+        indexes = [
+            models.Index(fields=['status', '-requested_at']),
+            models.Index(fields=['user', '-requested_at']),
+        ]
+
+    def __str__(self):
+        user_label = self.name_snapshot or self.username_snapshot or '알 수 없음'
+        return f'{user_label} / {self.get_status_display()}'
+
+    @property
+    def is_active_request(self):
+        return self.status in (self.Status.REQUESTED, self.Status.PROCESSING)
+
+    def save(self, *args, **kwargs):
+        if self.user_id:
+            self.username_snapshot = self.username_snapshot or self.user.username
+            self.name_snapshot = self.name_snapshot or self.user.display_name
+            self.email_snapshot = self.email_snapshot or self.user.email
+            self.phone_snapshot = self.phone_snapshot or self.user.phone
+        if self.status in (self.Status.COMPLETED, self.Status.CANCELED) and self.processed_at is None:
+            self.processed_at = timezone.now()
+        super().save(*args, **kwargs)
