@@ -1,4 +1,5 @@
 import logging
+import time
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -67,6 +68,42 @@ def _record_email_log(kind, enrollment, recipients, subject, status, error_messa
         logger.exception('Failed to record ONEDU email delivery log.')
 
 
+def _send_mail_with_retries(*, subject, message, recipients):
+    retry_count = max(int(getattr(settings, 'ONEDU_EMAIL_RETRY_COUNT', 3)), 0)
+    retry_delay = max(float(getattr(settings, 'ONEDU_EMAIL_RETRY_DELAY_SECONDS', 2.0)), 0)
+    total_attempts = retry_count + 1
+    last_exception = None
+
+    for attempt in range(1, total_attempts + 1):
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                recipients,
+                fail_silently=False,
+            )
+            return attempt, None
+        except Exception as exc:
+            last_exception = exc
+            if attempt >= total_attempts:
+                break
+            logger.warning(
+                'ONEDU email send attempt %s/%s failed; retrying. error=%s',
+                attempt,
+                total_attempts,
+                exc,
+            )
+            if retry_delay:
+                time.sleep(retry_delay)
+
+    return total_attempts, last_exception
+
+
+def _email_error_message(attempts, exc):
+    return f'메일 발송이 {attempts}회 시도 후 실패했습니다. 오류: {type(exc).__name__}: {exc}'[:2000]
+
+
 def notify_enrollment_request(enrollment):
     if not getattr(settings, 'ONEDU_NOTIFY_ENROLLMENT_REQUEST', True):
         return False
@@ -104,23 +141,20 @@ def notify_enrollment_request(enrollment):
         f'관리자에서 확인하기:\n{admin_url}\n'
     )
 
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            recipients,
-            fail_silently=False,
+    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=recipients)
+    if exc:
+        logger.error(
+            'Failed to send enrollment request notification email after %s attempts.',
+            attempts,
+            exc_info=(type(exc), exc, exc.__traceback__),
         )
-    except Exception:
-        logger.exception('Failed to send enrollment request notification email.')
         _record_email_log(
             EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
             enrollment,
             recipients,
             subject,
             EmailDeliveryLog.Status.FAILED,
-            '메일 발송 중 오류가 발생했습니다. 서버 로그를 확인해 주세요.',
+            _email_error_message(attempts, exc),
         )
         return False
 
@@ -179,23 +213,20 @@ def notify_enrollment_approved(enrollment):
         '수강 기간 안에서 영상을 시청해 주세요.\n'
     )
 
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [recipient],
-            fail_silently=False,
+    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=[recipient])
+    if exc:
+        logger.error(
+            'Failed to send enrollment approval notification email after %s attempts.',
+            attempts,
+            exc_info=(type(exc), exc, exc.__traceback__),
         )
-    except Exception:
-        logger.exception('Failed to send enrollment approval notification email.')
         _record_email_log(
             EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL,
             enrollment,
             [recipient],
             subject,
             EmailDeliveryLog.Status.FAILED,
-            '메일 발송 중 오류가 발생했습니다. 서버 로그를 확인해 주세요.',
+            _email_error_message(attempts, exc),
         )
         return False
 
@@ -253,23 +284,20 @@ def notify_enrollment_expiry_7d(enrollment):
         '이미 학습을 완료했다면 내 강의실에서 수료 상태와 수료증을 확인할 수 있습니다.\n'
     )
 
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [recipient],
-            fail_silently=False,
+    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=[recipient])
+    if exc:
+        logger.error(
+            'Failed to send enrollment expiry notification email after %s attempts.',
+            attempts,
+            exc_info=(type(exc), exc, exc.__traceback__),
         )
-    except Exception:
-        logger.exception('Failed to send enrollment expiry notification email.')
         _record_email_log(
             EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D,
             enrollment,
             [recipient],
             subject,
             EmailDeliveryLog.Status.FAILED,
-            '메일 발송 중 오류가 발생했습니다. 서버 로그를 확인해 주세요.',
+            _email_error_message(attempts, exc),
         )
         return False
 

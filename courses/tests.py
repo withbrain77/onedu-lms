@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.test import override_settings
@@ -189,6 +190,46 @@ class MVPFlowViewTests(TestCase):
         self.assertEqual(log.status, EmailDeliveryLog.Status.SENT)
         self.assertEqual(log.recipient_email, 'admin@example.com')
         self.assertEqual(log.course_title, self.course.title)
+
+    @override_settings(
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        ONEDU_EMAIL_RETRY_COUNT=3,
+        ONEDU_EMAIL_RETRY_DELAY_SECONDS=0,
+    )
+    @patch('enrollments.notifications.send_mail')
+    def test_paid_course_application_retries_admin_notification_until_success(self, mocked_send_mail):
+        mocked_send_mail.side_effect = [
+            TimeoutError('smtp timeout 1'),
+            TimeoutError('smtp timeout 2'),
+            None,
+        ]
+        self.login_student()
+
+        self.client.post(reverse('courses:apply', kwargs={'slug': self.course.slug}))
+
+        self.assertEqual(mocked_send_mail.call_count, 3)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ENROLLMENT_REQUEST)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.SENT)
+
+    @override_settings(
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        ONEDU_EMAIL_RETRY_COUNT=3,
+        ONEDU_EMAIL_RETRY_DELAY_SECONDS=0,
+    )
+    @patch('enrollments.notifications.send_mail')
+    def test_paid_course_application_records_failed_after_retry_limit(self, mocked_send_mail):
+        mocked_send_mail.side_effect = TimeoutError('smtp timeout')
+        self.login_student()
+
+        self.client.post(reverse('courses:apply', kwargs={'slug': self.course.slug}))
+
+        self.assertEqual(mocked_send_mail.call_count, 4)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ENROLLMENT_REQUEST)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.FAILED)
+        self.assertIn('4회 시도 후 실패', log.error_message)
+        self.assertIn('TimeoutError', log.error_message)
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
