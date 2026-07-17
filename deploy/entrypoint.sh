@@ -20,6 +20,7 @@ fix_runtime_permissions() {
   chown -R "$APP_USER:$APP_GROUP" "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR"
   chmod u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR"
   chmod -R u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR"
+  chmod -R a+rX "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR"
 
   if [ "${ONEDU_FIX_HLS_OWNERSHIP:-1}" = "1" ]; then
     chown -R "$APP_USER:$APP_GROUP" "$PRIVATE_MEDIA_DIR/lesson_hls"
