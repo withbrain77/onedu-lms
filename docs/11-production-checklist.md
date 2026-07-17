@@ -101,6 +101,7 @@ DJANGO_EMAIL_USE_TLS=True
 DJANGO_EMAIL_TIMEOUT=30
 ONEDU_EMAIL_RETRY_COUNT=3
 ONEDU_EMAIL_RETRY_DELAY_SECONDS=10
+ONEDU_EMAIL_ASYNC=True
 DJANGO_DEFAULT_FROM_EMAIL=Onedu LMS <no-reply@example.com>
 ONEDU_NOTIFY_ENROLLMENT_REQUEST=True
 ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True
@@ -112,6 +113,7 @@ ONEDU_ADMIN_NOTIFICATION_EMAIL=admin@example.com
 - 관리자가 수강 신청을 승인하면 수강생 이메일 주소로 승인 안내 메일이 발송된다.
 - 수강 종료 7일 전에는 수료 완료되지 않은 승인 수강생에게 만료 예정 안내 메일이 발송된다.
 - SMTP 서버 응답 지연에 대비해 메일 발송은 기본 30초까지 기다리고, 실패 시 3회 재시도한다.
+- `ONEDU_EMAIL_ASYNC=True`이면 웹 요청은 메일 발송 작업을 큐에 등록하고, 실제 SMTP 발송과 재시도는 worker가 처리한다.
 - 여러 관리자에게 보내려면 `ONEDU_ADMIN_NOTIFICATION_EMAILS=admin1@example.com,admin2@example.com`처럼 쉼표로 구분한다.
 - `ONEDU_ADMIN_NOTIFICATION_EMAIL`을 비워 두면 SMTP 로그인 계정인 `DJANGO_EMAIL_HOST_USER`가 기본 수신자가 된다.
 - 무료 강의는 신청 즉시 자동 승인되므로 승인요청 메일을 보내지 않는다.

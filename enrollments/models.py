@@ -213,6 +213,7 @@ class EmailDeliveryLog(models.Model):
         ENROLLMENT_EXPIRY_7D = 'enrollment_expiry_7d', '수강 종료 7일 전 알림'
 
     class Status(models.TextChoices):
+        QUEUED = 'queued', '발송 대기'
         SENT = 'sent', '발송 완료'
         FAILED = 'failed', '발송 실패'
         SKIPPED = 'skipped', '발송 생략'

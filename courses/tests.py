@@ -192,6 +192,45 @@ class MVPFlowViewTests(TestCase):
         self.assertEqual(log.course_title, self.course.title)
 
     @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_EMAIL_ASYNC=True,
+        CELERY_TASK_ALWAYS_EAGER=False,
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    @patch('enrollments.tasks.send_queued_email_task.delay')
+    def test_paid_course_application_queues_admin_notification_email(self, mocked_delay):
+        self.login_student()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse('courses:apply', kwargs={'slug': self.course.slug}))
+
+        self.assertEqual(len(mail.outbox), 0)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ENROLLMENT_REQUEST)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.QUEUED)
+        self.assertEqual(log.recipient_email, 'admin@example.com')
+        mocked_delay.assert_called_once()
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_EMAIL_ASYNC=True,
+        CELERY_TASK_ALWAYS_EAGER=True,
+        ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_eager_queued_admin_notification_sends_and_updates_log(self):
+        self.login_student()
+
+        self.client.post(reverse('courses:apply', kwargs={'slug': self.course.slug}))
+
+        self.assertEqual(len(mail.outbox), 1)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ENROLLMENT_REQUEST)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.SENT)
+        self.assertIsNotNone(log.sent_at)
+
+    @override_settings(
         ONEDU_NOTIFY_ENROLLMENT_REQUEST=True,
         ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
         ONEDU_EMAIL_RETRY_COUNT=3,

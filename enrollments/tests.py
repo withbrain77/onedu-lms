@@ -1,5 +1,6 @@
 from datetime import timedelta
 from io import StringIO
+from unittest.mock import patch
 
 from django.contrib.admin.sites import AdminSite
 from django.core import mail
@@ -13,7 +14,7 @@ from accounts.models import User
 from courses.models import Course
 
 from .admin import EnrollmentAdmin
-from .models import Enrollment, ReEnrollmentRequest
+from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 
 
 class ReEnrollmentRequestTests(TestCase):
@@ -398,6 +399,26 @@ class EnrollmentApprovalEmailTests(TestCase):
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_EMAIL_ASYNC=True,
+        CELERY_TASK_ALWAYS_EAGER=False,
+        ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True,
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    @patch('enrollments.tasks.send_queued_email_task.delay')
+    def test_admin_approval_queues_student_email_when_async_enabled(self, mocked_delay):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.approve_enrollment()
+
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.status, Enrollment.Status.APPROVED)
+        self.assertEqual(len(mail.outbox), 0)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.QUEUED)
+        self.assertEqual(log.recipient_email, 'student@example.com')
+        mocked_delay.assert_called_once()
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
         ONEDU_NOTIFY_ENROLLMENT_APPROVAL=True,
     )
     def test_approved_enrollment_update_does_not_send_duplicate_email(self):
@@ -477,6 +498,26 @@ class EnrollmentExpiryNoticeCommandTests(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('matched=0 sent=0 skipped=0 dry_run=False', second_output.getvalue())
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_EMAIL_ASYNC=True,
+        CELERY_TASK_ALWAYS_EAGER=True,
+        ONEDU_NOTIFY_ENROLLMENT_EXPIRY_7D=True,
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_command_can_send_expiry_notice_through_eager_email_queue(self):
+        enrollment = self.enrollment()
+        output = StringIO()
+
+        call_command('send_expiry_notices', date=str(self.today), stdout=output)
+
+        enrollment.refresh_from_db()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIsNotNone(enrollment.expiry_notice_7d_sent_at)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.SENT)
+        self.assertIn('matched=1 sent=1 skipped=0 dry_run=False', output.getvalue())
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',

@@ -4,6 +4,7 @@ import traceback
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
@@ -52,7 +53,7 @@ def _record_email_log(kind, enrollment, recipients, subject, status, error_messa
     user = getattr(enrollment, 'user', None)
     course = getattr(enrollment, 'course', None)
     try:
-        EmailDeliveryLog.objects.create(
+        return EmailDeliveryLog.objects.create(
             enrollment=enrollment,
             kind=kind,
             status=status,
@@ -67,6 +68,7 @@ def _record_email_log(kind, enrollment, recipients, subject, status, error_messa
         )
     except Exception:
         logger.exception('Failed to record ONEDU email delivery log.')
+        return None
 
 
 def _send_mail_with_retries(*, subject, message, recipients):
@@ -109,6 +111,109 @@ def _email_error_message(attempts, exc):
     return message[:4000]
 
 
+def _mark_queue_failure(log_id, exc):
+    message = f'작업 큐 등록 실패: {type(exc).__name__}: {exc}'
+    try:
+        EmailDeliveryLog.objects.filter(pk=log_id).update(
+            status=EmailDeliveryLog.Status.FAILED,
+            error_message=message[:4000],
+        )
+    except Exception:
+        logger.exception('Failed to mark ONEDU email queue failure.')
+
+
+def send_queued_email_log(log_id, subject, message, recipients):
+    try:
+        log = EmailDeliveryLog.objects.select_related('enrollment').get(pk=log_id)
+    except EmailDeliveryLog.DoesNotExist:
+        logger.warning('Queued email log %s does not exist.', log_id)
+        return False
+
+    if log.status not in (EmailDeliveryLog.Status.QUEUED, EmailDeliveryLog.Status.FAILED):
+        logger.info('Queued email log %s skipped because status is %s.', log_id, log.status)
+        return False
+
+    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=recipients)
+    if exc:
+        logger.error(
+            'Failed to send queued ONEDU email log %s after %s attempts.',
+            log_id,
+            attempts,
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
+        log.status = EmailDeliveryLog.Status.FAILED
+        log.error_message = _email_error_message(attempts, exc)
+        log.sent_at = None
+        log.save(update_fields=['status', 'error_message', 'sent_at'])
+        return False
+
+    log.status = EmailDeliveryLog.Status.SENT
+    log.error_message = ''
+    log.sent_at = timezone.now()
+    log.save(update_fields=['status', 'error_message', 'sent_at'])
+    return True
+
+
+def _enqueue_email_log(log, subject, message, recipients):
+    from .tasks import send_queued_email_task
+
+    def publish():
+        try:
+            send_queued_email_task.delay(log.pk, subject, message, list(recipients))
+            logger.info('Queued ONEDU email log %s for background delivery.', log.pk)
+        except Exception as exc:
+            logger.exception('Failed to enqueue ONEDU email log %s.', log.pk)
+            _mark_queue_failure(log.pk, exc)
+
+    if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
+        publish()
+    else:
+        transaction.on_commit(publish)
+
+
+def _deliver_or_queue_email(kind, enrollment, recipients, subject, message):
+    if getattr(settings, 'ONEDU_EMAIL_ASYNC', False):
+        log = _record_email_log(
+            kind,
+            enrollment,
+            recipients,
+            subject,
+            EmailDeliveryLog.Status.QUEUED,
+            '작업 큐에 등록되어 발송 대기 중입니다.',
+        )
+        if not log:
+            return False
+        _enqueue_email_log(log, subject, message, recipients)
+        return True
+
+    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=recipients)
+    if exc:
+        logger.error(
+            'Failed to send %s notification email after %s attempts.',
+            kind,
+            attempts,
+            exc_info=(type(exc), exc, exc.__traceback__),
+        )
+        _record_email_log(
+            kind,
+            enrollment,
+            recipients,
+            subject,
+            EmailDeliveryLog.Status.FAILED,
+            _email_error_message(attempts, exc),
+        )
+        return False
+
+    _record_email_log(
+        kind,
+        enrollment,
+        recipients,
+        subject,
+        EmailDeliveryLog.Status.SENT,
+    )
+    return True
+
+
 def notify_enrollment_request(enrollment):
     if not getattr(settings, 'ONEDU_NOTIFY_ENROLLMENT_REQUEST', True):
         return False
@@ -146,31 +251,13 @@ def notify_enrollment_request(enrollment):
         f'관리자에서 확인하기:\n{admin_url}\n'
     )
 
-    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=recipients)
-    if exc:
-        logger.error(
-            'Failed to send enrollment request notification email after %s attempts.',
-            attempts,
-            exc_info=(type(exc), exc, exc.__traceback__),
-        )
-        _record_email_log(
-            EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
-            enrollment,
-            recipients,
-            subject,
-            EmailDeliveryLog.Status.FAILED,
-            _email_error_message(attempts, exc),
-        )
-        return False
-
-    _record_email_log(
+    return _deliver_or_queue_email(
         EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
         enrollment,
         recipients,
         subject,
-        EmailDeliveryLog.Status.SENT,
+        message,
     )
-    return True
 
 
 def notify_enrollment_approved(enrollment):
@@ -218,31 +305,13 @@ def notify_enrollment_approved(enrollment):
         '수강 기간 안에서 영상을 시청해 주세요.\n'
     )
 
-    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=[recipient])
-    if exc:
-        logger.error(
-            'Failed to send enrollment approval notification email after %s attempts.',
-            attempts,
-            exc_info=(type(exc), exc, exc.__traceback__),
-        )
-        _record_email_log(
-            EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL,
-            enrollment,
-            [recipient],
-            subject,
-            EmailDeliveryLog.Status.FAILED,
-            _email_error_message(attempts, exc),
-        )
-        return False
-
-    _record_email_log(
+    return _deliver_or_queue_email(
         EmailDeliveryLog.Kind.ENROLLMENT_APPROVAL,
         enrollment,
         [recipient],
         subject,
-        EmailDeliveryLog.Status.SENT,
+        message,
     )
-    return True
 
 
 def notify_enrollment_expiry_7d(enrollment):
@@ -289,28 +358,10 @@ def notify_enrollment_expiry_7d(enrollment):
         '이미 학습을 완료했다면 내 강의실에서 수료 상태와 수료증을 확인할 수 있습니다.\n'
     )
 
-    attempts, exc = _send_mail_with_retries(subject=subject, message=message, recipients=[recipient])
-    if exc:
-        logger.error(
-            'Failed to send enrollment expiry notification email after %s attempts.',
-            attempts,
-            exc_info=(type(exc), exc, exc.__traceback__),
-        )
-        _record_email_log(
-            EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D,
-            enrollment,
-            [recipient],
-            subject,
-            EmailDeliveryLog.Status.FAILED,
-            _email_error_message(attempts, exc),
-        )
-        return False
-
-    _record_email_log(
+    return _deliver_or_queue_email(
         EmailDeliveryLog.Kind.ENROLLMENT_EXPIRY_7D,
         enrollment,
         [recipient],
         subject,
-        EmailDeliveryLog.Status.SENT,
+        message,
     )
-    return True
