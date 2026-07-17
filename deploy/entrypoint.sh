@@ -14,12 +14,16 @@ fix_runtime_permissions() {
   fi
 
   mkdir -p "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR"
+  touch "$LOG_DIR/onedu.log"
 
   chown "$APP_USER:$APP_GROUP" "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR"
   chown -R "$APP_USER:$APP_GROUP" "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR"
+  chmod u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$PRIVATE_MEDIA_DIR" "$PRIVATE_MEDIA_DIR/lesson_hls" "$LOG_DIR"
+  chmod -R u+rwX "$STATIC_DIR" "$MEDIA_DIR" "$LOG_DIR"
 
   if [ "${ONEDU_FIX_HLS_OWNERSHIP:-1}" = "1" ]; then
     chown -R "$APP_USER:$APP_GROUP" "$PRIVATE_MEDIA_DIR/lesson_hls"
+    chmod -R u+rwX "$PRIVATE_MEDIA_DIR/lesson_hls"
   fi
 }
 
