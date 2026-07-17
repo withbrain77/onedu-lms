@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
@@ -14,6 +17,46 @@ from .models import ServerWarningAcknowledgement
 from .server_status import build_server_status
 
 
+def _tail_log_file(path, max_lines=300, max_bytes=256 * 1024):
+    log_path = Path(path) if path else None
+    if not log_path:
+        return {
+            'path': '-',
+            'exists': False,
+            'lines': [],
+            'message': '로그 파일 경로가 설정되어 있지 않습니다.',
+            'size': 0,
+            'truncated': False,
+        }
+    if not log_path.exists():
+        return {
+            'path': str(log_path),
+            'exists': False,
+            'lines': [],
+            'message': '아직 기록된 서버 로그 파일이 없습니다. 오류나 운영 이벤트가 발생하면 이곳에 표시됩니다.',
+            'size': 0,
+            'truncated': False,
+        }
+
+    size = log_path.stat().st_size
+    offset = max(size - max_bytes, 0)
+    with log_path.open('rb') as log_file:
+        log_file.seek(offset)
+        data = log_file.read(max_bytes)
+    lines = data.decode('utf-8', errors='replace').splitlines()
+    if offset and lines:
+        lines = lines[1:]
+    lines = lines[-max_lines:]
+    return {
+        'path': str(log_path),
+        'exists': True,
+        'lines': lines,
+        'message': '',
+        'size': size,
+        'truncated': bool(offset),
+    }
+
+
 @staff_member_required
 def server_operations(request):
     context = {
@@ -22,6 +65,7 @@ def server_operations(request):
         'links': {
             'dashboard': reverse('admin:index'),
             'mobile': reverse('admin_mobile_ops'),
+            'logs': reverse('admin_server_logs'),
             'access_logs': reverse('admin:accounts_accesslog_changelist'),
             'hls': reverse('admin:lessons_hlsconversionjob_changelist'),
             'email_logs': reverse('admin:enrollments_emaildeliverylog_changelist'),
@@ -29,6 +73,21 @@ def server_operations(request):
         },
     }
     return render(request, 'admin/server_operations.html', context)
+
+
+@staff_member_required
+def server_logs(request):
+    log_data = _tail_log_file(getattr(settings, 'ONEDU_LOG_FILE', ''))
+    context = {
+        'title': '서버 로그',
+        'log_data': log_data,
+        'links': {
+            'dashboard': reverse('admin:index'),
+            'server': reverse('admin_server_ops'),
+            'refresh': reverse('admin_server_logs'),
+        },
+    }
+    return render(request, 'admin/server_logs.html', context)
 
 
 @staff_member_required

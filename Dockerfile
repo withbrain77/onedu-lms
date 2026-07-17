@@ -16,7 +16,7 @@ COPY . /app/
 COPY deploy/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh \
-    && mkdir -p /vol/web/static /vol/web/media /vol/web/private_media
+    && mkdir -p /vol/web/static /vol/web/media /vol/web/private_media /vol/web/logs
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]

@@ -2646,18 +2646,78 @@ a.onedu-server-warning__message:focus {
 }
 
 .onedu-admin-error-detail {
-  background: #0f2531;
-  border: 1px solid #1e4657;
-  border-radius: 14px;
-  color: #e8f6f6;
+  background: transparent;
+  border: 0;
+  border-left: 3px solid #dce9eb;
+  border-radius: 0;
+  color: var(--dash-ink);
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin: 0;
+  max-height: 12rem;
+  overflow: auto;
+  padding: 0 0 0 12px;
+  white-space: pre-wrap;
+}
+
+.onedu-server-log-meta {
+  border-top: 1px solid #e8eff1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.onedu-server-log-meta div {
+  border-right: 1px solid #e8eff1;
+  display: grid;
+  gap: 5px;
+  padding: 14px 18px;
+}
+
+.onedu-server-log-meta div:last-child {
+  border-right: 0;
+}
+
+.onedu-server-log-meta span {
+  color: var(--dash-muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.onedu-server-log-meta strong {
+  color: var(--dash-ink);
+  font-weight: 900;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.onedu-server-log-view {
+  background: #101f2a;
+  border: 0;
+  color: #dff6f2;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   line-height: 1.55;
   margin: 0;
-  max-height: 18rem;
+  max-height: 34rem;
   overflow: auto;
-  padding: 14px;
+  padding: 18px;
   white-space: pre-wrap;
+}
+
+@media (max-width: 760px) {
+  .onedu-server-log-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .onedu-server-log-meta div {
+    border-right: 0;
+    border-bottom: 1px solid #e8eff1;
+  }
+
+  .onedu-server-log-meta div:last-child {
+    border-bottom: 0;
+  }
 }
 
 .onedu-server-kv {

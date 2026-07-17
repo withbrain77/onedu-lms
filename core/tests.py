@@ -1,5 +1,6 @@
 from datetime import timedelta
 import hashlib
+import tempfile
 from pathlib import Path
 
 from django.conf import settings
@@ -200,7 +201,7 @@ class AdminThemeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ONEDU LMS 관리자')
         self.assertContains(response, 'css/admin.css')
-        self.assertContains(response, '20260718-warning-buttons')
+        self.assertContains(response, '20260718-server-logs')
         self.assertContains(response, 'onedu-admin-workspace')
         self.assertContains(response, 'onedu-admin-sidebar')
         self.assertContains(response, '운영 대시보드')
@@ -214,6 +215,7 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '오늘 자료 다운로드')
         self.assertContains(response, '운영 설정')
         self.assertContains(response, '서버 상태')
+        self.assertContains(response, '서버 로그')
         self.assertContains(response, 'onedu-admin-menu-direct')
         self.assertNotContains(response, '운영 현황')
 
@@ -275,6 +277,7 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '저장소 사용량')
         self.assertContains(response, '트래픽 지표')
         self.assertContains(response, 'HLS 작업')
+        self.assertContains(response, reverse('admin_server_logs'))
 
     @override_settings(USE_X_ACCEL_REDIRECT=False)
     def test_server_warning_links_to_related_area_and_can_be_acknowledged(self):
@@ -319,6 +322,37 @@ class AdminThemeTests(TestCase):
 
     def test_server_operations_requires_staff_login(self):
         response = self.client.get(reverse('admin_server_ops'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('admin:login'), response['Location'])
+
+    def test_staff_can_open_server_logs_page(self):
+        admin_user = User.objects.create_superuser(
+            username='server_logs_admin',
+            password='pass12345',
+            email='server-logs-admin@example.com',
+            name='서버 로그 관리자',
+        )
+        self.client.force_login(admin_user)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            log_file = Path(temp_dir) / 'onedu.log'
+            log_file.write_text(
+                '[2026-07-18 00:00:00] ERROR enrollments.notifications: smtp timeout\n'
+                '[2026-07-18 00:00:01] INFO core.server_status: status checked\n',
+                encoding='utf-8',
+            )
+            with override_settings(ONEDU_LOG_FILE=str(log_file)):
+                response = self.client.get(reverse('admin_server_logs'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '서버 로그')
+        self.assertContains(response, 'smtp timeout')
+        self.assertContains(response, 'onedu-server-log-view')
+        self.assertContains(response, reverse('admin_server_ops'))
+
+    def test_server_logs_requires_staff_login(self):
+        response = self.client.get(reverse('admin_server_logs'))
 
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse('admin:login'), response['Location'])

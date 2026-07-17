@@ -252,6 +252,53 @@ ONEDU_ACCESS_LOG_CONCURRENCY_WINDOW_MINUTES = env_int('ONEDU_ACCESS_LOG_CONCURRE
 ONEDU_SERVER_STATUS_DOMAIN = os.getenv('ONEDU_SERVER_STATUS_DOMAIN', '').strip()
 ONEDU_PUBLIC_IP_CHECK_URL = os.getenv('ONEDU_PUBLIC_IP_CHECK_URL', '').strip()
 ONEDU_SERVER_STATUS_TIMEOUT_SECONDS = env_float('ONEDU_SERVER_STATUS_TIMEOUT_SECONDS', 1.0)
+ONEDU_LOG_DIR = Path(os.getenv('ONEDU_LOG_DIR', BASE_DIR / 'logs'))
+ONEDU_LOG_FILE = str(ONEDU_LOG_DIR / 'onedu.log')
+try:
+    ONEDU_LOG_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    ONEDU_LOG_FILE = ''
+
+_LOG_HANDLERS = ['console']
+_LOGGING_HANDLERS = {
+    'console': {
+        'class': 'logging.StreamHandler',
+        'formatter': 'standard',
+    },
+}
+if ONEDU_LOG_FILE:
+    _LOG_HANDLERS.append('onedu_file')
+    _LOGGING_HANDLERS['onedu_file'] = {
+        'class': 'logging.handlers.RotatingFileHandler',
+        'filename': ONEDU_LOG_FILE,
+        'maxBytes': env_int('ONEDU_LOG_MAX_BYTES', 5 * 1024 * 1024),
+        'backupCount': env_int('ONEDU_LOG_BACKUP_COUNT', 5),
+        'encoding': 'utf-8',
+        'formatter': 'standard',
+    }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': _LOGGING_HANDLERS,
+    'root': {
+        'handlers': _LOG_HANDLERS,
+        'level': os.getenv('ONEDU_LOG_LEVEL', 'INFO'),
+    },
+    'loggers': {
+        'django.server': {
+            'handlers': _LOG_HANDLERS,
+            'level': os.getenv('ONEDU_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
+}
 
 SESSION_COOKIE_SECURE = env_bool('DJANGO_SESSION_COOKIE_SECURE', not DEBUG)
 CSRF_COOKIE_SECURE = env_bool('DJANGO_CSRF_COOKIE_SECURE', not DEBUG)

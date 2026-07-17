@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}{{ block.super }} onedu-admin-dashboard-page onedu-admin-server-logs-page{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs onedu-admin-breadcrumbs">
+  <a href="{% url 'admin:index' %}">홈</a>
+  <span>›</span>
+  <span>운영 설정</span>
+  <span>›</span>
+  <span>서버 로그</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="onedu-admin-main onedu-server-logs">
+  <header class="onedu-admin-hero">
+    <div>
+      <p class="onedu-admin-kicker">SERVER LOGS</p>
+      <h1>서버 로그</h1>
+      <p>메일 발송, 작업 큐, 애플리케이션 오류 등 최근 운영 로그를 확인합니다.</p>
+    </div>
+    <div class="onedu-admin-hero__actions">
+      <a class="button" href="{{ links.server }}">서버 상태</a>
+      <a class="button" href="{{ links.refresh }}">새로고침</a>
+    </div>
+  </header>
+
+  <section class="onedu-admin-card onedu-admin-card--full" aria-labelledby="serverLogTitle">
+    <div class="onedu-admin-card__head">
+      <div>
+        <p class="onedu-admin-kicker">RECENT LOG</p>
+        <h2 id="serverLogTitle">최근 로그</h2>
+      </div>
+      <span class="onedu-admin-badge {% if log_data.exists %}is-success{% endif %}">
+        {% if log_data.exists %}{{ log_data.lines|length }}줄{% else %}대기 중{% endif %}
+      </span>
+    </div>
+    <div class="onedu-server-log-meta">
+      <div><span>로그 파일</span><strong>{{ log_data.path }}</strong></div>
+      <div><span>파일 크기</span><strong>{{ log_data.size|filesizeformat }}</strong></div>
+      <div><span>표시 범위</span><strong>{% if log_data.truncated %}최근 일부만 표시{% else %}전체 표시 가능{% endif %}</strong></div>
+    </div>
+    {% if log_data.lines %}
+      <pre class="onedu-server-log-view" aria-label="최근 서버 로그">{% for line in log_data.lines %}{{ line }}
+{% endfor %}</pre>
+    {% else %}
+      <div class="onedu-admin-empty compact">{{ log_data.message }}</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

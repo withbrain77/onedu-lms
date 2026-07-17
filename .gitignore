@@ -6,6 +6,7 @@ private_media/
 staticfiles/
 data/
 backups/
+logs/
 .env
 .DS_Store
 .venv/

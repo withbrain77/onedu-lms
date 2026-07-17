@@ -131,6 +131,10 @@ def _build_menu(request, app_list, models):
         server_ops_url = reverse('admin_server_ops')
     except NoReverseMatch:
         server_ops_url = ''
+    try:
+        server_logs_url = reverse('admin_server_logs')
+    except NoReverseMatch:
+        server_logs_url = ''
     sections = [
         {
             'title': '대시보드',
@@ -166,6 +170,8 @@ def _build_menu(request, app_list, models):
             }
         )
     server_ops_active = bool(server_ops_url and current_path.rstrip('/') == server_ops_url.rstrip('/'))
+    server_logs_active = bool(server_logs_url and current_path.rstrip('/') == server_logs_url.rstrip('/'))
+    operations_active = server_ops_active or server_logs_active
     assigned = set()
     for group in MENU_GROUPS:
         items = []
@@ -230,6 +236,16 @@ def _build_menu(request, app_list, models):
                 'can_add': False,
             }
         )
+    if server_logs_url:
+        operations_items.append(
+            {
+                'label': '서버 로그',
+                'url': server_logs_url,
+                'add_url': '',
+                'is_active': server_logs_active,
+                'can_add': False,
+            }
+        )
     operations_items.append(
         {
             'label': '사이트 보기',
@@ -243,7 +259,7 @@ def _build_menu(request, app_list, models):
         {
             'title': '운영 설정',
             'icon': 'S',
-            'is_active': server_ops_active,
+            'is_active': operations_active,
             'items': operations_items,
         }
     )
