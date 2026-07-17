@@ -10,10 +10,10 @@ from django.test import RequestFactory, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import User
+from accounts.models import AccountWithdrawalRequest, User
 from courses.models import Course
 
-from .admin import EnrollmentAdmin
+from .admin import EnrollmentAdmin, EnrollmentAdminForm, ReEnrollmentRequestAdminForm
 from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 
 
@@ -182,6 +182,35 @@ class ReEnrollmentRequestTests(TestCase):
         response = client.get('/admin/enrollments/reenrollmentrequest/')
 
         self.assertEqual(response.status_code, 200)
+
+    def test_admin_form_blocks_approval_for_inactive_reenrollment_user(self):
+        enrollment = self.enrollment()
+        reenrollment_request = ReEnrollmentRequest.objects.create(
+            user=self.student,
+            course=self.course,
+            enrollment=enrollment,
+            reason='기간 연장이 필요합니다.',
+        )
+        self.student.is_active = False
+        self.student.save(update_fields=['is_active'])
+
+        form = ReEnrollmentRequestAdminForm(
+            data={
+                'user': self.student.pk,
+                'course': self.course.pk,
+                'enrollment': enrollment.pk,
+                'reason': reenrollment_request.reason,
+                'status': ReEnrollmentRequest.Status.APPROVED,
+                'extension_start_date': self.today,
+                'extension_end_date': self.today + timedelta(days=30),
+                'processed_by': '',
+                'admin_note': '',
+            },
+            instance=reenrollment_request,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('비활성화된 계정', str(form.errors))
 
 
 class EnrollmentCancellationTests(TestCase):
@@ -367,6 +396,25 @@ class EnrollmentApprovalEmailTests(TestCase):
         self.request = RequestFactory().post('/admin/enrollments/enrollment/')
         self.request.user = self.admin_user
 
+    def enrollment_form_data(self, status, **overrides):
+        data = {
+            'user': self.student.pk,
+            'course': self.course.pk,
+            'status': status,
+            'start_date': self.today,
+            'end_date': self.today + timedelta(days=30),
+            'approved_by': '',
+            'approved_at': '',
+            'rejected_reason': '',
+            'is_completed': '',
+            'completed_at': '',
+            'completion_progress_percent': 0,
+            'completion_note': '',
+            'expiry_notice_7d_sent_at': '',
+        }
+        data.update(overrides)
+        return data
+
     def approve_enrollment(self, enrollment=None):
         enrollment = enrollment or Enrollment.objects.get(pk=self.enrollment.pk)
         enrollment.status = Enrollment.Status.APPROVED
@@ -439,6 +487,66 @@ class EnrollmentApprovalEmailTests(TestCase):
         self.approve_enrollment()
 
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_admin_form_blocks_approval_for_inactive_user(self):
+        self.student.is_active = False
+        self.student.save(update_fields=['is_active'])
+
+        form = EnrollmentAdminForm(
+            data=self.enrollment_form_data(Enrollment.Status.APPROVED),
+            instance=self.enrollment,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('비활성화된 계정', str(form.errors))
+
+    def test_admin_form_blocks_approval_for_user_with_withdrawal_request(self):
+        AccountWithdrawalRequest.objects.create(
+            user=self.student,
+            reason='탈퇴 요청 중입니다.',
+        )
+
+        form = EnrollmentAdminForm(
+            data=self.enrollment_form_data(Enrollment.Status.APPROVED),
+            instance=self.enrollment,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('탈퇴 요청', str(form.errors))
+
+    def test_admin_form_allows_rejection_for_inactive_user(self):
+        self.student.is_active = False
+        self.student.save(update_fields=['is_active'])
+
+        form = EnrollmentAdminForm(
+            data=self.enrollment_form_data(
+                Enrollment.Status.REJECTED,
+                start_date='',
+                end_date='',
+                rejected_reason='탈퇴 요청 계정입니다.',
+            ),
+            instance=self.enrollment,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_admin_form_allows_existing_approved_enrollment_date_edit_for_inactive_user(self):
+        self.enrollment.status = Enrollment.Status.APPROVED
+        self.enrollment.start_date = self.today
+        self.enrollment.end_date = self.today + timedelta(days=30)
+        self.enrollment.save()
+        self.student.is_active = False
+        self.student.save(update_fields=['is_active'])
+
+        form = EnrollmentAdminForm(
+            data=self.enrollment_form_data(
+                Enrollment.Status.APPROVED,
+                end_date=self.today + timedelta(days=60),
+            ),
+            instance=self.enrollment,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
 
 
 class EnrollmentExpiryNoticeCommandTests(TestCase):

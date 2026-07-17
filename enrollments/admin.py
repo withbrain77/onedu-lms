@@ -1,15 +1,124 @@
+from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
+
+from accounts.models import AccountWithdrawalRequest
 
 from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 from .notifications import notify_enrollment_approved
 
 
+BLOCKING_WITHDRAWAL_STATUSES = (
+    AccountWithdrawalRequest.Status.REQUESTED,
+    AccountWithdrawalRequest.Status.PROCESSING,
+    AccountWithdrawalRequest.Status.COMPLETED,
+)
+
+
+def _approval_block_reason_for_user(user, object_label='수강 신청'):
+    if not user:
+        return ''
+    if not user.is_active:
+        return f'비활성화된 계정은 {object_label}을 승인할 수 없습니다. 반려 또는 취소로 정리해 주세요.'
+
+    withdrawal_request = (
+        AccountWithdrawalRequest.objects
+        .filter(user=user, status__in=BLOCKING_WITHDRAWAL_STATUSES)
+        .order_by('-requested_at')
+        .first()
+    )
+    if withdrawal_request:
+        return (
+            f'탈퇴 요청이 접수되었거나 처리된 회원은 {object_label}을 승인할 수 없습니다. '
+            '계정 탈퇴 요청 상태를 먼저 확인해 주세요.'
+        )
+    return ''
+
+
+def _student_account_status_badge(user):
+    if not user:
+        return '-'
+    if not user.is_active:
+        return format_html('<span class="onedu-admin-badge is-danger">비활성</span>')
+
+    withdrawal_request = (
+        AccountWithdrawalRequest.objects
+        .filter(user=user, status__in=BLOCKING_WITHDRAWAL_STATUSES)
+        .order_by('-requested_at')
+        .first()
+    )
+    if not withdrawal_request:
+        return format_html('<span class="onedu-admin-badge is-success">정상</span>')
+    if withdrawal_request.status == AccountWithdrawalRequest.Status.COMPLETED:
+        return format_html('<span class="onedu-admin-badge is-danger">탈퇴 완료</span>')
+    return format_html('<span class="onedu-admin-badge is-warning">탈퇴 요청</span>')
+
+
+class EnrollmentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Enrollment
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        user = cleaned_data.get('user') or getattr(self.instance, 'user', None)
+        previous_status = None
+        if self.instance and self.instance.pk:
+            previous_status = (
+                Enrollment.objects
+                .filter(pk=self.instance.pk)
+                .values_list('status', flat=True)
+                .first()
+            )
+
+        is_new_approval = (
+            status == Enrollment.Status.APPROVED
+            and previous_status != Enrollment.Status.APPROVED
+        )
+        if is_new_approval:
+            reason = _approval_block_reason_for_user(user, object_label='수강 신청')
+            if reason:
+                raise forms.ValidationError(reason)
+        return cleaned_data
+
+
+class ReEnrollmentRequestAdminForm(forms.ModelForm):
+    class Meta:
+        model = ReEnrollmentRequest
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        user = cleaned_data.get('user') or getattr(self.instance, 'user', None)
+        previous_status = None
+        if self.instance and self.instance.pk:
+            previous_status = (
+                ReEnrollmentRequest.objects
+                .filter(pk=self.instance.pk)
+                .values_list('status', flat=True)
+                .first()
+            )
+
+        is_new_approval = (
+            status == ReEnrollmentRequest.Status.APPROVED
+            and previous_status != ReEnrollmentRequest.Status.APPROVED
+        )
+        if is_new_approval:
+            reason = _approval_block_reason_for_user(user, object_label='재수강 신청')
+            if reason:
+                raise forms.ValidationError(reason)
+        return cleaned_data
+
+
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):
+    form = EnrollmentAdminForm
     list_display = (
         'student_username',
         'student_name',
+        'student_account_status',
         'course_title',
         'status',
         'start_date',
@@ -20,7 +129,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         'expiry_notice_7d_sent_at',
         'created_at',
     )
-    list_filter = ('status', 'is_completed', 'course', 'start_date', 'end_date', 'created_at')
+    list_filter = ('status', 'is_completed', 'user__is_active', 'course', 'start_date', 'end_date', 'created_at')
     search_fields = ('user__username', 'user__name', 'user__email', 'course__title')
     list_editable = ('status', 'start_date', 'end_date')
     autocomplete_fields = ('user', 'course', 'approved_by')
@@ -48,6 +157,10 @@ class EnrollmentAdmin(admin.ModelAdmin):
     @admin.display(description='수강생', ordering='user__name')
     def student_name(self, obj):
         return obj.user.display_name
+
+    @admin.display(description='계정 상태', ordering='user__is_active')
+    def student_account_status(self, obj):
+        return _student_account_status_badge(obj.user)
 
     @admin.display(description='강의', ordering='course__title')
     def course_title(self, obj):
@@ -82,9 +195,11 @@ class EnrollmentAdmin(admin.ModelAdmin):
 
 @admin.register(ReEnrollmentRequest)
 class ReEnrollmentRequestAdmin(admin.ModelAdmin):
+    form = ReEnrollmentRequestAdminForm
     list_display = (
         'student_username',
         'student_name',
+        'student_account_status',
         'course_title',
         'status',
         'requested_at',
@@ -93,7 +208,15 @@ class ReEnrollmentRequestAdmin(admin.ModelAdmin):
         'extension_start_date',
         'extension_end_date',
     )
-    list_filter = ('status', 'course', 'requested_at', 'processed_at', 'extension_start_date', 'extension_end_date')
+    list_filter = (
+        'status',
+        'user__is_active',
+        'course',
+        'requested_at',
+        'processed_at',
+        'extension_start_date',
+        'extension_end_date',
+    )
     search_fields = (
         'user__username',
         'user__name',
@@ -123,6 +246,10 @@ class ReEnrollmentRequestAdmin(admin.ModelAdmin):
     @admin.display(description='수강생', ordering='user__name')
     def student_name(self, obj):
         return obj.user.display_name
+
+    @admin.display(description='계정 상태', ordering='user__is_active')
+    def student_account_status(self, obj):
+        return _student_account_status_badge(obj.user)
 
     @admin.display(description='강의', ordering='course__title')
     def course_title(self, obj):
