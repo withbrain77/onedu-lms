@@ -1,12 +1,14 @@
 from datetime import timedelta
+import hashlib
 from pathlib import Path
 
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User
+from core.models import ServerWarningAcknowledgement
 from core.services.access import can_access_course
 from courses.models import Course
 from enrollments.models import Enrollment
@@ -272,6 +274,44 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '저장소 사용량')
         self.assertContains(response, '트래픽 지표')
         self.assertContains(response, 'HLS 작업')
+
+    @override_settings(USE_X_ACCEL_REDIRECT=False)
+    def test_server_warning_links_to_related_area_and_can_be_acknowledged(self):
+        admin_user = User.objects.create_superuser(
+            username='server_warning_admin',
+            password='pass12345',
+            email='server-warning-admin@example.com',
+            name='서버 경고 관리자',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin_server_ops'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'value="app:x_accel_disabled"')
+        self.assertContains(response, '#serviceTitle')
+        self.assertContains(response, '확인 완료')
+
+        message = '운영 환경에서 X-Accel-Redirect 영상 보호 설정을 확인하세요.'
+        response = self.client.post(
+            reverse('admin_server_warning_ack'),
+            {
+                'warning_key': 'app:x_accel_disabled',
+                'message_hash': hashlib.sha256(message.encode('utf-8')).hexdigest(),
+                'message': message,
+                'next': reverse('admin_server_ops'),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            ServerWarningAcknowledgement.objects.filter(
+                warning_key='app:x_accel_disabled',
+                acknowledged_by=admin_user,
+            ).exists()
+        )
+        self.assertNotContains(response, 'value="app:x_accel_disabled"')
 
     def test_server_operations_requires_staff_login(self):
         response = self.client.get(reverse('admin_server_ops'))

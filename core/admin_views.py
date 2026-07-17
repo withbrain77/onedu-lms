@@ -1,12 +1,16 @@
 from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from accounts.models import AccessLog
 from enrollments.models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 from lessons.models import HLSConversionJob, LessonAttachmentDownload
 
+from .models import ServerWarningAcknowledgement
 from .server_status import build_server_status
 
 
@@ -21,9 +25,40 @@ def server_operations(request):
             'access_logs': reverse('admin:accounts_accesslog_changelist'),
             'hls': reverse('admin:lessons_hlsconversionjob_changelist'),
             'email_logs': reverse('admin:enrollments_emaildeliverylog_changelist'),
+            'ack_warning': reverse('admin_server_warning_ack'),
         },
     }
     return render(request, 'admin/server_operations.html', context)
+
+
+@staff_member_required
+@require_POST
+def acknowledge_server_warning(request):
+    warning_key = request.POST.get('warning_key', '').strip()
+    message_hash = request.POST.get('message_hash', '').strip()
+    message = request.POST.get('message', '').strip()
+
+    if warning_key and message_hash:
+        ServerWarningAcknowledgement.objects.get_or_create(
+            warning_key=warning_key,
+            message_hash=message_hash,
+            defaults={
+                'message': message,
+                'acknowledged_by': request.user,
+            },
+        )
+        messages.success(request, '운영 경고를 확인 완료 처리했습니다.')
+    else:
+        messages.error(request, '확인 처리할 운영 경고 정보를 찾지 못했습니다.')
+
+    next_url = request.POST.get('next') or reverse('admin_server_ops')
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = reverse('admin_server_ops')
+    return redirect(next_url)
 
 
 @staff_member_required

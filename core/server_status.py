@@ -1,3 +1,4 @@
+import hashlib
 import socket
 import shutil
 import time
@@ -9,11 +10,14 @@ from django.conf import settings
 from django.core.exceptions import DisallowedHost
 from django.db import connection
 from django.db.utils import DatabaseError, OperationalError, ProgrammingError
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import AccessLog, User
 from enrollments.models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 from lessons.models import HLSConversionJob, Lesson, LessonAttachmentDownload
+
+from .models import ServerWarningAcknowledgement
 
 
 def _format_bytes(value):
@@ -261,28 +265,141 @@ def _application_summary():
     }
 
 
+def _warning(key, tone, message, target_url='', target_label='관련 내용 보기'):
+    message_hash = hashlib.sha256(message.encode('utf-8')).hexdigest()
+    return {
+        'key': key,
+        'tone': tone,
+        'message': message,
+        'message_hash': message_hash,
+        'target_url': target_url,
+        'target_label': target_label,
+    }
+
+
+def _filter_acknowledged_warnings(warnings, request=None):
+    if not request or not getattr(request, 'user', None) or not request.user.is_authenticated:
+        return warnings
+
+    actionable_warnings = [item for item in warnings if item['tone'] != 'ok']
+    if not actionable_warnings:
+        return warnings
+
+    warning_pairs = {(item['key'], item['message_hash']) for item in actionable_warnings}
+    acknowledged_pairs = set(
+        ServerWarningAcknowledgement.objects
+        .filter(warning_key__in={key for key, _ in warning_pairs})
+        .values_list('warning_key', 'message_hash')
+    )
+    visible_warnings = [
+        item
+        for item in warnings
+        if item['tone'] == 'ok' or (item['key'], item['message_hash']) not in acknowledged_pairs
+    ]
+    if visible_warnings:
+        return visible_warnings
+
+    return [
+        _warning(
+            'no_visible_warnings',
+            'ok',
+            '현재 표시할 운영 경고는 없습니다. 확인한 경고는 상태나 건수가 바뀌면 다시 표시됩니다.',
+        )
+    ]
+
+
 def _build_warnings(services, storage, network, app):
     warnings = []
     for service in services:
         if not service['ok']:
-            warnings.append({'tone': service['tone'], 'message': f"{service['label']} 상태를 확인하세요. {service['detail']}"})
+            warnings.append(
+                _warning(
+                    f"service:{service['code'].lower()}",
+                    service['tone'],
+                    f"{service['label']} 상태를 확인하세요. {service['detail']}",
+                    '#serviceTitle',
+                    '서비스 상태 보기',
+                )
+            )
     for item in storage:
         if item['tone'] == 'danger':
-            warnings.append({'tone': 'danger', 'message': f"{item['label']} 저장소 사용량이 {item['used_percent']}%입니다."})
+            warnings.append(
+                _warning(
+                    f"storage:{item['label']}",
+                    'danger',
+                    f"{item['label']} 저장소 사용량이 {item['used_percent']}%입니다.",
+                    '#storageTitle',
+                    '저장소 상태 보기',
+                )
+            )
         elif item['tone'] == 'warning':
-            warnings.append({'tone': 'warning', 'message': f"{item['label']} 저장소를 확인하세요. {item['detail']}"})
+            warnings.append(
+                _warning(
+                    f"storage:{item['label']}",
+                    'warning',
+                    f"{item['label']} 저장소를 확인하세요. {item['detail']}",
+                    '#storageTitle',
+                    '저장소 상태 보기',
+                )
+            )
     if network['mismatch']:
-        warnings.append({'tone': 'danger', 'message': '도메인 DNS IP와 현재 공인 IP가 일치하지 않습니다.'})
+        warnings.append(
+            _warning(
+                'network:dns_mismatch',
+                'danger',
+                '도메인 DNS IP와 현재 공인 IP가 일치하지 않습니다.',
+                '#networkTitle',
+                '도메인/IP 상태 보기',
+            )
+        )
     if app['hls_failed']:
-        warnings.append({'tone': 'warning', 'message': f"HLS 변환 실패 작업이 {app['hls_failed']}건 있습니다."})
+        warnings.append(
+            _warning(
+                'app:hls_failed',
+                'warning',
+                f"HLS 변환 실패 작업이 {app['hls_failed']}건 있습니다.",
+                f"{reverse('admin:lessons_hlsconversionjob_changelist')}?status__exact=failed",
+                'HLS 실패 작업 보기',
+            )
+        )
     if app['email_failed_24h']:
-        warnings.append({'tone': 'warning', 'message': f"최근 24시간 메일 발송 실패가 {app['email_failed_24h']}건 있습니다."})
+        warnings.append(
+            _warning(
+                'app:email_failed_24h',
+                'warning',
+                f"최근 24시간 메일 발송 실패가 {app['email_failed_24h']}건 있습니다.",
+                f"{reverse('admin:enrollments_emaildeliverylog_changelist')}?status__exact=failed",
+                '메일 발송 로그 보기',
+            )
+        )
     if app['suspicious_24h']:
-        warnings.append({'tone': 'warning', 'message': f"최근 24시간 접속 보안 주의 기록이 {app['suspicious_24h']}건 있습니다."})
+        warnings.append(
+            _warning(
+                'app:suspicious_access_24h',
+                'warning',
+                f"최근 24시간 접속 보안 주의 기록이 {app['suspicious_24h']}건 있습니다.",
+                f"{reverse('admin:accounts_accesslog_changelist')}?is_suspicious__exact=1",
+                '접속 보안 로그 보기',
+            )
+        )
     if not app['x_accel_enabled']:
-        warnings.append({'tone': 'warning', 'message': '운영 환경에서 X-Accel-Redirect 영상 보호 설정을 확인하세요.'})
+        warnings.append(
+            _warning(
+                'app:x_accel_disabled',
+                'warning',
+                '운영 환경에서 X-Accel-Redirect 영상 보호 설정을 확인하세요.',
+                '#serviceTitle',
+                '서비스 상태 보기',
+            )
+        )
     if not warnings:
-        warnings.append({'tone': 'ok', 'message': '현재 즉시 조치가 필요한 운영 경고는 없습니다.'})
+        warnings.append(
+            _warning(
+                'no_active_warnings',
+                'ok',
+                '현재 즉시 조치가 필요한 운영 경고는 없습니다.',
+            )
+        )
     return warnings
 
 
@@ -292,7 +409,7 @@ def build_server_status(request=None):
     network = _network_status(request)
     traffic = _traffic_summary()
     app = _application_summary()
-    warnings = _build_warnings(services, storage, network, app)
+    warnings = _filter_acknowledged_warnings(_build_warnings(services, storage, network, app), request)
 
     if any(item['tone'] == 'danger' for item in warnings):
         overall_tone = 'danger'

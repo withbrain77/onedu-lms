@@ -92,7 +92,28 @@
         {% for warning in status.warnings %}
           <div class="onedu-server-warning is-{{ warning.tone }}">
             <span aria-hidden="true">{% if warning.tone == 'danger' %}!{% elif warning.tone == 'warning' %}!{% else %}✓{% endif %}</span>
-            <strong>{{ warning.message }}</strong>
+            <div class="onedu-server-warning__body">
+              {% if warning.target_url %}
+                <a class="onedu-server-warning__message" href="{{ warning.target_url }}">{{ warning.message }}</a>
+              {% else %}
+                <strong class="onedu-server-warning__message">{{ warning.message }}</strong>
+              {% endif %}
+              {% if warning.tone != 'ok' %}
+                <div class="onedu-server-warning__actions">
+                  {% if warning.target_url %}
+                    <a class="button" href="{{ warning.target_url }}">{{ warning.target_label }}</a>
+                  {% endif %}
+                  <form method="post" action="{{ links.ack_warning }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="warning_key" value="{{ warning.key }}">
+                    <input type="hidden" name="message_hash" value="{{ warning.message_hash }}">
+                    <input type="hidden" name="message" value="{{ warning.message }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="button onedu-admin-button-secondary">확인 완료</button>
+                  </form>
+                </div>
+              {% endif %}
+            </div>
           </div>
         {% endfor %}
       </div>
