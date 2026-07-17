@@ -15,6 +15,16 @@ compose() {
   "$DOCKER_BIN" compose -p "$PROJECT" "$@"
 }
 
+ensure_data_dirs() {
+  mkdir -p \
+    "$APP_DIR/data/static" \
+    "$APP_DIR/data/media" \
+    "$APP_DIR/data/private_media" \
+    "$APP_DIR/data/logs" \
+    "$APP_DIR/data/postgres" \
+    "$APP_DIR/data/redis"
+}
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -82,6 +92,7 @@ case "${1:-help}" in
     compose restart web worker
     ;;
   deploy)
+    ensure_data_dirs
     compose config --quiet
     compose up -d --build --remove-orphans
     compose exec -T web python manage.py check

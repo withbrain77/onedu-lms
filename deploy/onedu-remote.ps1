@@ -91,6 +91,10 @@ function Sync-Source {
     }
 }
 
+function Ensure-RemoteDataDirs {
+    Invoke-Remote "mkdir -p '$AppDir/data/static' '$AppDir/data/media' '$AppDir/data/private_media' '$AppDir/data/logs' '$AppDir/data/postgres' '$AppDir/data/redis'"
+}
+
 function Invoke-Ops {
     param([string]$OpsAction)
 
@@ -105,6 +109,7 @@ switch ($Action) {
     }
     "deploy" {
         Sync-Source
+        Ensure-RemoteDataDirs
         Invoke-Ops "deploy"
         Invoke-Ops "health"
     }
