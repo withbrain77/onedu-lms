@@ -1,7 +1,11 @@
+from unittest.mock import patch
+
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from django.test.utils import override_settings
+
+from enrollments.models import EmailDeliveryLog
 
 from .models import AccessLog, AccountWithdrawalRequest, User
 from .views import REMEMBER_USERNAME_COOKIE
@@ -274,6 +278,64 @@ class ProfileManagementTests(TestCase):
 
         profile_response = self.client.get(reverse('accounts:profile'))
         self.assertContains(profile_response, '처리 대기 중')
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_NOTIFY_ACCOUNT_WITHDRAWAL_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    def test_withdrawal_request_sends_admin_notification_email(self):
+        self.client.force_login(self.user)
+
+        self.client.post(
+            reverse('accounts:withdrawal_request'),
+            {
+                'reason': '개인적인 민감한 사유입니다.',
+                'confirm': 'on',
+            },
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, ['admin@example.com'])
+        self.assertIn('[ONEDU] 계정 탈퇴 요청', message.subject)
+        self.assertIn(self.user.username, message.body)
+        self.assertIn(self.user.email, message.body)
+        self.assertIn('https://onedu.withbrain.kr/admin/accounts/accountwithdrawalrequest/', message.body)
+        self.assertNotIn('개인적인 민감한 사유입니다.', message.body)
+
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ACCOUNT_WITHDRAWAL_REQUEST)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.SENT)
+        self.assertEqual(log.recipient_email, 'admin@example.com')
+        self.assertEqual(log.user_label, f'{self.user.display_name} ({self.user.username})')
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+        ONEDU_EMAIL_ASYNC=True,
+        CELERY_TASK_ALWAYS_EAGER=False,
+        ONEDU_NOTIFY_ACCOUNT_WITHDRAWAL_REQUEST=True,
+        ONEDU_ADMIN_NOTIFICATION_EMAILS=['admin@example.com'],
+        PUBLIC_SITE_URL='https://onedu.withbrain.kr',
+    )
+    @patch('enrollments.tasks.send_queued_email_task.delay')
+    def test_withdrawal_request_queues_admin_notification_email(self, mocked_delay):
+        self.client.force_login(self.user)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(
+                reverse('accounts:withdrawal_request'),
+                {
+                    'reason': '큐 테스트 사유',
+                    'confirm': 'on',
+                },
+            )
+
+        self.assertEqual(len(mail.outbox), 0)
+        log = EmailDeliveryLog.objects.get(kind=EmailDeliveryLog.Kind.ACCOUNT_WITHDRAWAL_REQUEST)
+        self.assertEqual(log.status, EmailDeliveryLog.Status.QUEUED)
+        self.assertEqual(log.recipient_email, 'admin@example.com')
+        mocked_delay.assert_called_once()
 
     def test_withdrawal_request_requires_confirmation(self):
         self.client.force_login(self.user)

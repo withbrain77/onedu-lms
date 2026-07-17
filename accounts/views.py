@@ -33,6 +33,7 @@ from .forms import (
     UsernameLookupForm,
 )
 from .models import AccessLog, AccountWithdrawalRequest, User
+from .notifications import notify_account_withdrawal_request
 from .services import record_access_log
 
 
@@ -149,10 +150,11 @@ class AccountWithdrawalRequestView(LoginRequiredMixin, FormView):
             messages.info(self.request, '이미 처리 대기 중인 계정 탈퇴 요청이 있습니다.')
             return redirect('accounts:profile')
 
-        AccountWithdrawalRequest.objects.create(
+        withdrawal_request = AccountWithdrawalRequest.objects.create(
             user=self.request.user,
             reason=form.cleaned_data.get('reason', '').strip(),
         )
+        notify_account_withdrawal_request(withdrawal_request)
         messages.success(self.request, '계정 탈퇴 요청이 접수되었습니다. 운영자가 확인 후 처리합니다.')
         return redirect(self.get_success_url())
 

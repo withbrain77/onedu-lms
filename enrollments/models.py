@@ -211,6 +211,7 @@ class EmailDeliveryLog(models.Model):
         ENROLLMENT_REQUEST = 'enrollment_request', '수강 신청 관리자 알림'
         ENROLLMENT_APPROVAL = 'enrollment_approval', '수강 승인 수강생 알림'
         ENROLLMENT_EXPIRY_7D = 'enrollment_expiry_7d', '수강 종료 7일 전 알림'
+        ACCOUNT_WITHDRAWAL_REQUEST = 'account_withdrawal_request', '계정 탈퇴 요청 관리자 알림'
 
     class Status(models.TextChoices):
         QUEUED = 'queued', '발송 대기'

@@ -43,15 +43,15 @@ def _price_label(course):
     return f'{course.price_krw:,}원'
 
 
-def _record_email_log(kind, enrollment, recipients, subject, status, error_message=''):
+def _record_email_log(kind, enrollment, recipients, subject, status, error_message='', *, user=None, course=None):
     recipients = recipients or []
     if isinstance(recipients, str):
         recipient_label = recipients
     else:
         recipient_label = ', '.join([item for item in recipients if item])
     sent_at = timezone.now() if status == EmailDeliveryLog.Status.SENT else None
-    user = getattr(enrollment, 'user', None)
-    course = getattr(enrollment, 'course', None)
+    user = user or getattr(enrollment, 'user', None)
+    course = course or getattr(enrollment, 'course', None)
     try:
         return EmailDeliveryLog.objects.create(
             enrollment=enrollment,
@@ -69,6 +69,19 @@ def _record_email_log(kind, enrollment, recipients, subject, status, error_messa
     except Exception:
         logger.exception('Failed to record ONEDU email delivery log.')
         return None
+
+
+def record_email_delivery_log(kind, recipients, subject, status, error_message='', *, enrollment=None, user=None, course=None):
+    return _record_email_log(
+        kind,
+        enrollment,
+        recipients,
+        subject,
+        status,
+        error_message,
+        user=user,
+        course=course,
+    )
 
 
 def _send_mail_with_retries(*, subject, message, recipients):
@@ -171,7 +184,7 @@ def _enqueue_email_log(log, subject, message, recipients):
         transaction.on_commit(publish)
 
 
-def _deliver_or_queue_email(kind, enrollment, recipients, subject, message):
+def deliver_or_queue_email(kind, recipients, subject, message, *, enrollment=None, user=None, course=None):
     if getattr(settings, 'ONEDU_EMAIL_ASYNC', False):
         log = _record_email_log(
             kind,
@@ -180,6 +193,8 @@ def _deliver_or_queue_email(kind, enrollment, recipients, subject, message):
             subject,
             EmailDeliveryLog.Status.QUEUED,
             '작업 큐에 등록되어 발송 대기 중입니다.',
+            user=user,
+            course=course,
         )
         if not log:
             return False
@@ -201,6 +216,8 @@ def _deliver_or_queue_email(kind, enrollment, recipients, subject, message):
             subject,
             EmailDeliveryLog.Status.FAILED,
             _email_error_message(attempts, exc),
+            user=user,
+            course=course,
         )
         return False
 
@@ -210,8 +227,14 @@ def _deliver_or_queue_email(kind, enrollment, recipients, subject, message):
         recipients,
         subject,
         EmailDeliveryLog.Status.SENT,
+        user=user,
+        course=course,
     )
     return True
+
+
+def _deliver_or_queue_email(kind, enrollment, recipients, subject, message):
+    return deliver_or_queue_email(kind, recipients, subject, message, enrollment=enrollment)
 
 
 def notify_enrollment_request(enrollment):
