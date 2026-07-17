@@ -2584,9 +2584,11 @@ a.onedu-server-warning__message:focus {
 
 .onedu-server-warning__actions {
   align-items: center;
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-start;
 }
 
 .onedu-server-warning__actions form {
@@ -2597,11 +2599,19 @@ a.onedu-server-warning__message:focus {
 .onedu-server-warning__actions button.button {
   align-items: center;
   border-radius: 10px;
-  display: inline-flex;
-  font-size: 0.78rem;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  font-size: 0.78rem !important;
   font-weight: 900;
-  min-height: 34px;
-  padding: 7px 12px;
+  height: 34px !important;
+  justify-content: center;
+  line-height: 1 !important;
+  margin: 0 !important;
+  min-height: 34px !important;
+  min-width: 0 !important;
+  padding: 7px 12px !important;
+  width: auto !important;
 }
 
 .onedu-admin-button-secondary {
@@ -2615,6 +2625,21 @@ a.onedu-server-warning__message:focus {
   background: #eef8f7 !important;
   border-color: #9ccdc8 !important;
   color: var(--dash-primary) !important;
+}
+
+.onedu-admin-error-detail {
+  background: #0f2531;
+  border: 1px solid #1e4657;
+  border-radius: 14px;
+  color: #e8f6f6;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  margin: 0;
+  max-height: 18rem;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
 }
 
 .onedu-server-kv {

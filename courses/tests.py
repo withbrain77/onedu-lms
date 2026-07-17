@@ -230,6 +230,36 @@ class MVPFlowViewTests(TestCase):
         self.assertEqual(log.status, EmailDeliveryLog.Status.FAILED)
         self.assertIn('4회 시도 후 실패', log.error_message)
         self.assertIn('TimeoutError', log.error_message)
+        self.assertIn('서버 로그 요약', log.error_message)
+
+    def test_email_delivery_log_admin_shows_error_detail_block(self):
+        admin_user = User.objects.create_superuser(
+            username='email_log_admin',
+            password='pass12345',
+            email='email-log-admin@example.com',
+            name='메일 로그 관리자',
+        )
+        enrollment = Enrollment.objects.create(user=self.student, course=self.course)
+        log = EmailDeliveryLog.objects.create(
+            enrollment=enrollment,
+            kind=EmailDeliveryLog.Kind.ENROLLMENT_REQUEST,
+            status=EmailDeliveryLog.Status.FAILED,
+            recipient_email='admin@example.com',
+            subject='[ONEDU] 테스트',
+            user_id_value=self.student.pk,
+            user_label=f'{self.student.display_name} ({self.student.username})',
+            course_id_value=self.course.pk,
+            course_title=self.course.title,
+            error_message='메일 발송이 4회 시도 후 실패했습니다.\n오류: TimeoutError: smtp timeout\n\n서버 로그 요약:\nTraceback...',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:enrollments_emaildeliverylog_change', args=[log.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '오류 상세 / 서버 로그 요약')
+        self.assertContains(response, 'onedu-admin-error-detail')
+        self.assertContains(response, 'TimeoutError')
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',

@@ -1,5 +1,6 @@
 import logging
 import time
+import traceback
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -101,7 +102,11 @@ def _send_mail_with_retries(*, subject, message, recipients):
 
 
 def _email_error_message(attempts, exc):
-    return f'메일 발송이 {attempts}회 시도 후 실패했습니다. 오류: {type(exc).__name__}: {exc}'[:2000]
+    message = f'메일 발송이 {attempts}회 시도 후 실패했습니다.\n오류: {type(exc).__name__}: {exc}'
+    trace = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, limit=8)).strip()
+    if trace:
+        message = f'{message}\n\n서버 로그 요약:\n{trace}'
+    return message[:4000]
 
 
 def notify_enrollment_request(enrollment):

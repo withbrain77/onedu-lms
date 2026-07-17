@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 from .notifications import notify_enrollment_approved
@@ -167,14 +168,14 @@ class EmailDeliveryLogAdmin(admin.ModelAdmin):
         'user_label',
         'course_id_value',
         'course_title',
-        'error_message',
+        'error_detail',
         'sent_at',
         'created_at',
     )
     fieldsets = (
         ('메일 정보', {'fields': ('kind', 'status', 'recipient_email', 'subject')}),
         ('관련 수강', {'fields': ('enrollment', 'user_id_value', 'user_label', 'course_id_value', 'course_title')}),
-        ('결과', {'fields': ('sent_at', 'error_message')}),
+        ('결과', {'fields': ('sent_at', 'error_detail')}),
         ('기록', {'fields': ('created_at',)}),
     )
     date_hierarchy = 'created_at'
@@ -184,3 +185,13 @@ class EmailDeliveryLogAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    @admin.display(description='오류 상세 / 서버 로그 요약')
+    def error_detail(self, obj):
+        if obj.error_message:
+            message = obj.error_message
+        elif obj.status == EmailDeliveryLog.Status.FAILED:
+            message = '실패로 기록되었지만 저장된 오류 상세가 없습니다. 이전 버전에서 생성된 로그일 수 있습니다.'
+        else:
+            message = '기록된 오류 내용이 없습니다.'
+        return format_html('<pre class="onedu-admin-error-detail">{}</pre>', message)
