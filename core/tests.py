@@ -19,6 +19,8 @@ from core.services.access import can_access_course
 from core.tasks import create_nonvideo_backup_task
 from courses.models import Course
 from enrollments.models import Enrollment
+from lessons.models import Lesson
+from progress.models import WatchProgress
 
 
 class HomePageTests(TestCase):
@@ -88,6 +90,25 @@ class HomePageTests(TestCase):
         self.assertNotContains(response, 'Middle Public Program')
         self.assertContains(response, '전체 프로그램 더보기')
         self.assertContains(response, reverse('courses:list'))
+
+    def test_home_page_hides_invite_only_courses_from_public_programs(self):
+        Course.objects.create(
+            title='Public Home Program',
+            description='Visible on home.',
+            is_public=True,
+            visibility=Course.Visibility.PUBLIC,
+        )
+        Course.objects.create(
+            title='Invite Only Home Program',
+            description='Should not be visible on public home.',
+            is_public=True,
+            visibility=Course.Visibility.INVITE_ONLY,
+        )
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, 'Public Home Program')
+        self.assertNotContains(response, 'Invite Only Home Program')
 
     def test_home_page_shows_latest_global_notice(self):
         Notice.objects.create(
@@ -284,6 +305,52 @@ class AdminThemeTests(TestCase):
         self.assertContains(response, '서버 로그')
         self.assertContains(response, 'onedu-admin-menu-direct')
         self.assertNotContains(response, '운영 현황')
+
+    def test_admin_index_shows_recent_active_watchers(self):
+        admin_user = User.objects.create_superuser(
+            username='active_watch_admin',
+            password='pass12345',
+            email='active-watch-admin@example.com',
+            name='Active Watch Admin',
+        )
+        student = User.objects.create_user(
+            username='active_dash_student',
+            password='pass12345',
+            email='active-dash-student@example.com',
+            name='Active Dashboard Student',
+        )
+        course = Course.objects.create(title='Active Dashboard Program', is_public=True)
+        lesson = Lesson.objects.create(
+            course=course,
+            title='Active Dashboard Lesson',
+            order=1,
+            is_public=True,
+        )
+        enrollment = Enrollment.objects.create(
+            user=student,
+            course=course,
+            status=Enrollment.Status.APPROVED,
+            start_date=timezone.localdate() - timedelta(days=1),
+            end_date=timezone.localdate() + timedelta(days=7),
+        )
+        WatchProgress.objects.create(
+            user=student,
+            enrollment=enrollment,
+            lesson=lesson,
+            progress_percent=35,
+            last_position_seconds=120,
+            total_watched_seconds=240,
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:index'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'LIVE LEARNING')
+        self.assertContains(response, '현재 시청 중')
+        self.assertContains(response, 'Active Dashboard Program')
+        self.assertContains(response, 'Active Dashboard Lesson')
+        self.assertContains(response, 'active_dash_student')
 
     def test_admin_model_pages_keep_operations_sidebar(self):
         admin_user = User.objects.create_superuser(

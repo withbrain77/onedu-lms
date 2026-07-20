@@ -12,6 +12,7 @@ from certificates.models import Certificate
 from courses.models import Course
 from enrollments.models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 from lessons.models import HLSConversionJob, Lesson, LessonAttachmentDownload
+from progress.models import WatchProgress
 
 register = template.Library()
 
@@ -23,6 +24,7 @@ MODEL_LABELS = {
     ('auth', 'group'): '그룹 및 권한',
     ('core', 'notice'): '공지사항',
     ('courses', 'course'): '강의',
+    ('courses', 'courseinvitation'): '강의 초대 회원',
     ('lessons', 'lesson'): '차시',
     ('lessons', 'lessonattachment'): '학습 자료',
     ('lessons', 'lessonattachmentdownload'): '자료 다운로드 이력',
@@ -50,6 +52,7 @@ MENU_GROUPS = [
         'icon': 'P',
         'items': [
             ('courses', 'course'),
+            ('courses', 'courseinvitation'),
             ('lessons', 'lesson'),
             ('lessons', 'lessonattachment'),
             ('lessons', 'lessonattachmentdownload'),
@@ -310,7 +313,7 @@ def _build_stats(models):
             'tone': 'warning',
         },
         {
-            'label': '현재 수강 중',
+            'label': '수강 기간 내',
             'value': active_enrollments.values('user_id').distinct().count(),
             'description': '수강 기간 내 승인 수강생',
             'url': models.get(('enrollments', 'enrollment'), {}).get('admin_url', ''),
@@ -440,6 +443,7 @@ def _build_courses(models, limit=5):
             {
                 'title': course.title,
                 'is_public': course.is_public,
+                'visibility_label': course.visibility_label,
                 'lesson_count': course.admin_lesson_count,
                 'enrollment_count': course.admin_enrollment_count,
                 'pending_count': course.admin_pending_count,
@@ -451,6 +455,49 @@ def _build_courses(models, limit=5):
     return {
         'items': items,
         'url': course_model.get('admin_url') or '',
+    }
+
+
+def _build_active_watchers(models, limit=8):
+    progress_model = models.get(('progress', 'watchprogress'))
+    progress_url = progress_model.get('admin_url', '') if progress_model else ''
+    cutoff_minutes = 2
+    cutoff = timezone.now() - timedelta(minutes=cutoff_minutes)
+    queryset = (
+        WatchProgress.objects
+        .filter(last_watched_at__gte=cutoff)
+        .select_related('user', 'lesson', 'lesson__course', 'enrollment')
+        .order_by('-last_watched_at')
+    )
+
+    try:
+        count = queryset.values('user_id').distinct().count()
+        recent_progress = list(queryset[:limit])
+    except (OperationalError, ProgrammingError):
+        return {'count': 0, 'items': [], 'url': progress_url, 'cutoff_minutes': cutoff_minutes}
+
+    items = []
+    for progress in recent_progress:
+        items.append(
+            {
+                'student_name': progress.user.display_name,
+                'student_username': progress.user.username,
+                'course_title': progress.lesson.course.title,
+                'lesson_title': progress.lesson.title,
+                'progress_percent': progress.progress_percent,
+                'last_position_seconds': progress.last_position_seconds,
+                'total_watched_seconds': progress.total_watched_seconds,
+                'last_watched_at': progress.last_watched_at,
+                'progress_url': _reverse_admin('admin:progress_watchprogress_change', args=[progress.pk]),
+                'user_url': _reverse_admin('admin:accounts_user_change', args=[progress.user_id]),
+            }
+        )
+
+    return {
+        'count': count,
+        'items': items,
+        'url': progress_url,
+        'cutoff_minutes': cutoff_minutes,
     }
 
 
@@ -513,6 +560,7 @@ def onedu_admin_dashboard(context):
         'menu_sections': _build_menu(request, app_list, models),
         'stats': _build_stats(models),
         'pending_enrollments': _build_pending_enrollments(models),
+        'active_watchers': _build_active_watchers(models),
         'quick_actions': _build_quick_actions(models),
         'courses': _build_courses(models),
         'recent_activity': _build_recent_activity(),

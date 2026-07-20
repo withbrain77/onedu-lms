@@ -13,11 +13,14 @@ def _published_notices():
     return Notice.objects.filter(
         is_published=True,
         published_at__lte=timezone.now(),
-    ).filter(Q(course__isnull=True) | Q(course__is_public=True))
+    ).filter(
+        Q(course__isnull=True)
+        | Q(course__is_public=True, course__visibility=Course.Visibility.PUBLIC)
+    )
 
 
 def home(request):
-    public_courses = Course.objects.filter(is_public=True)
+    public_courses = Course.objects.filter(is_public=True, visibility=Course.Visibility.PUBLIC)
     public_course_ids = list(public_courses.values_list('id', flat=True))
     selected_ids = random.sample(public_course_ids, min(2, len(public_course_ids)))
     selected_courses = {

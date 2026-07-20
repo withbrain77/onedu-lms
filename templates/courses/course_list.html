@@ -41,6 +41,9 @@
                 <div><dt>입금 상태</dt><dd>{{ item.enrollment.get_payment_status_display }}</dd></div>
               {% endif %}
               <div><dt>승인 방식</dt><dd>{{ item.course.approval_policy_label }}</dd></div>
+              {% if item.course.is_invite_only %}
+                <div><dt>공개 방식</dt><dd>초대 전용</dd></div>
+              {% endif %}
               <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
               <div><dt>남은 기간</dt><dd>{{ item.remaining_text }}</dd></div>
             </dl>

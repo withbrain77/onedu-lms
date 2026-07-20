@@ -131,7 +131,7 @@ def cancel_enrollment_request(request, enrollment_id):
 
 @login_required
 def classroom_course_detail(request, course_id):
-    course = get_object_or_404(Course.objects.prefetch_related('lessons'), pk=course_id, is_public=True)
+    course = get_object_or_404(Course.objects.prefetch_related('lessons'), pk=course_id)
     access_result = can_access_course(request.user, course)
     if not access_result.allowed:
         reenrollment_request = access_result.enrollment and _latest_reenrollment_request(access_result.enrollment)

@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from core.models import Notice
-from courses.models import Course
+from courses.models import Course, CourseInvitation
 from enrollments.models import EmailDeliveryLog, Enrollment
 from lessons.models import Lesson
 
@@ -136,6 +136,90 @@ class MVPFlowViewTests(TestCase):
         response = self.client.get(reverse('course_short_link', kwargs={'course_id': private_course.pk}))
 
         self.assertEqual(response.status_code, 404)
+
+    def test_invite_only_course_is_hidden_from_anonymous_and_uninvited_students(self):
+        invite_course = Course.objects.create(
+            title='Invite Only Program',
+            description='Only invited students can see this program.',
+            is_public=True,
+            visibility=Course.Visibility.INVITE_ONLY,
+        )
+
+        anonymous_list = self.client.get(reverse('courses:list'))
+        anonymous_detail = self.client.get(invite_course.get_absolute_url())
+
+        self.assertNotContains(anonymous_list, 'Invite Only Program')
+        self.assertEqual(anonymous_detail.status_code, 404)
+
+        self.login_student()
+        student_list = self.client.get(reverse('courses:list'))
+        student_detail = self.client.get(invite_course.get_absolute_url())
+
+        self.assertNotContains(student_list, 'Invite Only Program')
+        self.assertEqual(student_detail.status_code, 404)
+
+    def test_invited_student_can_see_and_apply_to_invite_only_course(self):
+        invite_course = Course.objects.create(
+            title='Invite Only Free Program',
+            description='Invited students can apply.',
+            is_public=True,
+            visibility=Course.Visibility.INVITE_ONLY,
+            pricing_type=Course.PricingType.FREE,
+            price_krw=0,
+            default_enrollment_days=10,
+        )
+        CourseInvitation.objects.create(course=invite_course, user=self.student)
+        self.login_student()
+
+        list_response = self.client.get(reverse('courses:list'))
+        detail_response = self.client.get(invite_course.get_absolute_url())
+        apply_response = self.client.post(reverse('courses:apply', kwargs={'slug': invite_course.slug}))
+
+        self.assertContains(list_response, 'Invite Only Free Program')
+        self.assertContains(list_response, '초대됨')
+        self.assertEqual(detail_response.status_code, 200)
+        enrollment = Enrollment.objects.get(user=self.student, course=invite_course)
+        self.assertEqual(enrollment.status, Enrollment.Status.APPROVED)
+        self.assertRedirects(
+            apply_response,
+            reverse('enrollments:course_detail', kwargs={'course_id': invite_course.pk}),
+        )
+
+    def test_uninvited_student_cannot_apply_to_invite_only_course_by_direct_post(self):
+        invite_course = Course.objects.create(
+            title='Blocked Invite Program',
+            description='Should not be directly requestable.',
+            is_public=True,
+            visibility=Course.Visibility.INVITE_ONLY,
+        )
+        self.login_student()
+
+        response = self.client.post(reverse('courses:apply', kwargs={'slug': invite_course.slug}))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(Enrollment.objects.filter(user=self.student, course=invite_course).exists())
+
+    def test_approved_invite_only_course_is_accessible_from_classroom(self):
+        invite_course = Course.objects.create(
+            title='Approved Invite Program',
+            description='Approved student can enter classroom.',
+            is_public=True,
+            visibility=Course.Visibility.INVITE_ONLY,
+        )
+        Lesson.objects.create(course=invite_course, title='Invite Lesson', order=1, is_public=True)
+        Enrollment.objects.create(
+            user=self.student,
+            course=invite_course,
+            status=Enrollment.Status.APPROVED,
+            start_date=self.today - timedelta(days=1),
+            end_date=self.today + timedelta(days=7),
+        )
+        self.login_student()
+
+        response = self.client.get(reverse('enrollments:course_detail', kwargs={'course_id': invite_course.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Approved Invite Program')
 
     def test_anonymous_classroom_redirects_to_login(self):
         response = self.client.get(reverse('enrollments:classroom'))

@@ -10,11 +10,23 @@ class Course(models.Model):
         FREE = 'free', '무료'
         PAID = 'paid', '유료'
 
+    class Visibility(models.TextChoices):
+        PUBLIC = 'public', '공개'
+        INVITE_ONLY = 'invite_only', '초대 전용'
+        PRIVATE = 'private', '비공개'
+
     title = models.CharField('강의명', max_length=200)
     slug = models.SlugField('URL 슬러그', max_length=220, unique=True, blank=True, allow_unicode=True)
     description = models.TextField('강의 설명', blank=True)
     thumbnail = models.FileField('썸네일', upload_to='course_thumbnails/', blank=True)
     is_public = models.BooleanField('공개 여부', default=True)
+    visibility = models.CharField(
+        '공개 방식',
+        max_length=20,
+        choices=Visibility.choices,
+        default=Visibility.PUBLIC,
+        help_text='공개는 모든 회원이 볼 수 있고, 초대 전용은 지정한 회원만 목록과 상세를 볼 수 있습니다.',
+    )
     pricing_type = models.CharField(
         '과금 유형',
         max_length=10,
@@ -80,6 +92,22 @@ class Course(models.Model):
         return self.pricing_type == self.PricingType.PAID
 
     @property
+    def is_listed(self):
+        return self.is_public and self.visibility == self.Visibility.PUBLIC
+
+    @property
+    def is_invite_only(self):
+        return self.is_public and self.visibility == self.Visibility.INVITE_ONLY
+
+    @property
+    def is_private(self):
+        return (not self.is_public) or self.visibility == self.Visibility.PRIVATE
+
+    @property
+    def visibility_label(self):
+        return self.get_visibility_display()
+
+    @property
     def price_label(self):
         if self.is_free:
             return '무료'
@@ -87,6 +115,8 @@ class Course(models.Model):
 
     @property
     def approval_policy_label(self):
+        if self.is_invite_only:
+            return '초대 회원만 신청 가능'
         if self.is_free:
             return '신청 즉시 수강 가능'
         return '운영자 확인 후 승인'
@@ -96,3 +126,44 @@ class Course(models.Model):
         if self.is_free:
             return f'신청 즉시 {self.default_enrollment_days}일'
         return '승인 후 배정'
+
+
+class CourseInvitation(models.Model):
+    course = models.ForeignKey(
+        Course,
+        verbose_name='강의',
+        on_delete=models.CASCADE,
+        related_name='invitations',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='초대 회원',
+        on_delete=models.CASCADE,
+        related_name='course_invitations',
+    )
+    active = models.BooleanField('활성', default=True)
+    note = models.CharField('메모', max_length=255, blank=True)
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name='초대한 관리자',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_course_invitations',
+    )
+    created_at = models.DateTimeField('초대일시', auto_now_add=True)
+
+    class Meta:
+        verbose_name = '강의 초대 회원'
+        verbose_name_plural = '강의 초대 회원'
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['course', 'user'], name='unique_course_invitation_per_user'),
+        ]
+        indexes = [
+            models.Index(fields=['course', 'active']),
+            models.Index(fields=['user', 'active']),
+        ]
+
+    def __str__(self):
+        return f'{self.course} - {self.user}'

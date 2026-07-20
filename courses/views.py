@@ -18,13 +18,44 @@ from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
 from quizzes.services import get_course_quiz_items
 
-from .models import Course
+from .models import Course, CourseInvitation
 
 
 def _absolute_site_url(request, path):
     if settings.PUBLIC_SITE_URL:
         return f'{settings.PUBLIC_SITE_URL}{path}'
     return request.build_absolute_uri(path)
+
+
+def _visible_course_queryset(user):
+    queryset = Course.objects.all()
+    public_filter = Q(is_public=True, visibility=Course.Visibility.PUBLIC)
+
+    if getattr(user, 'is_authenticated', False) and user.is_staff:
+        return queryset
+
+    if not getattr(user, 'is_authenticated', False):
+        return queryset.filter(public_filter)
+
+    return queryset.filter(
+        public_filter
+        | Q(is_public=True, visibility=Course.Visibility.INVITE_ONLY, invitations__user=user, invitations__active=True)
+        | Q(enrollments__user=user)
+    ).distinct()
+
+
+def _is_invited_user(user, course):
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    return CourseInvitation.objects.filter(course=course, user=user, active=True).exists()
+
+
+def _can_apply_course(user, course):
+    if course.is_private:
+        return False, '현재 신청할 수 없는 강의입니다.'
+    if course.is_invite_only and not _is_invited_user(user, course):
+        return False, '초대된 회원만 신청할 수 있는 강의입니다.'
+    return True, ''
 
 
 def _status_for(enrollment, access_result=None):
@@ -74,6 +105,8 @@ def _course_card(course, enrollment, request):
     if request.user.is_authenticated:
         access_result = can_access_course(request.user, course)
     status_label, status_class = _status_for(enrollment, access_result)
+    if enrollment is None and course.is_invite_only and request.user.is_authenticated:
+        status_label, status_class = '초대됨', 'text-bg-info'
     progress_percent = get_course_progress_percent(enrollment) if enrollment else 0
     return {
         'course': course,
@@ -104,7 +137,7 @@ def _latest_enrollments(user, courses):
 
 
 def course_list(request):
-    courses = list(Course.objects.filter(is_public=True).prefetch_related('lessons'))
+    courses = list(_visible_course_queryset(request.user).prefetch_related('lessons'))
     latest = _latest_enrollments(request.user, courses)
     course_cards = [
         _course_card(course, latest.get(course.pk), request)
@@ -115,9 +148,8 @@ def course_list(request):
 
 def course_detail(request, slug):
     course = get_object_or_404(
-        Course.objects.prefetch_related('lessons'),
+        _visible_course_queryset(request.user).prefetch_related('lessons'),
         slug=slug,
-        is_public=True,
     )
     enrollment = get_latest_enrollment(request.user, course) if request.user.is_authenticated else None
     access_result = can_access_course(request.user, course) if request.user.is_authenticated else None
@@ -175,17 +207,22 @@ def course_detail(request, slug):
 
 
 def short_course_redirect(request, course_id):
-    course = get_object_or_404(Course, pk=course_id, is_public=True)
+    course = get_object_or_404(_visible_course_queryset(request.user), pk=course_id)
     return redirect(course)
 
 
 @login_required
 @require_POST
 def apply_course(request, slug):
-    course = get_object_or_404(Course, slug=slug, is_public=True)
+    course = get_object_or_404(_visible_course_queryset(request.user), slug=slug)
     if request.user.is_staff:
         messages.warning(request, '관리자 계정은 수강 신청 대상이 아닙니다.')
         return redirect(course)
+
+    can_apply, deny_message = _can_apply_course(request.user, course)
+    if not can_apply:
+        messages.warning(request, deny_message)
+        return redirect('courses:list')
 
     latest = get_latest_enrollment(request.user, course)
     if latest and latest.status == Enrollment.Status.REQUESTED:

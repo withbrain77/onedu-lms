@@ -105,6 +105,49 @@
         {% endif %}
       </section>
 
+      <section class="onedu-admin-card" aria-labelledby="activeWatcherTitle">
+        <div class="onedu-admin-card__head">
+          <div>
+            <p class="onedu-admin-kicker">LIVE LEARNING</p>
+            <h2 id="activeWatcherTitle">현재 시청 중</h2>
+          </div>
+          <span class="onedu-admin-badge {% if dashboard.active_watchers.count %}is-success{% endif %}">
+            {{ dashboard.active_watchers.count }}명
+          </span>
+        </div>
+        {% if dashboard.active_watchers.items %}
+          <div class="onedu-admin-activity-list">
+            {% for watcher in dashboard.active_watchers.items %}
+              <div class="onedu-admin-activity">
+                <span class="onedu-admin-activity__mark is-change" aria-hidden="true">▶</span>
+                <div>
+                  <div class="onedu-admin-activity__title">
+                    <a href="{{ watcher.progress_url }}">{{ watcher.student_name }} ({{ watcher.student_username }})</a>
+                  </div>
+                  <p>
+                    <span>{{ watcher.course_title }}</span>
+                    <span>{{ watcher.lesson_title }}</span>
+                    <span>{{ watcher.progress_percent }}%</span>
+                    <time datetime="{{ watcher.last_watched_at|date:'c' }}">{{ watcher.last_watched_at|date:"H:i:s" }}</time>
+                  </p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="onedu-admin-card__foot">
+            <p>최근 {{ dashboard.active_watchers.cutoff_minutes }}분 안에 진도 저장이 들어온 수강생입니다.</p>
+            {% if dashboard.active_watchers.url %}
+              <a class="button" href="{{ dashboard.active_watchers.url }}">시청 진도 보기</a>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="onedu-admin-empty compact">
+            <strong>현재 시청 중으로 추정되는 수강생이 없습니다.</strong>
+            <span>영상 재생 중에는 진도가 주기적으로 저장되며 이 영역에 표시됩니다.</span>
+          </div>
+        {% endif %}
+      </section>
+
       <section class="onedu-admin-card" aria-labelledby="quickActionTitle">
         <div class="onedu-admin-card__head">
           <div>
@@ -143,7 +186,7 @@
                   <small>{{ course.period }}</small>
                 </span>
                 <span class="onedu-admin-program__meta">
-                  <span class="onedu-admin-badge {% if course.is_public %}is-success{% endif %}">{% if course.is_public %}공개{% else %}비공개{% endif %}</span>
+                  <span class="onedu-admin-badge {% if course.is_public %}is-success{% endif %}">{% if course.is_public %}{{ course.visibility_label }}{% else %}비공개{% endif %}</span>
                   <span>차시 {{ course.lesson_count }}</span>
                   <span>수강 {{ course.enrollment_count }}</span>
                   <span>대기 {{ course.pending_count }}</span>
