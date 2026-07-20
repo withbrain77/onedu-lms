@@ -42,7 +42,7 @@ class HomePageTests(TestCase):
         self.assertContains(response, '학습 이용 안내')
         self.assertContains(response, 'portal-manual-card')
         self.assertContains(response, '매뉴얼 다운로드')
-        self.assertContains(response, 'docs/onedu-student-user-manual.pdf')
+        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260720-1739')
         self.assertNotContains(response, 'portal-manual-mark')
         self.assertContains(response, 'WITHBRAIN')
         self.assertContains(response, 'IM 마스터스 세미나 2026')
