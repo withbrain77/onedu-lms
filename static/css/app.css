@@ -2872,6 +2872,60 @@ body {
   margin: 0;
 }
 
+.portal-manual-card {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(232, 247, 245, 0.98), rgba(255, 255, 255, 0.96));
+  border: 1px solid rgba(8, 117, 111, 0.18);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(6, 27, 42, 0.06);
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 3.4rem minmax(0, 1fr) auto;
+  margin-top: 0.9rem;
+  padding: 1rem;
+}
+
+.portal-manual-icon {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(8, 117, 111, 0.14);
+  border-radius: 999px;
+  color: var(--onedu-primary);
+  display: inline-flex;
+  height: 3.25rem;
+  justify-content: center;
+  width: 3.25rem;
+}
+
+.portal-manual-icon .portal-svg-icon {
+  height: 68%;
+  width: 68%;
+}
+
+.portal-manual-copy {
+  min-width: 0;
+}
+
+.portal-manual-copy strong {
+  color: var(--onedu-ink);
+  display: block;
+  font-size: 1rem;
+  font-weight: 900;
+  margin-bottom: 0.2rem;
+}
+
+.portal-manual-copy p {
+  color: var(--onedu-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.portal-manual-card .btn {
+  white-space: nowrap;
+}
+
 .portal-benefit-strip {
   background:
     linear-gradient(135deg, rgba(232, 247, 245, 0.9), rgba(255, 255, 255, 0.96));
@@ -3104,6 +3158,20 @@ body {
 
   .portal-timeline li > div {
     grid-column: 1 / -1;
+  }
+
+  .portal-manual-card {
+    grid-template-columns: 3rem minmax(0, 1fr);
+  }
+
+  .portal-manual-card .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .portal-manual-icon {
+    height: 3rem;
+    width: 3rem;
   }
 }
 

@@ -40,6 +40,8 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'archive-console')
         self.assertContains(response, 'portal-category-card')
         self.assertContains(response, '학습 이용 안내')
+        self.assertContains(response, '사이트 이용안내 매뉴얼 다운로드')
+        self.assertContains(response, 'docs/onedu-student-user-manual.pdf')
         self.assertContains(response, 'WITHBRAIN')
         self.assertContains(response, 'IM 마스터스 세미나 2026')
         self.assertContains(response, '&copy; 2026 WITHBRAIN INSTITUTE. All rights reserved.')
