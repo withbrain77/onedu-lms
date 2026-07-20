@@ -153,6 +153,8 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertEqual(file_response.status_code, 200)
         self.assertContains(page_response, self.video_url)
         self.assertContains(page_response, '1분 0초')
+        self.assertNotContains(page_response, '개인정보 처리방침')
+        self.assertNotContains(page_response, '시청 기록이 저장됩니다')
         self.assertTrue(
             AccessLog.objects.filter(
                 user=self.student,

@@ -3453,17 +3453,6 @@ body {
   text-align: right;
 }
 
-.video-security-notice {
-  background: rgba(8, 117, 111, 0.06);
-  border: 1px solid rgba(8, 117, 111, 0.14);
-  border-radius: 0.75rem;
-  color: var(--onedu-ink-soft);
-  font-size: 0.86rem;
-  line-height: 1.55;
-  margin-bottom: 1rem;
-  padding: 0.8rem 0.9rem;
-}
-
 @media (max-width: 575.98px) {
   .privacy-policy-contact dl div {
     align-items: flex-start;

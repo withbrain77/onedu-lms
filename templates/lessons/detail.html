@@ -69,10 +69,6 @@
           {% endif %}
         </div>
         <p class="text-muted">{{ lesson.description|default:"차시 설명이 없습니다." }}</p>
-        <div class="video-security-notice" role="note">
-          학습 이력 관리와 안전한 서비스 이용을 위해 시청 기록이 저장됩니다.
-          <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">개인정보 처리방침</a>
-        </div>
         <div class="d-flex justify-content-between small text-muted mb-1">
           <span>진도율</span>
           <span id="progressPercentText">{% if progress %}{{ progress.progress_percent }}{% else %}0{% endif %}%</span>
