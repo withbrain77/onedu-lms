@@ -2873,31 +2873,59 @@ body {
 }
 
 .portal-manual-card {
-  align-items: center;
-  background:
-    linear-gradient(135deg, rgba(232, 247, 245, 0.98), rgba(255, 255, 255, 0.96));
+  align-items: start;
+  background: #ffffff;
   border: 1px solid rgba(8, 117, 111, 0.18);
   border-radius: 12px;
   box-shadow: 0 10px 24px rgba(6, 27, 42, 0.05);
   display: grid;
-  gap: 0.8rem;
-  grid-template-columns: 2.65rem minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
   margin-top: 0.9rem;
-  padding: 0.9rem 1rem;
+  padding: 0.85rem;
 }
 
 .portal-manual-mark {
-  align-items: center;
-  background: linear-gradient(135deg, var(--onedu-primary), #0b5f59);
+  border: 3px solid var(--onedu-primary);
+  border-radius: 4px;
+  color: var(--onedu-primary);
+  display: block;
+  height: 2.75rem;
+  margin-top: 0.15rem;
+  position: relative;
+  width: 2.25rem;
+}
+
+.portal-manual-mark::before {
+  background:
+    linear-gradient(135deg, #ffffff 0 49%, var(--onedu-primary) 50% 58%, transparent 59%);
+  content: "";
+  height: 0.9rem;
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 0.9rem;
+}
+
+.portal-manual-mark::after {
+  border-bottom: 3px solid currentColor;
+  border-right: 3px solid currentColor;
+  bottom: 0.38rem;
+  content: "";
+  height: 0.82rem;
+  position: absolute;
+  right: 0.22rem;
+  transform: rotate(45deg);
+  width: 0.42rem;
+}
+
+.portal-manual-content {
+  background: linear-gradient(135deg, rgba(232, 247, 245, 0.72), rgba(255, 255, 255, 0.94));
   border-radius: 10px;
-  color: #fff;
-  display: inline-flex;
-  font-size: 0.72rem;
-  font-weight: 950;
-  height: 2.55rem;
-  justify-content: center;
-  letter-spacing: 0.04em;
-  width: 2.55rem;
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.72rem 0.8rem;
 }
 
 .portal-manual-copy {
@@ -2920,6 +2948,7 @@ body {
 }
 
 .portal-manual-card .btn {
+  justify-self: start;
   min-height: 2.35rem;
   padding-left: 0.9rem;
   padding-right: 0.9rem;
@@ -3161,17 +3190,16 @@ body {
   }
 
   .portal-manual-card {
-    grid-template-columns: 2.55rem minmax(0, 1fr);
+    grid-template-columns: 2.35rem minmax(0, 1fr);
   }
 
   .portal-manual-card .btn {
-    grid-column: 1 / -1;
     width: 100%;
   }
 
   .portal-manual-mark {
-    height: 2.45rem;
-    width: 2.45rem;
+    height: 2.55rem;
+    width: 2.05rem;
   }
 }
 
