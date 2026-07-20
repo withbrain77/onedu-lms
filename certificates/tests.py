@@ -1,11 +1,15 @@
 from datetime import timedelta
+from io import BytesIO
 
+from django.core.files.base import ContentFile
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from accounts.models import User
-from certificates.models import Certificate
+from certificates.models import Certificate, CertificateDesign
+from certificates.services import render_certificate_pdf
 from core.services.completion import evaluate_enrollment_completion
 from courses.models import Course
 from enrollments.models import Enrollment
@@ -182,6 +186,38 @@ class CompletionAndCertificateTests(TestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
         response.close()
 
+    def test_certificate_pdf_uses_uploaded_private_design_assets(self):
+        enrollment = self.enrollment()
+        self.set_progress(enrollment, 100)
+        self.submit_quiz(enrollment, self.correct_choice)
+        evaluate_enrollment_completion(enrollment)
+        certificate = Certificate.objects.get(enrollment=enrollment)
+
+        logo = BytesIO()
+        Image.new('RGBA', (180, 90), (0, 123, 116, 255)).save(logo, format='PNG')
+        seal = BytesIO()
+        Image.new('RGBA', (120, 120), (220, 38, 38, 160)).save(seal, format='PNG')
+        design = CertificateDesign.objects.create(
+            name='Withbrain Design',
+            issuer_name='위드브레인연구소',
+            issuer_subtitle='WITHBRAIN INSTITUTE',
+            representative_name='표진호',
+            accent_color='#007B74',
+        )
+        design.logo_image.save('test-logo.png', ContentFile(logo.getvalue()), save=True)
+        design.seal_image.save('test-seal.png', ContentFile(seal.getvalue()), save=True)
+
+        pdf_buffer = render_certificate_pdf(certificate, verify_url='https://onedu.withbrain.kr/certificates/verify/')
+        content = pdf_buffer.read()
+
+        self.assertTrue(content.startswith(b'%PDF'))
+        self.assertGreater(len(content), 3000)
+        with self.assertRaises(ValueError):
+            design.logo_image.storage.url(design.logo_image.name)
+
+        design.logo_image.delete(save=False)
+        design.seal_image.delete(save=False)
+
     def test_anonymous_user_can_open_certificate_verification_page(self):
         response = self.client.get(reverse('certificates:verify'))
 
@@ -205,6 +241,22 @@ class CompletionAndCertificateTests(TestCase):
         self.assertContains(response, self.student.display_name)
         self.assertContains(response, self.course.title)
         self.assertContains(response, certificate.certificate_no)
+
+    def test_verification_page_uses_active_certificate_design_issuer_name(self):
+        enrollment = self.enrollment()
+        self.set_progress(enrollment, 100)
+        self.submit_quiz(enrollment, self.correct_choice)
+        evaluate_enrollment_completion(enrollment)
+        certificate = Certificate.objects.get(enrollment=enrollment)
+        CertificateDesign.objects.create(name='Issuer Design', issuer_name='위드브레인연구소')
+
+        response = self.client.get(
+            reverse('certificates:verify'),
+            {'code': certificate.verification_code},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '위드브레인연구소')
 
     def test_invalid_verification_code_shows_failure_message(self):
         response = self.client.post(
@@ -272,3 +324,17 @@ class CompletionAndCertificateTests(TestCase):
         response = client.get('/admin/certificates/certificate/')
 
         self.assertEqual(response.status_code, 200)
+
+    def test_admin_certificate_design_screen_accessible(self):
+        admin = User.objects.create_superuser(
+            username='certificate_design_admin',
+            password='pass12345',
+            email='design-admin@example.com',
+        )
+        client = Client()
+        client.force_login(admin)
+
+        response = client.get('/admin/certificates/certificatedesign/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '수료증 디자인 설정')

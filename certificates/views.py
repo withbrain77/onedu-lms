@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from .models import Certificate
-from .services import render_certificate_pdf
+from .services import get_active_certificate_design, render_certificate_pdf
 
 
 @require_http_methods(['GET', 'POST'])
@@ -38,6 +38,8 @@ def verify_certificate(request):
         is_invalid_or_revoked = True
 
     completed_date = None
+    design = get_active_certificate_design()
+    issuer_name = design.issuer_name if design else settings.CERTIFICATE_ISSUER_NAME
     if certificate:
         completed_at = certificate.enrollment.completed_at or certificate.issued_at
         completed_date = timezone.localtime(completed_at).date()
@@ -49,7 +51,7 @@ def verify_certificate(request):
             'code': code,
             'certificate': certificate,
             'completed_date': completed_date,
-            'issuer_name': settings.CERTIFICATE_ISSUER_NAME,
+            'issuer_name': issuer_name,
             'is_submitted': is_submitted,
             'is_invalid_or_revoked': is_invalid_or_revoked,
         },

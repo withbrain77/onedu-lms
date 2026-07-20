@@ -38,6 +38,7 @@ MODEL_LABELS = {
     ('quizzes', 'answerchoice'): '객관식 보기',
     ('quizzes', 'quizattempt'): '시험 응시',
     ('certificates', 'certificate'): '수료증',
+    ('certificates', 'certificatedesign'): '수료증 디자인 설정',
 }
 
 
@@ -83,7 +84,7 @@ MENU_GROUPS = [
     {
         'title': '수료 관리',
         'icon': 'C',
-        'items': [('certificates', 'certificate')],
+        'items': [('certificates', 'certificate'), ('certificates', 'certificatedesign')],
     },
 ]
 
