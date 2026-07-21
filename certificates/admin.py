@@ -68,7 +68,10 @@ class CertificateDesignAdmin(admin.ModelAdmin):
         if not obj or not obj.pk:
             return '저장 후 미리보기 가능'
         url = reverse('admin:certificates_certificatedesign_preview', args=[obj.pk])
-        return format_html('<a class="button" href="{}" target="_blank" rel="noopener">미리보기 PDF</a>', url)
+        return format_html(
+            '<a class="onedu-admin-inline-button" href="{}" target="_blank" rel="noopener">미리보기 PDF</a>',
+            url,
+        )
 
     def preview_pdf(self, request, object_id):
         design = get_object_or_404(CertificateDesign, pk=object_id)

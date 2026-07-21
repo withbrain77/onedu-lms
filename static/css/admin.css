@@ -935,7 +935,10 @@ button:hover {
 
 #result_list a.onedu-admin-inline-button,
 #result_list a.onedu-admin-inline-button:link,
-#result_list a.onedu-admin-inline-button:visited {
+#result_list a.onedu-admin-inline-button:visited,
+a.onedu-admin-inline-button,
+a.onedu-admin-inline-button:link,
+a.onedu-admin-inline-button:visited {
   align-items: center;
   background: linear-gradient(180deg, #128174 0%, #0f766e 100%) !important;
   border: 1px solid #0f766e;
@@ -954,7 +957,9 @@ button:hover {
 }
 
 #result_list a.onedu-admin-inline-button:hover,
-#result_list a.onedu-admin-inline-button:focus {
+#result_list a.onedu-admin-inline-button:focus,
+a.onedu-admin-inline-button:hover,
+a.onedu-admin-inline-button:focus {
   background: linear-gradient(180deg, #0b5f59 0%, #094f4a 100%) !important;
   border-color: #094f4a;
   box-shadow: 0 10px 22px rgba(15, 118, 110, 0.24);
