@@ -182,10 +182,10 @@ def render_certificate_pdf(certificate, verify_url=''):
     logo_path = _field_path(design.logo_image) if design else ''
     if not logo_path:
         logo_path = _default_logo_path()
-    if not _draw_image(pdf, logo_path, 70, height - 100, 130, 54):
+    if not _draw_image(pdf, logo_path, 70, height - 116, 130, 54):
         pdf.setFillColor(accent)
         pdf.setFont(font_name, 16)
-        pdf.drawString(70, height - 84, issuer_name)
+        pdf.drawString(70, height - 100, issuer_name)
 
     pdf.setFillColor(accent)
     pdf.setFont(font_name, 9)
