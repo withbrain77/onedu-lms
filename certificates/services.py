@@ -139,9 +139,9 @@ def _draw_centered_wrapped(pdf, text, x, y, max_width, font_name, font_size, lea
     return y
 
 
-def render_certificate_pdf(certificate, verify_url=''):
+def render_certificate_pdf(certificate, verify_url='', design=None):
     font_name = _register_certificate_font()
-    design = get_active_certificate_design()
+    design = design or get_active_certificate_design()
     buffer = BytesIO()
     page_size = landscape(A4)
     pdf = canvas.Canvas(buffer, pagesize=page_size)

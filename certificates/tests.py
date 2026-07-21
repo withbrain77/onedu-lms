@@ -338,3 +338,21 @@ class CompletionAndCertificateTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '수료증 디자인 설정')
+
+    def test_admin_certificate_design_preview_pdf(self):
+        admin = User.objects.create_superuser(
+            username='certificate_preview_admin',
+            password='pass12345',
+            email='preview-admin@example.com',
+        )
+        design = CertificateDesign.objects.create(
+            name='Preview Design',
+            issuer_name='위드브레인연구소',
+        )
+        client = Client()
+        client.force_login(admin)
+
+        response = client.get(reverse('admin:certificates_certificatedesign_preview', args=[design.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
