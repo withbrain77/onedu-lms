@@ -33,7 +33,6 @@
             {% if user.is_staff %}
               <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">관리자</a></li>
               <li class="nav-item"><a class="nav-link" href="{% url 'courses:list' %}">강의 목록</a></li>
-              <li class="nav-item"><a class="nav-link" href="{% url 'ui_preview' %}">UI 시안</a></li>
             {% else %}
               <li class="nav-item"><a class="nav-link" href="{% url 'enrollments:classroom' %}">내 강의실</a></li>
               <li class="nav-item"><a class="nav-link" href="{% url 'courses:list' %}">강의 목록</a></li>
@@ -43,7 +42,6 @@
           {% endif %}
           <li class="nav-item"><a class="nav-link" href="{% url 'notice_list' %}">공지사항</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'certificates:verify' %}">수료증 검증</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'privacy_policy' %}">개인정보</a></li>
         </ul>
         <div class="d-flex align-items-lg-center gap-2 flex-column flex-lg-row">
           {% if user.is_authenticated %}

@@ -66,6 +66,22 @@ class HomePageTests(TestCase):
         self.assertContains(response, '부정 이용 방지')
         self.assertContains(response, 'withbrain77@daum.net')
 
+    def test_top_navigation_hides_retired_public_links(self):
+        staff = User.objects.create_user(
+            username='staff_nav',
+            password='pass12345',
+            email='staff-nav@example.com',
+            is_staff=True,
+        )
+        self.client.force_login(staff)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'UI 시안')
+        self.assertNotContains(response, '>개인정보</a>')
+        self.assertContains(response, '개인정보 처리방침')
+
     @patch('core.views.random.sample')
     def test_home_page_shows_two_random_public_courses(self, mocked_sample):
         old_course = Course.objects.create(
