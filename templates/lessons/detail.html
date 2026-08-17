@@ -20,6 +20,7 @@
     <div class="video-card">
         {% if lesson.has_hls or lesson.video_file %}
           <div id="videoPlayerShell" class="video-player-shell">
+            <div id="videoZoomLayer" class="video-zoom-layer">
             <video
               id="lessonVideo"
               class="lesson-video"
@@ -40,7 +41,13 @@
               {% endif %}
               현재 브라우저에서 HTML5 video를 지원하지 않습니다.
             </video>
+            </div>
             <div id="videoWatermark" class="video-watermark wm-pos-center" aria-hidden="true">{{ watermark_text }}</div>
+            <div id="videoZoomControls" class="video-zoom-controls" aria-label="Video zoom controls">
+              <button class="video-zoom-button" type="button" data-zoom-action="out" aria-label="Zoom out">-</button>
+              <button id="videoZoomReset" class="video-zoom-button video-zoom-reset" type="button" data-zoom-action="reset" aria-label="Reset zoom">100%</button>
+              <button class="video-zoom-button" type="button" data-zoom-action="in" aria-label="Zoom in">+</button>
+            </div>
             <button id="videoFullscreenButton" class="btn btn-light btn-sm video-fullscreen-button" type="button">전체화면</button>
           </div>
         {% else %}
@@ -176,5 +183,5 @@
   {% if lesson.has_hls %}
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
   {% endif %}
-  <script src="{% static 'js/video_progress.js' %}?v=20260712-time-format"></script>
+  <script src="{% static 'js/video_progress.js' %}?v=20260817-video-zoom"></script>
 {% endblock %}

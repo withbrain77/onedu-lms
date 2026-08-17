@@ -11,6 +11,9 @@
   const playerShell = document.getElementById('videoPlayerShell');
   const watermark = document.getElementById('videoWatermark');
   const fullscreenButton = document.getElementById('videoFullscreenButton');
+  const zoomLayer = document.getElementById('videoZoomLayer');
+  const zoomControls = document.getElementById('videoZoomControls');
+  const zoomResetButton = document.getElementById('videoZoomReset');
   const statusEl = document.getElementById('progressSaveStatus');
   const percentEl = document.getElementById('progressPercentText');
   const progressBar = document.getElementById('lessonProgressBar');
@@ -20,6 +23,25 @@
   let lastSaveAt = 0;
   let hasRestoredPosition = false;
   let saving = false;
+  let zoomScale = 1;
+  let zoomX = 0;
+  let zoomY = 0;
+  let activePointerId = null;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let dragStartZoomX = 0;
+  let dragStartZoomY = 0;
+  let pinchActive = false;
+  let pinchStartDistance = 0;
+  let pinchStartScale = 1;
+  let lastTapAt = 0;
+  let lastTapX = 0;
+  let lastTapY = 0;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchMoved = false;
+  let ignoreNextTap = false;
+  const zoomLevels = [1, 1.25, 1.5, 2];
   const watermarkPositions = [
     'wm-pos-center',
     'wm-pos-top-left',
@@ -139,6 +161,105 @@
     }, randomWatermarkDelay());
   }
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function roundZoom(value) {
+    return Math.round(value * 100) / 100;
+  }
+
+  function zoomPanLimit() {
+    if (!playerShell || zoomScale <= 1) {
+      return { x: 0, y: 0 };
+    }
+    const rect = playerShell.getBoundingClientRect();
+    return {
+      x: Math.max(0, (rect.width * (zoomScale - 1)) / 2),
+      y: Math.max(0, (rect.height * (zoomScale - 1)) / 2),
+    };
+  }
+
+  function clampZoomPan() {
+    const limit = zoomPanLimit();
+    zoomX = clamp(zoomX, -limit.x, limit.x);
+    zoomY = clamp(zoomY, -limit.y, limit.y);
+  }
+
+  function updateZoomLabel() {
+    if (zoomResetButton) {
+      zoomResetButton.textContent = `${Math.round(zoomScale * 100)}%`;
+    }
+  }
+
+  function applyZoom() {
+    if (!zoomLayer) {
+      return;
+    }
+    if (zoomScale <= 1.01) {
+      zoomScale = 1;
+      zoomX = 0;
+      zoomY = 0;
+    }
+    clampZoomPan();
+    zoomLayer.style.transform = `translate3d(${zoomX}px, ${zoomY}px, 0) scale(${zoomScale})`;
+    if (playerShell) {
+      playerShell.classList.toggle('is-video-zoomed', zoomScale > 1);
+    }
+    updateZoomLabel();
+  }
+
+  function setZoom(nextScale) {
+    zoomScale = roundZoom(clamp(nextScale, zoomLevels[0], zoomLevels[zoomLevels.length - 1]));
+    applyZoom();
+  }
+
+  function stepZoom(direction) {
+    const tolerance = 0.01;
+    if (direction > 0) {
+      const nextLevel = zoomLevels.find((level) => level > zoomScale + tolerance);
+      setZoom(nextLevel || zoomLevels[zoomLevels.length - 1]);
+      return;
+    }
+    const previousLevel = zoomLevels
+      .slice()
+      .reverse()
+      .find((level) => level < zoomScale - tolerance);
+    setZoom(previousLevel || zoomLevels[0]);
+  }
+
+  function resetZoom() {
+    setZoom(1);
+  }
+
+  function isZoomControlTarget(target) {
+    if (!target || typeof target.closest !== 'function') {
+      return false;
+    }
+    return Boolean(
+      (
+        target.closest('.video-zoom-controls') ||
+        target.closest('.video-fullscreen-button')
+      )
+    );
+  }
+
+  function isNativeControlArea(clientY) {
+    const rect = video.getBoundingClientRect();
+    const controlHeight = Math.min(84, Math.max(46, rect.height * 0.22));
+    return clientY >= rect.bottom - controlHeight;
+  }
+
+  function touchDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt((dx * dx) + (dy * dy));
+  }
+
+  function toggleTapZoom() {
+    setZoom(zoomScale > 1 ? 1 : 1.5);
+  }
+
   function currentFullscreenElement() {
     return document.fullscreenElement || document.webkitFullscreenElement || null;
   }
@@ -167,6 +288,7 @@
       return;
     }
     fullscreenButton.textContent = currentFullscreenElement() ? '전체화면 종료' : '전체화면';
+    window.setTimeout(applyZoom, 80);
   }
 
   async function saveProgress(options) {
@@ -266,6 +388,162 @@
     });
     document.addEventListener('fullscreenchange', updateFullscreenButton);
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+  }
+
+  if (zoomControls && zoomLayer) {
+    zoomControls.addEventListener('click', function (event) {
+      const button = event.target && typeof event.target.closest === 'function'
+        ? event.target.closest('[data-zoom-action]')
+        : null;
+      if (!button) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const action = button.dataset.zoomAction;
+      if (action === 'in') {
+        stepZoom(1);
+      } else if (action === 'out') {
+        stepZoom(-1);
+      } else {
+        resetZoom();
+      }
+    });
+  }
+
+  if (playerShell && zoomLayer) {
+    video.addEventListener('dblclick', function (event) {
+      if (isZoomControlTarget(event.target) || isNativeControlArea(event.clientY)) {
+        return;
+      }
+      event.preventDefault();
+      toggleTapZoom();
+    });
+
+    playerShell.addEventListener('pointerdown', function (event) {
+      if (
+        zoomScale <= 1 ||
+        isZoomControlTarget(event.target) ||
+        isNativeControlArea(event.clientY) ||
+        (event.pointerType === 'mouse' && event.button !== 0)
+      ) {
+        return;
+      }
+      activePointerId = event.pointerId;
+      dragStartX = event.clientX;
+      dragStartY = event.clientY;
+      dragStartZoomX = zoomX;
+      dragStartZoomY = zoomY;
+      zoomLayer.classList.add('is-dragging');
+      if (playerShell.setPointerCapture) {
+        try {
+          playerShell.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // Some mobile browsers skip pointer capture during native media gestures.
+        }
+      }
+      event.preventDefault();
+    });
+
+    playerShell.addEventListener('pointermove', function (event) {
+      if (activePointerId === null || event.pointerId !== activePointerId) {
+        return;
+      }
+      zoomX = dragStartZoomX + (event.clientX - dragStartX);
+      zoomY = dragStartZoomY + (event.clientY - dragStartY);
+      applyZoom();
+      event.preventDefault();
+    });
+
+    function stopZoomDrag(event) {
+      if (activePointerId === null || (event && event.pointerId !== activePointerId)) {
+        return;
+      }
+      if (playerShell.releasePointerCapture && event) {
+        try {
+          playerShell.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          // Pointer capture may already be released by the browser.
+        }
+      }
+      activePointerId = null;
+      zoomLayer.classList.remove('is-dragging');
+    }
+
+    playerShell.addEventListener('pointerup', stopZoomDrag);
+    playerShell.addEventListener('pointercancel', stopZoomDrag);
+    playerShell.addEventListener('pointerleave', stopZoomDrag);
+
+    playerShell.addEventListener('touchstart', function (event) {
+      if (isZoomControlTarget(event.target)) {
+        return;
+      }
+      if (event.touches.length === 2) {
+        pinchActive = true;
+        pinchStartDistance = touchDistance(event.touches);
+        pinchStartScale = zoomScale;
+        ignoreNextTap = true;
+        zoomLayer.classList.add('is-dragging');
+        return;
+      }
+      if (event.touches.length === 1) {
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+        touchMoved = false;
+      }
+    }, { passive: true });
+
+    playerShell.addEventListener('touchmove', function (event) {
+      if (pinchActive && event.touches.length === 2 && pinchStartDistance > 0) {
+        event.preventDefault();
+        const nextScale = pinchStartScale * (touchDistance(event.touches) / pinchStartDistance);
+        setZoom(nextScale);
+        return;
+      }
+      if (event.touches.length === 1) {
+        const dx = event.touches[0].clientX - touchStartX;
+        const dy = event.touches[0].clientY - touchStartY;
+        touchMoved = touchMoved || Math.sqrt((dx * dx) + (dy * dy)) > 14;
+      }
+    }, { passive: false });
+
+    playerShell.addEventListener('touchend', function (event) {
+      if (pinchActive && event.touches.length < 2) {
+        pinchActive = false;
+        zoomLayer.classList.remove('is-dragging');
+        window.setTimeout(function () {
+          ignoreNextTap = false;
+        }, 280);
+        return;
+      }
+      if (ignoreNextTap || event.touches.length > 0 || event.changedTouches.length !== 1) {
+        return;
+      }
+      const touch = event.changedTouches[0];
+      if (touchMoved || isNativeControlArea(touch.clientY)) {
+        return;
+      }
+      const now = Date.now();
+      const dx = touch.clientX - lastTapX;
+      const dy = touch.clientY - lastTapY;
+      const isDoubleTap = now - lastTapAt < 320 && Math.sqrt((dx * dx) + (dy * dy)) < 44;
+      if (isDoubleTap) {
+        event.preventDefault();
+        toggleTapZoom();
+        lastTapAt = 0;
+      } else {
+        lastTapAt = now;
+        lastTapX = touch.clientX;
+        lastTapY = touch.clientY;
+      }
+    }, { passive: false });
+
+    window.addEventListener('resize', applyZoom);
+    window.addEventListener('orientationchange', function () {
+      window.setTimeout(applyZoom, 140);
+    });
+
+    applyZoom();
   }
 
   moveWatermark();

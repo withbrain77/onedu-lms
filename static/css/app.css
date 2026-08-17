@@ -1059,6 +1059,33 @@ main.container {
   width: 100%;
 }
 
+.video-zoom-layer {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  max-height: inherit;
+  transform-origin: center center;
+  transition: transform 160ms ease;
+  width: 100%;
+  will-change: transform;
+}
+
+.video-zoom-layer.is-dragging {
+  transition: none;
+}
+
+.video-player-shell.is-video-zoomed {
+  touch-action: none;
+}
+
+.video-player-shell.is-video-zoomed .lesson-video {
+  cursor: grab;
+}
+
+.video-zoom-layer.is-dragging .lesson-video {
+  cursor: grabbing;
+}
+
 .lesson-video::-webkit-media-controls-fullscreen-button {
   display: none;
 }
@@ -1135,6 +1162,55 @@ main.container {
   right: 0.75rem;
   top: 0.75rem;
   z-index: 5;
+}
+
+.video-zoom-controls {
+  align-items: center;
+  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  box-shadow: 0 0.75rem 1.8rem rgba(15, 23, 42, 0.22);
+  display: flex;
+  gap: 0.2rem;
+  opacity: 0.92;
+  padding: 0.2rem;
+  position: absolute;
+  right: 0.75rem;
+  top: 3.35rem;
+  z-index: 6;
+}
+
+.video-zoom-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.95rem;
+  font-weight: 800;
+  height: 2rem;
+  justify-content: center;
+  line-height: 1;
+  min-width: 2rem;
+  padding: 0 0.55rem;
+}
+
+.video-zoom-button:hover,
+.video-zoom-button:focus {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  outline: none;
+}
+
+.video-zoom-button:focus-visible {
+  box-shadow: 0 0 0 0.16rem rgba(255, 255, 255, 0.42);
+}
+
+.video-zoom-reset {
+  font-size: 0.78rem;
+  min-width: 3.2rem;
 }
 
 .video-player-shell:fullscreen,
@@ -3760,6 +3836,18 @@ body {
   max-width: 100%;
   object-fit: contain !important;
   object-position: center center;
+  width: 100%;
+}
+
+.video-player-shell:fullscreen .video-zoom-layer,
+.video-player-shell:-webkit-full-screen .video-zoom-layer {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  max-height: 100%;
+  max-width: 100%;
+  transform-origin: center center;
   width: 100%;
 }
 
