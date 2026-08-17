@@ -311,7 +311,7 @@ class AdminThemeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ONEDU LMS 관리자')
         self.assertContains(response, 'css/admin.css')
-        self.assertContains(response, '20260718-server-logs')
+        self.assertContains(response, '20260721-certificate-preview')
         self.assertContains(response, 'onedu-admin-workspace')
         self.assertContains(response, 'onedu-admin-sidebar')
         self.assertContains(response, '운영 대시보드')

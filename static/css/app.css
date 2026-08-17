@@ -3729,3 +3729,45 @@ body {
     flex-basis: auto;
   }
 }
+
+/* Keep lesson slides fully visible in custom fullscreen mode, especially on mobile landscape. */
+.video-player-shell:fullscreen,
+.video-player-shell:-webkit-full-screen {
+  align-items: center;
+  background: #000;
+  box-sizing: border-box;
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  justify-content: center;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+  width: 100vw;
+}
+
+.video-player-shell:fullscreen .lesson-video,
+.video-player-shell:-webkit-full-screen .lesson-video {
+  aspect-ratio: auto;
+  background: #000;
+  display: block;
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain !important;
+  object-position: center center;
+  width: 100%;
+}
+
+@media (orientation: landscape) {
+  .video-player-shell:fullscreen,
+  .video-player-shell:-webkit-full-screen {
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+  }
+}
