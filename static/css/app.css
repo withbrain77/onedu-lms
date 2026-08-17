@@ -1164,6 +1164,53 @@ main.container {
   z-index: 5;
 }
 
+.video-zoom-menu {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  position: absolute;
+  right: 0.75rem;
+  top: 3.35rem;
+  z-index: 6;
+}
+
+.video-zoom-toggle {
+  align-items: center;
+  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.48);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+  box-shadow: 0 0.6rem 1.4rem rgba(15, 23, 42, 0.18);
+  color: #fff;
+  display: inline-flex;
+  font-size: 1.2rem;
+  font-weight: 800;
+  height: 2.25rem;
+  justify-content: center;
+  line-height: 1;
+  opacity: 0.82;
+  padding: 0;
+  width: 2.25rem;
+}
+
+.video-zoom-toggle:hover,
+.video-zoom-toggle:focus {
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  opacity: 1;
+  outline: none;
+}
+
+.video-zoom-toggle:focus-visible {
+  box-shadow: 0 0 0 0.16rem rgba(255, 255, 255, 0.42);
+}
+
+.video-zoom-menu.is-open .video-zoom-toggle {
+  background: rgba(15, 23, 42, 0.76);
+  opacity: 1;
+}
+
 .video-zoom-controls {
   align-items: center;
   backdrop-filter: blur(10px);
@@ -1175,10 +1222,10 @@ main.container {
   gap: 0.2rem;
   opacity: 0.92;
   padding: 0.2rem;
-  position: absolute;
-  right: 0.75rem;
-  top: 3.35rem;
-  z-index: 6;
+}
+
+.video-zoom-controls[hidden] {
+  display: none;
 }
 
 .video-zoom-button {
@@ -1363,6 +1410,16 @@ main.container {
     font-size: 0.78rem;
     right: 0.5rem;
     top: 0.5rem;
+  }
+
+  .video-zoom-menu {
+    right: 0.5rem;
+    top: 3rem;
+  }
+
+  .video-zoom-toggle {
+    height: 2rem;
+    width: 2rem;
   }
 }
 

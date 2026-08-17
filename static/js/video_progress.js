@@ -12,6 +12,8 @@
   const watermark = document.getElementById('videoWatermark');
   const fullscreenButton = document.getElementById('videoFullscreenButton');
   const zoomLayer = document.getElementById('videoZoomLayer');
+  const zoomMenu = document.getElementById('videoZoomMenu');
+  const zoomToggle = document.getElementById('videoZoomToggle');
   const zoomControls = document.getElementById('videoZoomControls');
   const zoomResetButton = document.getElementById('videoZoomReset');
   const statusEl = document.getElementById('progressSaveStatus');
@@ -192,6 +194,15 @@
     }
   }
 
+  function setZoomMenuOpen(isOpen) {
+    if (!zoomMenu || !zoomToggle || !zoomControls) {
+      return;
+    }
+    zoomMenu.classList.toggle('is-open', isOpen);
+    zoomToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    zoomControls.hidden = !isOpen;
+  }
+
   function applyZoom() {
     if (!zoomLayer) {
       return;
@@ -239,6 +250,7 @@
     return Boolean(
       (
         target.closest('.video-zoom-controls') ||
+        target.closest('.video-zoom-toggle') ||
         target.closest('.video-fullscreen-button')
       )
     );
@@ -409,6 +421,28 @@
         resetZoom();
       }
     });
+  }
+
+  if (zoomToggle && zoomMenu && zoomControls) {
+    zoomToggle.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      setZoomMenuOpen(zoomControls.hidden);
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!zoomControls.hidden && !zoomMenu.contains(event.target)) {
+        setZoomMenuOpen(false);
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        setZoomMenuOpen(false);
+      }
+    });
+
+    setZoomMenuOpen(false);
   }
 
   if (playerShell && zoomLayer) {

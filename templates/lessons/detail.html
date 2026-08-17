@@ -43,10 +43,20 @@
             </video>
             </div>
             <div id="videoWatermark" class="video-watermark wm-pos-center" aria-hidden="true">{{ watermark_text }}</div>
-            <div id="videoZoomControls" class="video-zoom-controls" aria-label="Video zoom controls">
-              <button class="video-zoom-button" type="button" data-zoom-action="out" aria-label="Zoom out">-</button>
-              <button id="videoZoomReset" class="video-zoom-button video-zoom-reset" type="button" data-zoom-action="reset" aria-label="Reset zoom">100%</button>
-              <button class="video-zoom-button" type="button" data-zoom-action="in" aria-label="Zoom in">+</button>
+            <div id="videoZoomMenu" class="video-zoom-menu">
+              <button
+                id="videoZoomToggle"
+                class="video-zoom-toggle"
+                type="button"
+                aria-label="Zoom options"
+                aria-expanded="false"
+                aria-controls="videoZoomControls"
+              >&#8942;</button>
+              <div id="videoZoomControls" class="video-zoom-controls" aria-label="Video zoom controls" hidden>
+                <button class="video-zoom-button" type="button" data-zoom-action="out" aria-label="Zoom out">-</button>
+                <button id="videoZoomReset" class="video-zoom-button video-zoom-reset" type="button" data-zoom-action="reset" aria-label="Reset zoom">100%</button>
+                <button class="video-zoom-button" type="button" data-zoom-action="in" aria-label="Zoom in">+</button>
+              </div>
             </div>
             <button id="videoFullscreenButton" class="btn btn-light btn-sm video-fullscreen-button" type="button">전체화면</button>
           </div>
@@ -183,5 +193,5 @@
   {% if lesson.has_hls %}
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
   {% endif %}
-  <script src="{% static 'js/video_progress.js' %}?v=20260817-video-zoom"></script>
+  <script src="{% static 'js/video_progress.js' %}?v=20260817-video-zoom-menu"></script>
 {% endblock %}
