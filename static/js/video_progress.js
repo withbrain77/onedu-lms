@@ -44,7 +44,7 @@
   let touchMoved = false;
   let ignoreNextTap = false;
   let controlsHideTimer = null;
-  const zoomLevels = [1, 1.25, 1.5, 2];
+  const zoomLevels = [1, 1.25, 1.5, 2, 3];
   const controlsAutoHideDelay = 10000;
   const watermarkPositions = [
     'wm-pos-center',
