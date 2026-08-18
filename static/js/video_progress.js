@@ -43,7 +43,9 @@
   let touchStartY = 0;
   let touchMoved = false;
   let ignoreNextTap = false;
+  let controlsHideTimer = null;
   const zoomLevels = [1, 1.25, 1.5, 2];
+  const controlsAutoHideDelay = 10000;
   const watermarkPositions = [
     'wm-pos-center',
     'wm-pos-top-left',
@@ -199,8 +201,50 @@
       return;
     }
     zoomMenu.classList.toggle('is-open', isOpen);
+    if (playerShell) {
+      playerShell.classList.toggle('is-video-menu-open', isOpen);
+    }
     zoomToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     zoomControls.hidden = !isOpen;
+  }
+
+  function shouldAutoHideControls() {
+    return video && !video.paused && !video.ended;
+  }
+
+  function clearControlsHideTimer() {
+    if (controlsHideTimer) {
+      window.clearTimeout(controlsHideTimer);
+      controlsHideTimer = null;
+    }
+  }
+
+  function setControlsHidden(isHidden) {
+    if (!playerShell) {
+      return;
+    }
+    if (isHidden && zoomControls && !zoomControls.hidden) {
+      setZoomMenuOpen(false);
+    }
+    playerShell.classList.toggle('are-video-controls-hidden', isHidden);
+  }
+
+  function scheduleControlsAutoHide() {
+    clearControlsHideTimer();
+    if (!shouldAutoHideControls()) {
+      setControlsHidden(false);
+      return;
+    }
+    controlsHideTimer = window.setTimeout(function () {
+      if (shouldAutoHideControls()) {
+        setControlsHidden(true);
+      }
+    }, controlsAutoHideDelay);
+  }
+
+  function revealCustomControls() {
+    setControlsHidden(false);
+    scheduleControlsAutoHide();
   }
 
   function applyZoom() {
@@ -300,6 +344,7 @@
       return;
     }
     fullscreenButton.textContent = currentFullscreenElement() ? '전체화면 종료' : '전체화면';
+    revealCustomControls();
     window.setTimeout(applyZoom, 80);
   }
 
@@ -372,9 +417,17 @@
   video.addEventListener('play', function () {
     lastSaveAt = Date.now();
     setStatus('학습 중');
+    revealCustomControls();
+  });
+
+  video.addEventListener('pause', function () {
+    clearControlsHideTimer();
+    setControlsHidden(false);
   });
 
   video.addEventListener('ended', function () {
+    clearControlsHideTimer();
+    setControlsHidden(false);
     saveProgress({ completed: true });
   });
 
@@ -392,6 +445,7 @@
 
   if (fullscreenButton && playerShell) {
     fullscreenButton.addEventListener('click', function () {
+      revealCustomControls();
       if (currentFullscreenElement()) {
         exitFullscreen();
       } else {
@@ -412,6 +466,7 @@
       }
       event.preventDefault();
       event.stopPropagation();
+      revealCustomControls();
       const action = button.dataset.zoomAction;
       if (action === 'in') {
         stepZoom(1);
@@ -427,22 +482,41 @@
     zoomToggle.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
+      revealCustomControls();
       setZoomMenuOpen(zoomControls.hidden);
     });
 
     document.addEventListener('click', function (event) {
       if (!zoomControls.hidden && !zoomMenu.contains(event.target)) {
         setZoomMenuOpen(false);
+        scheduleControlsAutoHide();
       }
     });
 
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
         setZoomMenuOpen(false);
+        revealCustomControls();
       }
     });
 
     setZoomMenuOpen(false);
+  }
+
+  if (playerShell) {
+    ['mousemove', 'pointerdown', 'touchstart'].forEach(function (eventName) {
+      playerShell.addEventListener(eventName, revealCustomControls, { passive: true });
+    });
+
+    playerShell.addEventListener('focusin', revealCustomControls);
+
+    document.addEventListener('keydown', function () {
+      if (currentFullscreenElement() === playerShell || playerShell.contains(document.activeElement)) {
+        revealCustomControls();
+      }
+    });
+
+    revealCustomControls();
   }
 
   if (playerShell && zoomLayer) {

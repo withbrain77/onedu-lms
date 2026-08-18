@@ -1161,6 +1161,7 @@ main.container {
   position: absolute;
   right: 0.75rem;
   top: 0.75rem;
+  transition: opacity 180ms ease, transform 180ms ease;
   z-index: 5;
 }
 
@@ -1172,6 +1173,7 @@ main.container {
   position: absolute;
   right: 0.75rem;
   top: 3.35rem;
+  transition: opacity 180ms ease, transform 180ms ease;
   z-index: 6;
 }
 
@@ -1226,6 +1228,13 @@ main.container {
 
 .video-zoom-controls[hidden] {
   display: none;
+}
+
+.video-player-shell.are-video-controls-hidden:not(.is-video-menu-open) .video-fullscreen-button,
+.video-player-shell.are-video-controls-hidden:not(.is-video-menu-open) .video-zoom-menu {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.35rem);
 }
 
 .video-zoom-button {
