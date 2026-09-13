@@ -34,7 +34,7 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('home'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '위드브레인연구소 교육·세미나 영상 아카이브')
+        self.assertContains(response, '위드브레인연구소 아카데미')
         self.assertContains(response, '승인된 수강생에게 교육 영상과 세미나 영상을 제공')
         self.assertContains(response, '제한 공개')
         self.assertContains(response, 'archive-console')
@@ -206,7 +206,7 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('home'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'WITHBRAIN VIDEO ARCHIVE')
+        self.assertContains(response, 'WITHBRAIN ACADEMY')
         self.assertContains(response, reverse('enrollments:classroom'))
         self.assertContains(response, course.get_absolute_url())
         self.assertContains(response, '전체 프로그램')
@@ -223,7 +223,7 @@ class HomePageTests(TestCase):
         response = self.client.get(reverse('home'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'WITHBRAIN VIDEO ARCHIVE')
+        self.assertContains(response, 'WITHBRAIN ACADEMY')
         self.assertContains(response, reverse('admin:index'))
 
 
