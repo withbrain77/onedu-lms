@@ -199,6 +199,17 @@
             <button class="btn btn-outline-secondary w-100" type="button" disabled>신청 대기 중</button>
           {% elif enrollment and access %}
             <div class="alert alert-warning small">{{ access.message }}</div>
+            {% if access.code == 'ended' %}
+              {% if course.is_free %}
+                <div class="alert alert-info small">무료 재수강 신청 즉시 {{ course.default_enrollment_days }}일 동안 다시 수강할 수 있습니다.</div>
+                <form method="post" action="{% url 'enrollments:request_reenrollment' enrollment.id %}">
+                  {% csrf_token %}
+                  <button class="btn btn-primary w-100" type="submit">무료 재수강 신청</button>
+                </form>
+              {% else %}
+                <a class="btn btn-primary w-100" href="{% url 'enrollments:request_reenrollment' enrollment.id %}">재수강 신청</a>
+              {% endif %}
+            {% endif %}
           {% endif %}
           {% if not enrollment or enrollment.status == 'rejected' or enrollment.status == 'cancelled' %}
             {% if course.is_free %}

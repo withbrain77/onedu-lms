@@ -12,6 +12,7 @@ from quizzes.services import get_course_quiz_items
 
 from .forms import ReEnrollmentRequestForm
 from .models import Enrollment, ReEnrollmentRequest
+from .services import renew_free_enrollment
 
 
 def _latest_reenrollment_request(enrollment):
@@ -199,11 +200,15 @@ def request_reenrollment(request, enrollment_id):
         return redirect('enrollments:classroom')
 
     pending_request = enrollment.reenrollment_requests.filter(status=ReEnrollmentRequest.Status.PENDING).first()
-    if pending_request:
+    if pending_request and not enrollment.course.is_free:
         messages.info(request, '이미 재수강 신청이 접수되어 관리자 승인을 기다리고 있습니다.')
         return redirect('enrollments:classroom')
 
     if request.method == 'POST':
+        if enrollment.course.is_free:
+            if renew_free_enrollment(enrollment):
+                messages.success(request, '무료 재수강 신청이 완료되었습니다. 바로 학습을 이어갈 수 있습니다.')
+            return redirect('enrollments:course_detail', course_id=enrollment.course_id)
         form = ReEnrollmentRequestForm(request.POST)
         if form.is_valid():
             reenrollment_request = form.save(commit=False)

@@ -43,7 +43,11 @@
       {% if item.reenrollment_request %}
         <div class="mb-3 small">
           {% if item.reenrollment_request.status == 'pending' %}
+            {% if item.course.is_free %}
+            <span class="badge text-bg-info">무료 재수강 가능</span>
+            {% else %}
             <span class="badge text-bg-warning">재수강 승인 대기</span>
+            {% endif %}
           {% elif item.reenrollment_request.status == 'approved' %}
             <span class="badge text-bg-success">재수강 승인됨</span>
           {% elif item.reenrollment_request.status == 'rejected' %}
@@ -69,7 +73,12 @@
           <button class="btn btn-outline-secondary" type="button" disabled>수강 시작 전</button>
         {% elif item.access.code == 'ended' %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
-          {% if item.has_pending_reenrollment %}
+          {% if item.course.is_free %}
+            <form method="post" action="{% url 'enrollments:request_reenrollment' item.enrollment.id %}">
+              {% csrf_token %}
+              <button class="btn btn-primary" type="submit">무료 재수강 신청</button>
+            </form>
+          {% elif item.has_pending_reenrollment %}
             <button class="btn btn-outline-secondary" type="button" disabled>재수강 승인 대기</button>
           {% else %}
             <a class="btn btn-primary" href="{% url 'enrollments:request_reenrollment' item.enrollment.id %}">재수강 신청</a>

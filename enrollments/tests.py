@@ -13,6 +13,8 @@ from django.utils import timezone
 
 from accounts.models import AccountWithdrawalRequest, User
 from courses.models import Course
+from lessons.models import Lesson
+from progress.models import WatchProgress
 
 from .admin import EmailDeliveryLogAdmin, EnrollmentAdmin, EnrollmentAdminForm, ReEnrollmentRequestAdminForm
 from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
@@ -36,7 +38,10 @@ class ReEnrollmentRequestTests(TestCase):
             password='pass12345',
             email='admin@example.com',
         )
-        self.course = Course.objects.create(title='ReEnrollment Course', is_public=True)
+        self.course = Course.objects.create(
+            title='ReEnrollment Course', is_public=True,
+            pricing_type=Course.PricingType.PAID, price_krw=30000,
+        )
 
     def enrollment(self, user=None, start_days=-40, end_days=-1, status=Enrollment.Status.APPROVED):
         return Enrollment.objects.create(
@@ -73,6 +78,19 @@ class ReEnrollmentRequestTests(TestCase):
 
         self.assertRedirects(response, reverse('enrollments:classroom'))
         self.assertFalse(ReEnrollmentRequest.objects.exists())
+
+    def test_paid_general_application_redirects_to_reenrollment_form(self):
+        enrollment = self.enrollment()
+        self.client.force_login(self.student)
+
+        response = self.client.post(reverse('courses:apply', args=[self.course.slug]), follow=True)
+
+        self.assertContains(response, '관리자 승인 후 다시 수강할 수 있습니다.')
+        self.assertNotContains(response, '다음 단계에서 제공됩니다')
+        self.assertEqual(response.redirect_chain[0][0], reverse('enrollments:request_reenrollment', args=[enrollment.pk]))
+        self.assertFalse(ReEnrollmentRequest.objects.exists())
+        enrollment.refresh_from_db()
+        self.assertTrue(enrollment.has_ended)
 
     def test_unapproved_enrollment_cannot_request_reenrollment(self):
         enrollment = self.enrollment(status=Enrollment.Status.REQUESTED)
@@ -212,6 +230,119 @@ class ReEnrollmentRequestTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn('비활성화된 계정', str(form.errors))
+
+
+class FreeReEnrollmentTests(TestCase):
+    def setUp(self):
+        self.today = timezone.localdate()
+        self.student = User.objects.create_user(username='free_renewal', password='pass12345')
+        self.course = Course.objects.create(
+            title='Free Renewal Course', is_public=True,
+            pricing_type=Course.PricingType.FREE, default_enrollment_days=14,
+        )
+        self.enrollment = Enrollment.objects.create(
+            user=self.student, course=self.course, status=Enrollment.Status.APPROVED,
+            start_date=self.today - timedelta(days=40), end_date=self.today - timedelta(days=1),
+            is_completed=True, completed_at=timezone.now(), completion_progress_percent=100,
+            expiry_notice_7d_sent_at=timezone.now(),
+        )
+        self.url = reverse('enrollments:request_reenrollment', args=[self.enrollment.pk])
+        self.classroom_url = reverse('enrollments:course_detail', args=[self.course.pk])
+        self.client.force_login(self.student)
+
+    def test_free_reenrollment_immediately_restores_access_and_preserves_records(self):
+        lesson = Lesson.objects.create(course=self.course, title='Lesson', order=1)
+        progress = WatchProgress.objects.create(
+            user=self.student, enrollment=self.enrollment, lesson=lesson,
+            progress_percent=75, last_position_seconds=45, total_watched_seconds=90,
+        )
+        completed_at = self.enrollment.completed_at
+
+        response = self.client.post(self.url)
+
+        self.assertRedirects(response, self.classroom_url, fetch_redirect_response=False)
+        self.enrollment.refresh_from_db()
+        self.assertEqual(Enrollment.objects.count(), 1)
+        self.assertEqual(self.enrollment.start_date, self.today)
+        self.assertEqual(self.enrollment.end_date, self.today + timedelta(days=14))
+        self.assertTrue(self.enrollment.is_completed)
+        self.assertEqual(self.enrollment.completed_at, completed_at)
+        self.assertEqual(self.enrollment.completion_progress_percent, 100)
+        self.assertIsNone(self.enrollment.expiry_notice_7d_sent_at)
+        renewal = ReEnrollmentRequest.objects.get(enrollment=self.enrollment)
+        self.assertEqual(renewal.status, ReEnrollmentRequest.Status.APPROVED)
+        self.assertIsNone(renewal.processed_by)
+        self.assertIsNotNone(renewal.processed_at)
+        progress.refresh_from_db()
+        self.assertEqual(progress.progress_percent, 75)
+        self.assertEqual(progress.last_position_seconds, 45)
+        self.assertEqual(progress.total_watched_seconds, 90)
+        self.assertEqual(self.client.get(self.classroom_url).status_code, 200)
+
+    def test_free_general_application_renews_existing_enrollment_once(self):
+        url = reverse('courses:apply', args=[self.course.slug])
+        for _ in range(2):
+            response = self.client.post(url)
+            self.assertRedirects(response, self.classroom_url)
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.end_date, self.today + timedelta(days=14))
+        self.assertEqual(Enrollment.objects.count(), 1)
+        self.assertEqual(ReEnrollmentRequest.objects.count(), 1)
+
+    def test_pending_free_request_can_be_approved_by_student_resubmission(self):
+        pending = ReEnrollmentRequest.objects.create(
+            user=self.student, course=self.course, enrollment=self.enrollment,
+            reason='기존 무료 재수강 신청',
+        )
+        classroom = self.client.get(reverse('enrollments:classroom'))
+        denied = self.client.get(self.classroom_url)
+        self.assertContains(classroom, '무료 재수강 신청')
+        self.assertNotContains(classroom, '재수강 승인 대기')
+        self.assertContains(denied, '무료 재수강 신청', status_code=403)
+        self.assertNotContains(denied, '관리자 승인을 기다리고 있습니다', status_code=403)
+
+        self.assertRedirects(self.client.post(self.url), self.classroom_url)
+
+        pending.refresh_from_db()
+        self.assertEqual(pending.status, ReEnrollmentRequest.Status.APPROVED)
+        self.assertEqual(pending.reason, '기존 무료 재수강 신청')
+        self.assertEqual(ReEnrollmentRequest.objects.count(), 1)
+
+    def test_free_form_get_does_not_renew_and_requires_no_reason(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, '관리자 승인 없이')
+        self.assertContains(response, '14일')
+        self.assertNotContains(response, 'name="reason"')
+        self.enrollment.refresh_from_db()
+        self.assertTrue(self.enrollment.has_ended)
+        self.assertFalse(ReEnrollmentRequest.objects.exists())
+        detail = self.client.get(self.course.get_absolute_url())
+        self.assertContains(detail, '무료 재수강 신청')
+        self.assertContains(detail, self.url)
+
+    def test_free_reenrollment_cannot_extend_active_or_unapproved_enrollment(self):
+        for status, end_date, expected_status in (
+            (Enrollment.Status.APPROVED, self.today, 302),
+            (Enrollment.Status.REQUESTED, self.today - timedelta(days=1), 404),
+        ):
+            with self.subTest(status=status):
+                self.enrollment.status = status
+                self.enrollment.end_date = end_date
+                self.enrollment.save()
+                self.assertEqual(self.client.post(self.url).status_code, expected_status)
+                self.enrollment.refresh_from_db()
+                self.assertEqual(self.enrollment.end_date, end_date)
+                self.assertFalse(ReEnrollmentRequest.objects.exists())
+
+    def test_free_reenrollment_requires_owner_login(self):
+        self.client.logout()
+        self.assertEqual(self.client.post(self.url).status_code, 302)
+        other = User.objects.create_user(username='other_free_renewal', password='pass12345')
+        self.client.force_login(other)
+        self.assertEqual(self.client.post(self.url).status_code, 404)
+        self.assertFalse(ReEnrollmentRequest.objects.exists())
+        self.enrollment.refresh_from_db()
+        self.assertTrue(self.enrollment.has_ended)
 
 
 class EnrollmentCancellationTests(TestCase):

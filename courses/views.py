@@ -14,6 +14,7 @@ from core.services.completion import evaluate_enrollment_completion
 from core.models import Notice
 from enrollments.models import Enrollment
 from enrollments.notifications import notify_enrollment_request
+from enrollments.services import renew_free_enrollment
 from progress.models import WatchProgress
 from progress.services import get_course_progress_percent
 from quizzes.services import get_course_quiz_items
@@ -234,8 +235,12 @@ def apply_course(request, slug):
         return redirect('enrollments:course_detail', course_id=course.pk)
 
     if latest and latest.status == Enrollment.Status.APPROVED and latest.has_ended:
-        messages.warning(request, '수강 기간이 종료되었습니다. 재수강 신청은 다음 단계에서 제공됩니다.')
-        return redirect(course)
+        if course.is_free:
+            if renew_free_enrollment(latest):
+                messages.success(request, '무료 재수강 신청이 완료되었습니다. 바로 학습을 이어갈 수 있습니다.')
+            return redirect('enrollments:course_detail', course_id=course.pk)
+        messages.info(request, '수강 기간이 종료되었습니다. 재수강을 신청하면 관리자 승인 후 다시 수강할 수 있습니다.')
+        return redirect('enrollments:request_reenrollment', enrollment_id=latest.pk)
 
     if course.is_free:
         today = timezone.localdate()
