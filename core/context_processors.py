@@ -2,6 +2,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.templatetags.static import static
+from django.urls import reverse
 
 
 def onedu_settings(request):
@@ -10,4 +11,5 @@ def onedu_settings(request):
         'onedu_deposit_notice': settings.ONEDU_DEPOSIT_NOTICE,
         'onedu_share_url': urljoin(site_url, request.path),
         'onedu_share_image_url': urljoin(site_url, static('img/withbrain-logo.png')),
+        'onedu_classroom_url': urljoin(site_url, reverse('enrollments:classroom')),
     }

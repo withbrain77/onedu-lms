@@ -4,6 +4,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="{% url 'pwa_manifest' %}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/pwa/withbrain-180.png' %}">
+  <meta name="theme-color" content="#087f7b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="위드브레인">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="{% static 'css/pwa.css' %}?v=20260915">
+  <script src="{% static 'js/pwa_install.js' %}?v=20260915" defer></script>
   <title>{% block title %}위드브레인연구소 아카데미{% endblock %}</title>
   <meta name="description" content="위드브레인연구소의 교육·세미나 영상과 학습 자료를 만나보세요.">
   <meta property="og:type" content="website">
@@ -59,6 +67,7 @@
           {% endif %}
           <li class="nav-item"><a class="nav-link" href="{% url 'notice_list' %}">공지사항</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'certificates:verify' %}">수료증 검증</a></li>
+          <li class="nav-item" data-install-promotion><a class="nav-link" href="{% url 'install' %}" data-install-link>홈 화면에 추가</a></li>
         </ul>
         <div class="d-flex align-items-lg-center gap-2 flex-column flex-lg-row">
           {% if user.is_authenticated %}

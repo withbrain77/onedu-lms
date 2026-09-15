@@ -2,14 +2,18 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 from core.admin_views import acknowledge_server_warning, mobile_operations, server_logs, server_operations
 from core.views import home, notice_detail, notice_list, privacy_policy, ui_preview
 from courses.views import short_course_redirect
+from core.pwa import manifest
 
 admin.site.index_template = 'admin/onedu_index.html'
 
 urlpatterns = [
+    path('manifest.webmanifest', manifest, name='pwa_manifest'),
+    path('install/', TemplateView.as_view(template_name='core/install.html'), name='install'),
     path('', home, name='home'),
     path('notices/', notice_list, name='notice_list'),
     path('notices/<int:notice_id>/', notice_detail, name='notice_detail'),
