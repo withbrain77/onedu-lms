@@ -1,5 +1,19 @@
 (function () {
   'use strict';
+  const bottomNav = document.querySelector('.mobile-bottom-nav');
+  if (bottomNav) {
+    function updateNavHeight() {
+      const height = Math.ceil(bottomNav.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--mobile-nav-height', height + 'px');
+    }
+    updateNavHeight();
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(updateNavHeight);
+      observer.observe(bottomNav);
+    }
+    window.addEventListener('resize', updateNavHeight);
+  }
+
   document.querySelectorAll('input[type="password"]').forEach(function (input) {
     const wrapper = document.createElement('div');
     wrapper.className = 'password-field';

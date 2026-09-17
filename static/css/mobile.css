@@ -32,7 +32,8 @@
   .academy-brand-name > span { display: block; }
   .classroom-tabs { gap: 6px; }
   .classroom-tabs a { flex: 1; padding: 10px 6px; font-size: .85rem; gap: 4px; }
-  body.has-mobile-nav { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  /* The measured height includes safe-area padding and enlarged/wrapped text. */
+  body.has-mobile-nav { padding-bottom: calc(var(--mobile-nav-height, calc(72px + env(safe-area-inset-bottom))) + 12px); }
   .mobile-bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1025; padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #cce0df; box-shadow: 0 -3px 16px #073a3910; }
   .mobile-bottom-nav a { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 48px; color: #315b59; text-decoration: none; border-radius: 10px; font-size: .9rem; font-weight: 700; }
   .mobile-bottom-nav [aria-current="page"] { background: #e8f6f4; color: #006b65; }
@@ -56,5 +57,5 @@
   .auth-link-row a, .login-support-links a { display: inline-flex; align-items: center; }
   input.form-control, select.form-select, textarea.form-control { font-size: 16px; min-height: 48px; }
   .password-toggle { min-height: 44px; }
-  html { scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+  html { scroll-padding-bottom: calc(var(--mobile-nav-height, calc(72px + env(safe-area-inset-bottom))) + 16px); }
 }
