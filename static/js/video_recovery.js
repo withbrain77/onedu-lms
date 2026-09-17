@@ -156,7 +156,12 @@
     saveAccessFailure(event.detail.data);
   });
   window.addEventListener('pagehide', stopRetries);
-  if (video.dataset.hlsUrl) attachStream();
+  if (video.dataset.hlsUrl) {
+    // Native HLS metadata can arrive before these scripts (especially from cache).
+    // Preserve the position already restored by video_progress when attaching again.
+    if (video.readyState >= 1) restorePosition = video.currentTime;
+    attachStream();
+  }
   else if (video.error) failure();
   const accessFailure = window.oneduProgressSync && window.oneduProgressSync.accessFailure(video.dataset.progressKey);
   if (accessFailure) saveAccessFailure(accessFailure.data);

@@ -11,7 +11,7 @@ function player(options = {}) {
   let timerId = 0;
   const video = Object.assign(new EventTarget(), {
     dataset: {startPosition: '12', progressKey: '1-1-1', accessUrl: '/lessons/1/access/', loginUrl: '/accounts/login/', courseUrl: '/classroom/1/'},
-    paused: true, currentTime: 12, duration: 120, error: null,
+    paused: true, currentTime: options.position || 12, duration: 120, readyState: options.readyState || 0, error: null,
     loads: 0, plays: 0,
     load() { this.loads++; },
     play() { this.plays++; this.paused = false; this.dispatchEvent(new Event('play')); return Promise.resolve(); },
@@ -150,4 +150,11 @@ test('autoplay rejection lets the next user gesture play without another reload'
   await p.manual();
   assert(played);
   assert.equal(p.video.loads, 1);
+});
+
+test('HLS attachment retains a position restored before the player script loaded', () => {
+  const p = player({hls: true, readyState: 1, position: 37});
+  p.video.currentTime = 0;
+  p.video.dispatchEvent(new Event('loadedmetadata'));
+  assert.equal(p.video.currentTime, 37);
 });
