@@ -1,8 +1,8 @@
 {% load admin_dashboard %}
 {% onedu_admin_dashboard as dashboard %}
 
-<input class="onedu-admin-menu-toggle" id="oneduAdminMenuToggle" type="checkbox">
-<label class="onedu-admin-menu-button" for="oneduAdminMenuToggle">관리 메뉴</label>
+<details class="onedu-admin-navigation" open>
+<summary class="onedu-admin-menu-button">관리 메뉴</summary>
 
 <aside class="onedu-admin-sidebar" aria-label="관리 메뉴">
   <div class="onedu-admin-sidebar__brand">
@@ -42,3 +42,4 @@
     {% endfor %}
   </nav>
 </aside>
+</details>

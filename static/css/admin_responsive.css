@@ -1,0 +1,130 @@
+/* Load after Django's page and responsive styles. Its #container rule otherwise
+   turns the workspace into a flex row, even on phones. */
+body.onedu-admin-workspace #container > .main {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+body.onedu-admin-workspace.popup #container > .main {
+  grid-template-columns: minmax(0, 1fr);
+}
+.onedu-admin-navigation { min-width: 0; }
+.onedu-admin-navigation > .onedu-admin-menu-button { display: none; }
+.onedu-admin-navigation .onedu-admin-sidebar { box-sizing: border-box; height: 100%; }
+body.onedu-admin-dashboard-page #content { padding: 0; }
+.onedu-admin-program > div { min-width: 0; }
+.onedu-admin-table-hint { padding: 8px 12px; margin: 0; color: #627084; font-size: 12px; }
+#changelist-filter .onedu-admin-filter-panel > summary {
+  background: #f1f7f9;
+  color: #0f172a;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  min-height: 44px;
+}
+.onedu-admin-menu-button:focus-visible,
+#changelist-filter .onedu-admin-filter-panel > summary:focus-visible {
+  outline: 3px solid #08756f;
+  outline-offset: 3px;
+}
+
+@media (max-width: 1120px) {
+  body.onedu-admin-workspace #container > .main {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+  .onedu-admin-navigation > .onedu-admin-menu-button {
+    display: list-item;
+    box-sizing: border-box;
+    min-height: 44px;
+    margin: 12px 16px 0;
+    padding: 10px 14px;
+  }
+  .onedu-admin-navigation[open] .onedu-admin-sidebar { display: block; }
+  body.onedu-admin-workspace #content { padding: 20px 16px; }
+  body.onedu-admin-dashboard-page #content { padding: 0; }
+  .onedu-admin-main { padding: 20px 16px; }
+  .onedu-admin-hero { flex-direction: column; }
+  .onedu-admin-hero__actions { justify-content: flex-start; }
+  .onedu-admin-program { grid-template-columns: minmax(0, 1fr); }
+  .onedu-admin-program strong { white-space: normal; overflow-wrap: anywhere; }
+  .onedu-admin-program__meta { justify-content: flex-start; }
+
+  body.onedu-admin-workspace .object-tools {
+    display: flex;
+    flex-wrap: wrap;
+    float: none;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+  body.onedu-admin-workspace .object-tools li { float: none; height: auto; }
+  body.onedu-admin-workspace #changelist { flex-direction: column; align-items: stretch; }
+  #changelist .changelist-form-container { min-width: 0; width: 100%; }
+  body.onedu-admin-workspace #changelist-filter {
+    order: -1;
+    flex: none;
+    width: auto;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border-left: 0;
+    border-bottom: 1px solid #dbe8ef;
+  }
+  #toolbar form { display: block; }
+  #toolbar #changelist-search > div {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: none;
+  }
+  #toolbar #changelist-search #searchbar {
+    box-sizing: border-box;
+    flex: 1 1 120px;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 44px;
+    margin: 0;
+  }
+  #toolbar #changelist-search input[type="submit"] {
+    flex: 0 0 auto;
+    min-height: 44px;
+    margin: 0;
+  }
+  #toolbar #changelist-search .quiet {
+    flex: 1 1 100%;
+    width: auto;
+    margin: 0;
+  }
+  #changelist #changelist-form { overflow: visible; min-width: 0; }
+  #changelist .results { overflow-x: auto; width: 100%; }
+  #changelist .actions, #changelist .paginator { box-sizing: border-box; }
+  #changelist .actions { gap: 8px; padding: 12px; }
+  #changelist .actions label {
+    display: flex;
+    align-items: center;
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 8px;
+  }
+  #changelist .actions select {
+    flex: 1 1 0;
+    box-sizing: border-box;
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+    min-height: 44px;
+  }
+  #changelist .actions .button { min-height: 44px; margin: 0; }
+  .onedu-admin-card__head, .onedu-admin-card__foot { flex-wrap: wrap; }
+}
+
+@media (max-width: 760px) {
+  .onedu-admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .onedu-admin-stat { padding: 14px; gap: 10px; }
+  .onedu-admin-stat__icon { display: none; }
+  .onedu-admin-stat__body small { font-size: 12px; }
+}
