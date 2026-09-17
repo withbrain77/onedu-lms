@@ -36,7 +36,7 @@
               <div class="mb-3">
                 <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
-                {% if field.help_text and field.name != 'password1' %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% if field.help_text and field.name != 'password1' %}<div class="form-text" id="{{ field.id_for_label }}_help">{{ field.help_text }}</div>{% endif %}
                 {% if field.name == 'password1' %}
                   <div class="password-feedback-panel mt-3" data-password-feedback aria-live="polite">
                     <div class="password-feedback-head">

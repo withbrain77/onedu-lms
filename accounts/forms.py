@@ -41,6 +41,22 @@ class BootstrapAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
 
 
 class StudentSignUpForm(BootstrapFormMixin, UserCreationForm):
+    username = forms.RegexField(
+        label='아이디',
+        regex=r'\A(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]+\Z',
+        max_length=20,
+        strip=False,
+        help_text='영문과 숫자를 모두 포함해 최대 20자로 입력해 주세요. 한글, 공백, 특수문자는 사용할 수 없습니다. 예: brain123',
+        error_messages={
+            'invalid': '아이디는 영문과 숫자를 모두 포함해야 하며, 한글·공백·특수문자는 사용할 수 없습니다.',
+            'max_length': '아이디는 최대 20자까지 입력할 수 있습니다.',
+        },
+        widget=forms.TextInput(attrs={
+            'autocapitalize': 'none',
+            'spellcheck': 'false',
+            'aria-describedby': 'id_username_help',
+        }),
+    )
     privacy_agreement = forms.BooleanField(
         label='개인정보 처리방침에 동의합니다.',
         required=True,

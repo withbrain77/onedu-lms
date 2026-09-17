@@ -113,7 +113,7 @@ class SignupPageTests(TestCase):
         response = self.client.post(
             reverse('accounts:signup'),
             {
-                'username': 'privacy_student',
+                'username': 'privacy123',
                 'name': 'Privacy Student',
                 'email': 'privacy@example.com',
                 'phone': '010-2222-3333',
@@ -125,7 +125,7 @@ class SignupPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '개인정보 처리방침에 동의해 주세요.')
         self.assertContains(response, 'privacy-consent-box-invalid')
-        self.assertFalse(User.objects.filter(username='privacy_student').exists())
+        self.assertFalse(User.objects.filter(username='privacy123').exists())
 
     def test_signup_rejects_duplicate_email_case_insensitively(self):
         User.objects.create_user(
@@ -138,7 +138,7 @@ class SignupPageTests(TestCase):
         response = self.client.post(
             reverse('accounts:signup'),
             {
-                'username': 'new_student',
+                'username': 'newstudent123',
                 'name': 'New Student',
                 'email': 'STUDENT@example.com',
                 'phone': '010-1234-5678',
@@ -150,7 +150,62 @@ class SignupPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '이미 가입된 이메일 주소입니다')
-        self.assertFalse(User.objects.filter(username='new_student').exists())
+        self.assertFalse(User.objects.filter(username='newstudent123').exists())
+
+    def signup_data(self, username):
+        return {
+            'username': username,
+            'name': '신규 수강생',
+            'email': 'signup@example.com',
+            'phone': '01012345678',
+            'password1': 'StrongPass12345!',
+            'password2': 'StrongPass12345!',
+            'privacy_agreement': 'on',
+        }
+
+    def test_signup_username_instructions_and_input_limit(self):
+        response = self.client.get(reverse('accounts:signup'))
+        field = response.context['form'].fields['username']
+        self.assertEqual(field.max_length, 20)
+        self.assertEqual(field.widget.attrs['maxlength'], '20')
+        self.assertContains(response, '영문과 숫자를 모두 포함해 최대 20자')
+        self.assertContains(response, 'id="id_username_help"')
+        self.assertContains(response, 'aria-describedby="id_username_help"')
+
+    def test_signup_accepts_twenty_character_alphanumeric_username(self):
+        username = 'Brain123456789012345'
+        self.assertEqual(len(username), 20)
+        response = self.client.post(reverse('accounts:signup'), self.signup_data(username))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username=username).exists())
+
+    def test_signup_rejects_invalid_usernames_on_server(self):
+        for username in (
+            'a' * 20 + '1', 'brain', '123456', '홍길동1', 'brain_1',
+            'brain@1', 'brain.1', 'brain+1', 'brain-1', 'brain!1',
+            'brain 1', ' brain1', 'brain1 ', 'Ｂrain1', 'brain１２',
+        ):
+            with self.subTest(username=username):
+                response = self.client.post(reverse('accounts:signup'), self.signup_data(username))
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('username', response.context['form'].errors)
+                self.assertFalse(User.objects.filter(username=username).exists())
+
+    def test_signup_still_rejects_duplicate_username(self):
+        User.objects.create_user(username='brain123', password='ExistingPass123!')
+        response = self.client.post(reverse('accounts:signup'), self.signup_data('brain123'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('username', response.context['form'].errors)
+        self.assertEqual(User.objects.filter(username='brain123').count(), 1)
+
+    def test_existing_username_outside_new_rules_can_still_log_in(self):
+        username = '기존회원_' + 'a' * 21
+        user = User.objects.create_user(username=username, password='ExistingPass123!')
+        response = self.client.post(reverse('accounts:login'), {
+            'username': username, 'password': 'ExistingPass123!',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
 
 
 class ProfileManagementTests(TestCase):
