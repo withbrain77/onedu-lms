@@ -1,0 +1,44 @@
+.mobile-bottom-nav, .mobile-classroom-shortcut { display: none; }
+.recent-learning { border-color: #a9d9d6; background: #f4fbfa; }
+.player-page-header .btn-outline-secondary { color: #075e5a; border-color: #97c8c4; background: white; }
+.password-field { position: relative; }
+.password-field input { padding-right: 5rem; }
+.password-toggle { position: absolute; right: 2px; top: 0; bottom: 0; border: 0; background: transparent; color: #075e5a; min-width: 64px; padding: 0 12px; }
+.password-toggle:focus-visible { outline: 2px solid #087f7b; outline-offset: -3px; }
+.player-learning-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; }
+.player-learning-actions p { margin: 0; font-size: .875rem; }
+.player-learning-actions .btn { flex-shrink: 0; }
+.lesson-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.focus-player-dock { display: block; }
+.lesson-tabs[hidden] { display: none; }
+.lesson-tabs button { flex: 1; min-height: 48px; border: 1px solid #b9d4d3; border-radius: 8px; background: white; color: #075e5a; }
+.lesson-tabs [aria-selected="true"] { color: white; background: #087f7b; border-color: #087f7b; }
+[data-lesson-panel][hidden] { display: none !important; }
+.attachment-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+@media (max-width: 767px) {
+  body.has-mobile-nav { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .mobile-bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1025; padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #cce0df; box-shadow: 0 -3px 16px #073a3910; }
+  .mobile-bottom-nav a { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 48px; color: #315b59; text-decoration: none; border-radius: 10px; font-size: .9rem; font-weight: 700; }
+  .mobile-bottom-nav [aria-current="page"] { background: #e8f6f4; color: #006b65; }
+  body.is-player-fullscreen .mobile-bottom-nav, body.is-keyboard-open .mobile-bottom-nav { display: none; }
+  .mobile-classroom-shortcut { display: block; }
+  .portal-home .portal-hero { padding: 26px 0; min-height: 0; }
+  .portal-home .portal-hero-grid { gap: 0; }
+  .portal-home .portal-hero-copy h1 { font-size: clamp(26px, 7.6vw, 38px); line-height: 1.25; margin-bottom: 14px; }
+  .portal-home .portal-hero-copy > p { font-size: 15px; margin-bottom: 18px; }
+  .portal-home .portal-hero-points, .portal-home .archive-console, .portal-home .portal-category-section { display: none; }
+  .portal-home .portal-hero-actions { margin-top: 16px; }
+  .portal-home .portal-hero-bg { opacity: .4; }
+  .player-page-header h1 { font-size: 1.35rem; }
+  .player-page-header { margin-bottom: 16px; padding-top: 16px; padding-bottom: 16px; }
+  .player-page-header .hero-kicker { display: none; }
+  .focus-player-layout { gap: 12px; }
+  .lesson-attachment-item { flex-wrap: wrap; }
+  .lesson-attachment-copy { min-width: 0; overflow-wrap: anywhere; }
+  .lesson-attachment-copy span { overflow-wrap: anywhere; }
+  .btn, .nav-link, .list-group-item, .auth-link-row a, .login-support-links a { min-height: 44px; }
+  .auth-link-row a, .login-support-links a { display: inline-flex; align-items: center; }
+  input.form-control, select.form-select, textarea.form-control { font-size: 16px; min-height: 48px; }
+  .password-toggle { min-height: 44px; }
+  html { scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+}

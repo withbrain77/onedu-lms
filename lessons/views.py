@@ -248,6 +248,15 @@ def lesson_hls_file(request, pk, filename):
 
 @login_required
 def lesson_attachment_download(request, pk, attachment_id):
+    return _lesson_attachment_response(request, pk, attachment_id)
+
+
+@login_required
+def lesson_attachment_view(request, pk, attachment_id):
+    return _lesson_attachment_response(request, pk, attachment_id, preview=True)
+
+
+def _lesson_attachment_response(request, pk, attachment_id, preview=False):
     lesson = _get_accessible_lesson_or_404(request.user, pk)
     record_access_log(request, AccessLog.EventType.ATTACHMENT_DOWNLOAD, course=lesson.course, lesson=lesson)
     attachment = get_object_or_404(
@@ -260,6 +269,8 @@ def lesson_attachment_download(request, pk, attachment_id):
     file_path = _private_file_path(attachment.file.name)
     content_type = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
     is_pdf = file_path.suffix.lower() == '.pdf' or content_type == 'application/pdf'
+    if preview and not is_pdf:
+        raise Http404('PDF file not found')
     if is_pdf:
         try:
             watermarked_pdf = render_watermarked_pdf(file_path, request.user)
@@ -270,7 +281,7 @@ def lesson_attachment_download(request, pk, attachment_id):
             watermarked_pdf,
             'application/pdf',
             attachment.filename,
-            disposition='attachment',
+            disposition='inline' if preview else 'attachment',
         )
     _record_attachment_download(request, attachment)
     return _protected_file_response(file_path, content_type, attachment.filename, disposition='attachment')

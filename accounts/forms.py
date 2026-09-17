@@ -12,8 +12,14 @@ from .models import AccountWithdrawalRequest, User
 
 class BootstrapFormMixin:
     def apply_bootstrap(self):
-        for field in self.fields.values():
+        for name, field in self.fields.items():
             widget = field.widget
+            autocomplete = {'username': 'username', 'name': 'name', 'email': 'email', 'phone': 'tel'}.get(name)
+            if autocomplete:
+                widget.attrs.setdefault('autocomplete', autocomplete)
+            if name == 'phone':
+                widget.input_type = 'tel'
+                widget.attrs['inputmode'] = 'tel'
             if isinstance(widget, forms.CheckboxInput):
                 widget.attrs.setdefault('class', 'form-check-input')
             else:

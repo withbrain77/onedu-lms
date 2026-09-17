@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from uuid import uuid4
 
 from django.contrib.admin.sites import AdminSite
 from django.test import TestCase
@@ -12,10 +13,55 @@ from enrollments.models import Enrollment
 from lessons.models import Lesson
 
 from .admin import WatchProgressAdmin
-from .models import WatchProgress
+from .models import ProgressSaveReceipt, WatchProgress
 
 
 class SaveLessonProgressTests(TestCase):
+    def test_retry_does_not_double_count_watched_time(self):
+        enrollment = self.approve()
+        payload = {
+            'event_id': str(uuid4()), 'recorded_at': timezone.now().isoformat(),
+            'enrollment_id': enrollment.pk, 'position_seconds': 24,
+            'duration_seconds': 120, 'watched_increment_seconds': 12,
+        }
+        for _ in range(3):
+            response = self.post_progress(self.student, payload)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()['total_watched_seconds'], 12)
+        self.assertEqual(ProgressSaveReceipt.objects.count(), 1)
+
+    def test_delayed_event_adds_time_without_rewinding_position(self):
+        self.approve()
+        now = timezone.now()
+        for position, recorded_at in [(50, now), (12, now - timedelta(seconds=30))]:
+            response = self.post_progress(self.student, {
+                'event_id': str(uuid4()), 'recorded_at': recorded_at.isoformat(),
+                'position_seconds': position, 'duration_seconds': 120,
+                'watched_increment_seconds': 12,
+            })
+            self.assertEqual(response.status_code, 200)
+        progress = WatchProgress.objects.get(user=self.student)
+        self.assertEqual(progress.last_position_seconds, 50)
+        self.assertEqual(progress.total_watched_seconds, 24)
+
+    def test_events_for_previous_enrollment_are_rejected(self):
+        enrollment = self.approve()
+        response = self.post_progress(self.student, {
+            'enrollment_id': enrollment.pk + 100,
+            'watched_increment_seconds': 12,
+        })
+        self.assertEqual(response.status_code, 409)
+        self.assertFalse(WatchProgress.objects.exists())
+
+    def test_malformed_event_cannot_change_progress(self):
+        self.approve()
+        for payload in [
+            {'event_id': 'invalid'},
+            {'event_id': str(uuid4()), 'recorded_at': '2026-09-17T12:00:00'},
+        ]:
+            self.assertEqual(self.post_progress(self.student, payload).status_code, 400)
+        self.assertFalse(WatchProgress.objects.exists())
+
     def setUp(self):
         self.today = timezone.localdate()
         self.student = User.objects.create_user(

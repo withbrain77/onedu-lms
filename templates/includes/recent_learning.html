@@ -1,0 +1,19 @@
+{% load lesson_time %}
+{% if recent_learning %}
+<section class="recent-learning card mb-3" aria-label="최근 학습 이어보기">
+  <div class="card-body">
+    <div class="learning-card-label">최근 학습</div>
+    <p class="small text-muted mb-1">{{ recent_learning.lesson.course.title }}</p>
+    <h2 class="h5">{{ recent_learning.lesson.title }}</h2>
+    <p class="small mb-3">저장 위치 {{ recent_learning.last_position_seconds|duration_hms }} · 진도 {{ recent_learning.progress_percent }}%</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{{ recent_learning.lesson.get_absolute_url }}">이어서 학습하기</a>
+      <a class="btn btn-outline-primary" href="{% url 'enrollments:classroom' %}">내 강의실</a>
+    </div>
+  </div>
+</section>
+{% elif user.is_authenticated and not user.is_staff %}
+<div class="mobile-classroom-shortcut mb-3">
+  <a class="btn btn-primary w-100" href="{% url 'enrollments:classroom' %}">내 강의실에서 학습하기</a>
+</div>
+{% endif %}

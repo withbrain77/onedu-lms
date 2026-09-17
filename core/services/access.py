@@ -21,7 +21,7 @@ def get_latest_enrollment(user, course):
         Enrollment.objects
         .filter(user=user, course=course)
         .select_related('course', 'user')
-        .order_by('-created_at')
+        .order_by('-created_at', '-pk')
         .first()
     )
 

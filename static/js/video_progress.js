@@ -22,9 +22,14 @@
   const durationText = document.getElementById('lessonDurationText');
   const lastPositionText = document.getElementById('lessonLastPositionText');
   const totalWatchedText = document.getElementById('lessonTotalWatchedText');
-  let lastSaveAt = 0;
   let hasRestoredPosition = false;
-  let saving = false;
+  const progressKey = video.dataset.progressKey;
+  const sync = window.oneduProgressSync;
+  let watchedSeconds = 0;
+  let playbackRunning = false;
+  let hasPlayed = false;
+  let sampleAt = performance.now();
+  let samplePosition = video.currentTime;
   let zoomScale = 1;
   let zoomX = 0;
   let zoomY = 0;
@@ -77,13 +82,6 @@
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsUrl;
     }
-  }
-
-  function csrfToken() {
-    const token = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('csrftoken='));
-    return token ? decodeURIComponent(token.split('=')[1]) : '';
   }
 
   function setStatus(message) {
@@ -348,51 +346,65 @@
     window.setTimeout(applyZoom, 80);
   }
 
-  async function saveProgress(options) {
-    if (!progressUrl || saving) {
-      return;
+  function samplePlayback() {
+    const now = performance.now();
+    const elapsed = Math.max(0, (now - sampleAt) / 1000);
+    const advanced = video.currentTime - samplePosition;
+    const rate = video.playbackRate || 1;
+    // Count only advancing playback, excluding pauses, buffering and seek jumps.
+    if (playbackRunning && !video.seeking && advanced > 0 && advanced <= elapsed * rate + 1) {
+      watchedSeconds += Math.min(elapsed, advanced / rate);
     }
-
-    const completed = Boolean(options && options.completed);
-    const watchedIncrement = Math.max(0, Math.round((Date.now() - lastSaveAt) / 1000));
-    const payload = {
-      position_seconds: safeSeconds(video.currentTime),
-      duration_seconds: safeSeconds(video.duration),
-      watched_increment_seconds: Math.min(watchedIncrement, 60),
-      completed: completed,
-    };
-
-    saving = true;
-    setStatus('진도 저장 중...');
-    try {
-      const response = await fetch(progressUrl, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken(),
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        setStatus('진도 저장 실패');
-        return;
-      }
-
-      const data = await response.json();
-      if (data.ok) {
-        updateProgressUI(data.progress_percent);
-        updateTimeUI(data);
-        setStatus(data.is_completed ? '시청 완료 저장됨' : '최근 진도 저장됨');
-        lastSaveAt = Date.now();
-      }
-    } catch (error) {
-      setStatus('진도 저장 실패');
-    } finally {
-      saving = false;
-    }
+    sampleAt = now;
+    samplePosition = video.currentTime;
   }
+
+  function eventId() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, function (c) {
+      return (Number(c) ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> Number(c) / 4).toString(16);
+    });
+  }
+
+  function saveProgress(options) {
+    if (!progressUrl || !sync || !video.dataset.enrollmentId || !hasPlayed) return;
+    samplePlayback();
+    let remaining = Math.floor(watchedSeconds);
+    watchedSeconds -= remaining;
+    do {
+      const increment = Math.min(remaining, 60);
+      sync.enqueue({
+        key: progressKey, url: progressUrl,
+        payload: {
+          event_id: eventId(), recorded_at: new Date().toISOString(),
+          enrollment_id: video.dataset.enrollmentId,
+          position_seconds: safeSeconds(video.currentTime),
+          duration_seconds: safeSeconds(video.duration),
+          watched_increment_seconds: increment,
+          completed: Boolean(options && options.completed),
+        },
+      });
+      remaining -= increment;
+    } while (remaining > 0);
+  }
+
+  window.addEventListener('onedu:progress-save', function (event) {
+    const result = event.detail;
+    if (result.key !== progressKey) return;
+    if (result.state === 'saved') {
+      updateProgressUI(result.data.progress_percent);
+      updateTimeUI(result.data);
+      setStatus(sync.latest(progressKey) ? '남은 진도 저장 중...' : '진도가 저장되었습니다.');
+    } else {
+      const messages = {
+        saving: '진도 저장 중...',
+        retry: '연결되면 진도를 자동으로 다시 저장합니다.',
+        'retry-memory': '진도 저장을 재시도합니다. 저장될 때까지 이 화면을 유지해 주세요.',
+        access: '진도를 저장하려면 로그인 상태와 수강 기간을 확인해 주세요.',
+      };
+      setStatus(messages[result.state] || '진도 저장 대기 중');
+    }
+  });
 
   setupHlsPlayback();
   updateTimeUI({
@@ -405,8 +417,11 @@
     if (Number.isFinite(video.duration) && video.duration > 0) {
       setTimeText(durationText, video.duration);
     }
-    if (!hasRestoredPosition && startPosition > 0 && Number.isFinite(video.duration)) {
-      const restorePosition = Math.min(startPosition, Math.max(video.duration - 2, 0));
+    const pending = sync && sync.resume(progressKey);
+    const pendingIsNewer = pending && (!video.dataset.positionRecordedAt || Date.parse(pending.payload.recorded_at) > Date.parse(video.dataset.positionRecordedAt));
+    const position = pendingIsNewer ? pending.payload.position_seconds : startPosition;
+    if (!hasRestoredPosition && position > 0 && Number.isFinite(video.duration)) {
+      const restorePosition = Math.min(position, Math.max(video.duration - 2, 0));
       if (restorePosition > 0) {
         video.currentTime = restorePosition;
       }
@@ -415,12 +430,14 @@
   });
 
   video.addEventListener('play', function () {
-    lastSaveAt = Date.now();
+    hasPlayed = true;
     setStatus('학습 중');
     revealCustomControls();
   });
 
   video.addEventListener('pause', function () {
+    saveProgress();
+    playbackRunning = false;
     clearControlsHideTimer();
     setControlsHidden(false);
   });
@@ -429,6 +446,26 @@
     clearControlsHideTimer();
     setControlsHidden(false);
     saveProgress({ completed: true });
+    playbackRunning = false;
+  });
+
+  video.addEventListener('timeupdate', samplePlayback);
+  video.addEventListener('playing', function () {
+    sampleAt = performance.now();
+    samplePosition = video.currentTime;
+    playbackRunning = true;
+  });
+  ['waiting', 'seeking'].forEach(function (name) {
+    video.addEventListener(name, function () { samplePlayback(); playbackRunning = false; });
+  });
+  video.addEventListener('seeked', function () {
+    sampleAt = performance.now();
+    samplePosition = video.currentTime;
+    playbackRunning = !video.paused && !video.ended;
+  });
+  video.addEventListener('ratechange', function () {
+    sampleAt = performance.now();
+    samplePosition = video.currentTime;
   });
 
   window.setInterval(function () {
@@ -438,9 +475,14 @@
   }, saveInterval);
 
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'hidden' && !video.paused && !video.ended) {
+    if (document.visibilityState === 'hidden') {
       saveProgress();
+      if (sync) sync.flush(progressKey);
     }
+  });
+  window.addEventListener('pagehide', function () {
+    saveProgress({ completed: video.ended });
+    if (sync) sync.flush(progressKey);
   });
 
   if (fullscreenButton && playerShell) {

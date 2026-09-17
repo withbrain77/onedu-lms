@@ -86,6 +86,13 @@ class LessonAttachment(models.Model):
     def get_download_url(self):
         return reverse('lessons:attachment_download', kwargs={'pk': self.lesson_id, 'attachment_id': self.pk})
 
+    def get_view_url(self):
+        return reverse('lessons:attachment_view', kwargs={'pk': self.lesson_id, 'attachment_id': self.pk})
+
+    @property
+    def is_pdf(self):
+        return Path(self.filename).suffix.lower() == '.pdf'
+
     @property
     def filename(self):
         if not self.file:

@@ -67,7 +67,10 @@
         {% endif %}
 
         {% if item.access.allowed %}
-          <a class="btn btn-primary" href="{% url 'enrollments:course_detail' item.course.id %}">이어보기</a>
+          {% if item.continue_lesson %}
+            <a class="btn btn-primary" href="{{ item.continue_lesson.get_absolute_url }}">이어보기</a>
+          {% endif %}
+          <a class="btn btn-outline-primary" href="{% url 'enrollments:course_detail' item.course.id %}">차시 목록</a>
         {% elif item.access.code == 'not_started' %}
           <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
           <button class="btn btn-outline-secondary" type="button" disabled>수강 시작 전</button>

@@ -19,3 +19,23 @@
 > Edit the supplied WITHBRAIN logo for a mobile home-screen icon. Preserve the exact existing stylized yellow brain/lightbulb symbol and gray bulb base and yellow rays faithfully; extract this existing symbol only, completely remove the black WITHBRAIN wordmark and tagline below it. Do not redraw, simplify, invent or restyle its geometry. Center the complete bulb and rays on a solid pure white square canvas, no border, no shadows, no rounded-corner frame. The complete symbol should fit within the central 68% of the square height to leave safe padding for circular app icon masks. Output a crisp square 1024x1024 PNG. This is an existing brand identity extraction, not a new logo design.
 
 참고: [MDN 설치 조건](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable), [브라우저 설치창](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt).
+
+## 모바일 학습 개선 (2026-09-17)
+
+- 홈과 내 강의실 상단에서 최근 접근 가능한 차시와 저장 위치를 보여주고 바로 이어봅니다. 만료·비공개·다른 계정의 진도는 노출하지 않습니다. 과정별 이어보기도 최근 차시로 연결하며, 시청 기록이 없으면 첫 공개 차시로 연결합니다.
+- 767px 이하 홈에서는 장식용 영상 패널과 카테고리 소개를 접어 프로그램 목록을 앞당깁니다. 하단에는 홈·내 강의실·내 정보 바로가기를 고정하고 안전 영역 여백을 둡니다.
+- 영상 바로 아래에 저장 상태와 다음 차시 버튼을 배치합니다. 차시 목록·학습 자료·학습 진도는 키보드로도 조작 가능한 탭으로 전환합니다. JavaScript를 끄면 모든 내용을 표시합니다.
+- 회원가입·내 정보 연락처에 전화 키보드를 사용하고 자동완성을 제공합니다. 비밀번호 입력에는 보기/숨기기 버튼을 제공합니다.
+- PDF의 `/view/` 경로는 기존 다운로드와 동일한 권한 확인·개인 워터마크·접근 기록을 적용하고 `inline`으로 응답합니다. PDF 외 파일은 이 경로로 표시하지 않습니다. 브라우저의 PDF 지원에 따라 열리는 방식은 달라질 수 있습니다.
+
+### 진도 저장
+
+재생 중 정기 저장 외에 일시정지·화면 숨김·페이지 이동 때 저장합니다. 실제 재생 위치가 움직인 시간만 집계하며 일시정지·버퍼링·탐색 시간을 제외합니다. 영상 파일은 오프라인으로 저장하지 않습니다.
+
+`progress_sync.js`는 미전송 진도 이벤트를 사용자별 `localStorage` 항목에 보관하고 연결 복구와 다음 페이지 방문 때 재시도합니다. 각 요청은 이벤트 UUID와 수강 ID를 포함합니다. `ProgressSaveReceipt`와 수강 행 잠금으로 재전송 중복 합산을 방지하며, `last_position_recorded_at`으로 지연 요청이 최신 위치를 덮어쓰지 않도록 합니다. 운영 PostgreSQL의 행 잠금을 사용합니다. 기존 클라이언트의 이벤트 ID 없는 요청도 계속 허용합니다.
+
+브라우저가 저장소를 차단하면 해당 페이지의 메모리에서만 재시도하며 화면 유지 안내를 표시합니다. 브라우저 강제 종료 직전 저장, 저장소 삭제, 실제 기기 OS의 백그라운드 종료까지 저장을 보장하지는 않습니다. 진도 이벤트에는 영상 데이터나 인증 토큰을 저장하지 않습니다.
+
+배포에는 `progress/0003` 마이그레이션이 필요합니다. DB 백업 후 적용합니다. 중복 방지 영수증은 임의로 정리하지 않습니다. 정리 기능을 추가하려면 클라이언트 재전송 기한도 함께 정의해야 합니다.
+
+검증: Django 전체 218개 테스트, Chromium의 모바일 크기·데스크톱 화면, 캔버스 스트림 실제 재생/일시정지, 오프라인 재전송·중복 요청·페이지 이동 복구·지연 메타데이터 이어보기, 홈 화면 설치 안내 회귀 확인. iPhone/Android 화면과 사용자 에이전트를 모사했으며 실제 iOS Safari·카카오톡 앱 내 브라우저에서의 기기 테스트는 별도로 필요합니다.

@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from core.services.access import can_access_course
+from core.services.learning import continue_lesson, recent_learning
 from core.services.completion import evaluate_enrollment_completion
 from courses.models import Course
 from progress.models import WatchProgress
@@ -62,6 +63,7 @@ def _enrollment_card(enrollment, request):
         'enrollment': enrollment,
         'course': enrollment.course,
         'access': access_result,
+        'continue_lesson': continue_lesson(access_result.enrollment) if access_result.allowed and access_result.enrollment else None,
         'status_label': status_label,
         'status_class': status_class,
         'period_text': period_text,
@@ -105,6 +107,7 @@ def classroom(request):
         'classroom/index.html',
         {
             'active_cards': active_cards,
+            'recent_learning': recent_learning(request.user),
             'waiting_cards': waiting_cards,
             'ended_cards': ended_cards,
             'other_cards': other_cards,

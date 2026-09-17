@@ -33,6 +33,7 @@ class WatchProgress(models.Model):
     is_completed = models.BooleanField('시청 완료', default=False)
     completed_at = models.DateTimeField('완료일시', null=True, blank=True)
     last_watched_at = models.DateTimeField('마지막 시청일시', auto_now=True)
+    last_position_recorded_at = models.DateTimeField('재생 위치 기록 시각', null=True, blank=True)
     created_at = models.DateTimeField('생성일시', auto_now_add=True)
     updated_at = models.DateTimeField('수정일시', auto_now=True)
 
@@ -84,3 +85,16 @@ class WatchProgress(models.Model):
         if can_complete and not self.is_completed:
             self.is_completed = True
             self.completed_at = timezone.now()
+
+
+class ProgressSaveReceipt(models.Model):
+    """Acknowledge retryable client events exactly once for each enrollment/lesson."""
+
+    progress = models.ForeignKey(WatchProgress, on_delete=models.CASCADE, related_name='save_receipts')
+    event_id = models.UUIDField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['progress', 'event_id'], name='unique_progress_save_event'),
+        ]

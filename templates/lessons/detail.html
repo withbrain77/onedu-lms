@@ -31,6 +31,9 @@
               preload="metadata"
               {% if lesson.has_hls %}data-hls-url="{{ lesson.get_hls_playlist_url }}"{% endif %}
               data-progress-url="{% url 'progress:save_lesson' lesson.id %}"
+              data-progress-key="{{ user.pk }}-{{ access.enrollment.pk }}-{{ lesson.pk }}"
+              data-enrollment-id="{{ access.enrollment.pk|default:'' }}"
+              data-position-recorded-at="{{ progress.last_position_recorded_at|date:'c' }}"
               data-start-position="{% if progress %}{{ progress.last_position_seconds }}{% else %}0{% endif %}"
               data-save-interval="12000"
             >
@@ -68,16 +71,28 @@
           </div>
         {% endif %}
     </div>
+    <div class="player-learning-actions">
+      <p id="progressSaveStatus" role="status" aria-live="polite">{% if access.enrollment %}진도 저장 대기 중{% else %}관리자 미리보기{% endif %}</p>
+      {% if next_lesson %}
+        <a class="btn btn-primary" href="{{ next_lesson.get_absolute_url }}">다음 차시</a>
+      {% else %}
+        <a class="btn btn-outline-primary" href="{% url 'enrollments:course_detail' course.id %}">차시 목록으로</a>
+      {% endif %}
+    </div>
   </section>
 
   <section class="focus-player-dock">
-    <div class="card shadow-sm mb-3 lesson-progress-card">
+    <div class="lesson-tabs" role="tablist" aria-label="학습 메뉴" hidden>
+      <button id="tab-lessons" type="button" role="tab" data-lesson-tab aria-controls="panel-lessons">차시 목록</button>
+      <button id="tab-materials" type="button" role="tab" data-lesson-tab aria-controls="panel-materials">학습 자료</button>
+      <button id="tab-progress" type="button" role="tab" data-lesson-tab aria-controls="panel-progress">학습 진도</button>
+    </div>
+    <div id="panel-progress" data-lesson-panel aria-labelledby="tab-progress" class="card shadow-sm mb-3 lesson-progress-card">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
           <div>
             <div class="learning-card-label">CURRENT LESSON</div>
             <h2 class="h5 mb-1">학습 현황</h2>
-            <p class="small text-muted mb-0" id="progressSaveStatus">진도 저장 대기 중</p>
           </div>
           {% if progress and progress.is_completed %}
             <span class="badge text-bg-success">완료</span>
@@ -121,17 +136,10 @@
             </dd>
           </div>
         </dl>
-        <div class="d-grid gap-2 mt-3">
-          {% if next_lesson %}
-            <a class="btn btn-primary" href="{{ next_lesson.get_absolute_url }}">다음 차시</a>
-          {% else %}
-            <button class="btn btn-outline-secondary" type="button" disabled>마지막 차시</button>
-          {% endif %}
-        </div>
       </div>
     </div>
 
-    <div class="card shadow-sm mb-3 lesson-attachments-card">
+    <div id="panel-materials" data-lesson-panel aria-labelledby="tab-materials" class="card shadow-sm mb-3 lesson-attachments-card">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
           <div>
@@ -151,7 +159,10 @@
                     <p>{{ attachment.description }}</p>
                   {% endif %}
                 </div>
-                <a class="btn btn-outline-primary btn-sm" href="{{ attachment.get_download_url }}">다운로드</a>
+                <div class="attachment-actions">
+                  {% if attachment.is_pdf %}<a class="btn btn-outline-primary btn-sm" href="{{ attachment.get_view_url }}" target="_blank" rel="noopener">바로 보기<span class="visually-hidden"> (새 창)</span></a>{% endif %}
+                  <a class="btn btn-outline-primary btn-sm" href="{{ attachment.get_download_url }}">다운로드</a>
+                </div>
               </div>
             {% endfor %}
           </div>
@@ -163,7 +174,7 @@
       </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div id="panel-lessons" data-lesson-panel aria-labelledby="tab-lessons" class="card shadow-sm">
       <div class="card-body">
         <h2 class="h5 mb-3">차시 목록</h2>
         <div class="list-group lesson-side-list">
@@ -193,5 +204,5 @@
   {% if lesson.has_hls %}
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
   {% endif %}
-  <script src="{% static 'js/video_progress.js' %}?v=20260818-video-zoom-300"></script>
+  <script src="{% static 'js/video_progress.js' %}?v=20260917-mobile-save"></script>
 {% endblock %}

@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
 from courses.models import Course
+from .services.learning import recent_learning
 from .models import Notice
 
 
@@ -34,6 +35,7 @@ def home(request):
         'core/home.html',
         {
             'featured_course': featured_course,
+            'recent_learning': recent_learning(request.user),
             'courses': courses,
             'notices': _published_notices().filter(course__isnull=True)[:3],
             'course_count': len(public_course_ids),

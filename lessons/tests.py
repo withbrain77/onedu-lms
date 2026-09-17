@@ -34,6 +34,41 @@ class LessonTimeTemplateFilterTests(TestCase):
 
 
 class VideoProtectionAndWatermarkTests(TestCase):
+    def test_pdf_preview_is_inline_and_still_watermarked(self):
+        attachment = self.create_attachment()
+        self.approve()
+        self.client.force_login(self.student)
+        response = self.client.get(attachment.get_view_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response['Content-Disposition'].startswith('inline;'))
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+        text = PdfReader(BytesIO(self.response_body(response))).pages[0].extract_text()
+        self.assertIn(self.student.display_name, text)
+        self.assertContains(self.client.get(self.watch_url), attachment.get_view_url())
+        response.close()
+
+    def test_pdf_preview_enforces_enrollment_and_publication(self):
+        attachment = self.create_attachment()
+        self.assertEqual(self.client.get(attachment.get_view_url()).status_code, 302)
+        self.client.force_login(self.other_student)
+        self.assertEqual(self.client.get(attachment.get_view_url()).status_code, 404)
+        enrollment = self.approve()
+        self.client.force_login(self.student)
+        enrollment.end_date = self.today - timedelta(days=1)
+        enrollment.save()
+        self.assertEqual(self.client.get(attachment.get_view_url()).status_code, 404)
+        enrollment.end_date = self.today + timedelta(days=1)
+        enrollment.save()
+        attachment.is_public = False
+        attachment.save()
+        self.assertEqual(self.client.get(attachment.get_view_url()).status_code, 404)
+
+    def test_preview_does_not_render_non_pdf_files_inline(self):
+        attachment = self.create_attachment(filename='document.html', content=b'<script>alert(1)</script>')
+        self.approve()
+        self.client.force_login(self.student)
+        self.assertEqual(self.client.get(attachment.get_view_url()).status_code, 404)
+
     def setUp(self):
         self.today = timezone.localdate()
         self.student = User.objects.create_user(
