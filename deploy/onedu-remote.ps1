@@ -98,6 +98,18 @@ function Ensure-RemoteDataDirs {
     Invoke-Remote "mkdir -p '$AppDir/data/static' '$AppDir/data/media' '$AppDir/data/private_media' '$AppDir/data/logs' '$AppDir/data/postgres' '$AppDir/data/redis' '$AppDir/backups'"
 }
 
+function Test-MobileLayout {
+    # Check the exact tracked source that Sync-Source will deploy. Untracked
+    # documents may remain when -AllowDirty is used.
+    $trackedChanges = Get-GitOutput @("status", "--porcelain", "--untracked-files=no")
+    if ($trackedChanges) {
+        throw "Commit tracked source changes before running deployment checks."
+    }
+    Require-Command "npm.cmd"
+    Write-Host "Checking mobile layouts before deployment..." -ForegroundColor Cyan
+    Invoke-Native "npm.cmd" @("run", "test:mobile")
+}
+
 function Invoke-Ops {
     param([string]$OpsAction)
 
@@ -111,6 +123,7 @@ switch ($Action) {
         Sync-Source
     }
     "deploy" {
+        Test-MobileLayout
         Sync-Source
         Ensure-RemoteDataDirs
         Invoke-Ops "deploy"

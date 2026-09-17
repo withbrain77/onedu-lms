@@ -13,4 +13,8 @@ staticfiles/
 data/
 backups/
 .qa/
+node_modules/
+test-results/
+playwright-report/
+.browser-tests/
 .DS_Store

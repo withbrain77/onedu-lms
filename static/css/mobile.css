@@ -28,6 +28,8 @@
 [data-lesson-panel][hidden] { display: none !important; }
 .attachment-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .notice-detail-content { overflow-wrap: anywhere; }
+.notice-list-card { min-width: 0; overflow-wrap: anywhere; }
+.notice-list-card .badge { max-width: 100%; white-space: normal; text-align: left; }
 .login-support-company { flex-wrap: wrap; white-space: normal; }
 .login-support-company strong { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
 .portal-program-placeholder, .course-detail-thumb-placeholder { min-width: 0; overflow-wrap: anywhere; }

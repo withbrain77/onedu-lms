@@ -1,0 +1,11 @@
+{
+  "name": "onedu-browser-checks",
+  "private": true,
+  "scripts": {
+    "test:mobile": "playwright test",
+    "test:js": "node --test tests/js/*.test.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

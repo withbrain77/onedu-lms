@@ -12,3 +12,7 @@ logs/
 .venv/
 venv/
 .qa/
+node_modules/
+test-results/
+playwright-report/
+.browser-tests/

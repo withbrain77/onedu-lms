@@ -187,7 +187,7 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertEqual(page_response.status_code, 200)
         self.assertEqual(file_response.status_code, 200)
         self.assertContains(page_response, self.video_url)
-        self.assertContains(page_response, 'video-controls-autohide')
+        self.assertContains(page_response, 'js/video_progress.js')
         self.assertContains(page_response, 'videoZoomToggle')
         self.assertContains(page_response, 'videoZoomControls')
         self.assertContains(page_response, 'id="videoZoomControls"')

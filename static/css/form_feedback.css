@@ -1,0 +1,5 @@
+.onedu-form-status { flex: 1 1 100%; clear: both; margin: 8px 0; color: #086b67; font-size: 14px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+[aria-busy="true"] [aria-disabled="true"] { opacity: .65; cursor: wait; }
+@media (prefers-color-scheme: dark) {
+  html[data-theme="dark"] .onedu-form-status { color: #8ce0d9; }
+}
