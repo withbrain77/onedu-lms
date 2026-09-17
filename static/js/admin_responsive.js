@@ -22,7 +22,7 @@
   updateLayout();
   compact.addEventListener('change', updateLayout);
 
-  document.querySelectorAll('#changelist .results, .onedu-admin-table-wrap').forEach(function (tableRegion) {
+  document.querySelectorAll('#changelist .results, .onedu-admin-table-wrap, .inline-group .tabular').forEach(function (tableRegion) {
     const hint = document.createElement('p');
     hint.className = 'onedu-admin-table-hint';
     hint.textContent = '표를 좌우로 밀어 나머지 항목을 확인하세요.';

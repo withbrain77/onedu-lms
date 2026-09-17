@@ -15,6 +15,10 @@ body.onedu-admin-workspace #main > .content:only-child {
 .onedu-admin-navigation .onedu-admin-sidebar { box-sizing: border-box; height: 100%; }
 body.onedu-admin-dashboard-page #content { padding: 0; }
 .onedu-admin-program > div { min-width: 0; }
+body.onedu-admin-workspace #content h1,
+body.onedu-admin-workspace #content h2,
+.onedu-admin-activity p,
+.onedu-admin-activity p > * { overflow-wrap: anywhere; min-width: 0; }
 /* Keep metadata out of the badge column: its text used to widen that column
    until names and document titles had almost no space left. */
 .onedu-admin-ops-list > a {
@@ -53,6 +57,34 @@ body.onedu-admin-dashboard-page #content { padding: 0; }
 }
 
 @media (max-width: 1120px) {
+  /* Form fields must fit the actual card, not the browser viewport. */
+  .aligned .form-row, .aligned .form-row > div {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .aligned .form-row > div { width: 100%; }
+  .aligned .flex-container:not(.checkbox-row) { flex-direction: column; min-width: 0; }
+  .aligned .form-row input:not([type="checkbox"]):not([type="radio"]),
+  .aligned .form-row select, .aligned .form-row textarea {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .aligned .related-widget-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+  }
+  .aligned .related-widget-wrapper > select { flex: 1 1 100%; width: 100%; }
+  .aligned .related-widget-wrapper > a { flex: none; margin: 0; }
+  .selector, .selector-available, .selector-chosen { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .inline-group .tabular { overflow-x: auto; }
+  .inline-group .tabular > fieldset.module { overflow: visible; }
+
   body.onedu-admin-workspace #container > .main {
     grid-template-columns: minmax(0, 1fr);
     align-content: start;
