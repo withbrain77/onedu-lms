@@ -48,7 +48,7 @@ def seed(root):
     routes = {
         'public': ['/', '/courses/', course.get_absolute_url(), '/notices/', reverse('notice_detail', args=[notice.pk]),
                    '/privacy/', '/install/', '/accounts/login/', '/accounts/signup/', '/accounts/find-username/',
-                   '/accounts/password-reset/', '/certificates/verify/'],
+                   '/accounts/password-reset/', '/certificates/verify/', '/admin/login/'],
         'student': ['/', '/classroom/', '/classroom/?status=ended', f'/classroom/{course.pk}/',
                     '/accounts/profile/', '/accounts/password-change/', '/accounts/withdrawal-request/',
                     lesson.get_absolute_url(), reverse('quizzes:take', args=[quiz.pk])],

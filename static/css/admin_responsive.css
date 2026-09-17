@@ -1,5 +1,7 @@
 /* Load after Django's page and responsive styles. Its #container rule otherwise
    turns the workspace into a flex row, even on phones. */
+body.onedu-admin-login { padding: 0; }
+body.onedu-admin-login #container { box-sizing: border-box; margin: 0; max-width: none; }
 body.onedu-admin-workspace #container > .main {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
