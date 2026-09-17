@@ -16,6 +16,8 @@ async function layoutIssues(page) {
   return page.evaluate(() => {
     const issues = [];
     if (document.documentElement.scrollWidth > innerWidth + 1) issues.push('Document overflows');
+    const cards = document.querySelector('#result_list.onedu-card-list');
+    if (cards && cards.closest('.results').scrollWidth > cards.closest('.results').clientWidth + 1) issues.push('Card view requires horizontal scrolling');
     const root = document.querySelector('main') || document.querySelector('#content');
     for (const el of root.querySelectorAll('h1,h2,h3,p,span,strong,a,label,dt,dd,td,th,summary,button,input,select,textarea')) {
       const css = getComputedStyle(el), rect = el.getBoundingClientRect();
