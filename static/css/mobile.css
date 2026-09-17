@@ -32,6 +32,7 @@
 .notice-list-card .badge { max-width: 100%; white-space: normal; text-align: left; }
 .login-support-company { flex-wrap: wrap; white-space: normal; }
 .login-support-company strong { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.login-support-links > span { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .portal-program-placeholder, .course-detail-thumb-placeholder { min-width: 0; overflow-wrap: anywhere; }
 .privacy-policy-card dd { min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 767px) {
@@ -62,6 +63,7 @@
   .lesson-attachment-copy span { overflow-wrap: anywhere; }
   .btn, .nav-link, .list-group-item, .auth-link-row a, .login-support-links a { min-height: 44px; }
   .auth-link-row a, .login-support-links a { display: inline-flex; align-items: center; }
+  .login-support-links a { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
   input.form-control, select.form-select, textarea.form-control { font-size: 16px; min-height: 48px; }
   .password-toggle { min-height: 44px; }
   html { scroll-padding-bottom: calc(var(--mobile-nav-height, calc(72px + env(safe-area-inset-bottom))) + 16px); }

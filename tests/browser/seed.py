@@ -12,6 +12,7 @@ from lessons.models import Lesson, LessonAttachment, LessonAttachmentDownload
 from enrollments.models import Enrollment, ReEnrollmentRequest
 from core.models import Notice
 from quizzes.models import Quiz, Question, AnswerChoice
+from progress.models import WatchProgress
 
 
 def seed(root):
@@ -28,6 +29,7 @@ def seed(root):
     today = timezone.localdate()
     enrollment, _ = Enrollment.objects.update_or_create(user=student, course=course, defaults={
         'status': 'approved', 'start_date': today - timedelta(days=1), 'end_date': today + timedelta(days=7)})
+    WatchProgress.objects.get_or_create(user=student, enrollment=enrollment, lesson=lesson)
     expired, _ = Course.objects.get_or_create(slug='browser-expired', defaults={'title': '기간 만료 과정'})
     old, _ = Enrollment.objects.update_or_create(user=student, course=expired, defaults={
         'status': 'approved', 'start_date': today-timedelta(days=40), 'end_date': today-timedelta(days=10)})

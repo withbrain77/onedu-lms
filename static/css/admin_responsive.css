@@ -57,6 +57,7 @@ body.onedu-admin-workspace #content h2,
 }
 
 @media (max-width: 1120px) {
+  .onedu-admin-activity__title { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
   /* Form fields must fit the actual card, not the browser viewport. */
   .aligned .form-row, .aligned .form-row > div {
     box-sizing: border-box;
