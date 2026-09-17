@@ -7,11 +7,34 @@ body.onedu-admin-workspace #container > .main {
 body.onedu-admin-workspace.popup #container > .main {
   grid-template-columns: minmax(0, 1fr);
 }
+body.onedu-admin-workspace #main > .content:only-child {
+  grid-column: 1 / -1;
+}
 .onedu-admin-navigation { min-width: 0; }
 .onedu-admin-navigation > .onedu-admin-menu-button { display: none; }
 .onedu-admin-navigation .onedu-admin-sidebar { box-sizing: border-box; height: 100%; }
 body.onedu-admin-dashboard-page #content { padding: 0; }
 .onedu-admin-program > div { min-width: 0; }
+/* Keep metadata out of the badge column: its text used to widen that column
+   until names and document titles had almost no space left. */
+.onedu-admin-ops-list > a {
+  min-width: 0;
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+.onedu-admin-ops-list > a > .onedu-admin-badge {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: start;
+}
+.onedu-admin-ops-list > a > strong,
+.onedu-admin-ops-list > a > small {
+  grid-column: 2;
+  min-width: 0;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 .onedu-admin-table-hint { padding: 8px 12px; margin: 0; color: #627084; font-size: 12px; }
 #changelist-filter .onedu-admin-filter-panel > summary {
   background: #f1f7f9;
