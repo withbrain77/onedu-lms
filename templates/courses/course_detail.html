@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ course.title }} | Onedu LMS{% endblock %}
+{% block title %}{{ course.title }} | 위드브레인연구소 아카데미{% endblock %}
 
 {% block page_header %}
 <div class="page-header student-hero">
@@ -25,7 +25,7 @@
     {% else %}
       <div class="course-detail-thumb-placeholder">
         <span>WITHBRAIN</span>
-        <strong>ONEDU PROGRAM</strong>
+        <strong>WITHBRAIN PROGRAM</strong>
       </div>
     {% endif %}
   </div>
@@ -69,7 +69,7 @@
 
 <div class="row g-4">
   <div class="col-12 col-lg-8">
-    <div class="timeline-panel">
+    <div class="timeline-panel" data-list-filter>
       <div class="timeline-panel-head">
         <div>
           <span>학습 구성</span>
@@ -77,10 +77,11 @@
         </div>
         <strong>{{ progress_percent }}%</strong>
       </div>
+        {% include "includes/lesson_filter.html" %}
         {% if lesson_items %}
           <div class="learning-timeline">
             {% for item in lesson_items %}
-              <div class="timeline-step {% if item.progress and item.progress.is_completed %}done{% elif item.progress and item.progress.progress_percent %}active{% endif %}">
+              <div data-filter-item data-title="{{ item.lesson.title }}" data-completed="{{ item.progress.is_completed|yesno:'true,false' }}" class="timeline-step {% if item.progress and item.progress.is_completed %}done{% elif item.progress and item.progress.progress_percent %}active{% endif %}">
                 <span class="timeline-step-number">{{ item.lesson.order }}</span>
                 <div class="timeline-step-body">
                   <div class="timeline-step-title">{{ item.lesson.title }}</div>
@@ -97,7 +98,7 @@
                   {% if access and access.allowed %}
                     <a class="btn btn-sm btn-outline-primary" href="{{ item.lesson.get_absolute_url }}">차시 보기</a>
                   {% else %}
-                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>승인 후 이용</button>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" disabled>{% if access.code == 'ended' %}수강 기간 만료{% elif access.code == 'not_started' %}수강 시작 전{% elif course.is_free %}수강 신청 후 이용{% else %}승인 후 이용{% endif %}</button>
                   {% endif %}
                 </div>
               </div>
@@ -224,7 +225,7 @@
             </form>
           {% endif %}
         {% else %}
-          <a class="btn btn-primary w-100" href="{% url 'accounts:login' %}">로그인 후 신청</a>
+          <a class="btn btn-primary w-100" href="{% url 'accounts:login' %}?next={{ course.get_absolute_url|urlencode }}">로그인 후 신청</a>
         {% endif %}
       </div>
     </div>

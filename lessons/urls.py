@@ -5,6 +5,7 @@ from . import views
 app_name = 'lessons'
 
 urlpatterns = [
+    path('<int:pk>/access/', views.lesson_access_status, name='access_status'),
     path('<int:pk>/attachments/<int:attachment_id>/view/', views.lesson_attachment_view, name='attachment_view'),
     path('<int:pk>/watch/', views.lesson_detail, name='detail'),
     path('<int:pk>/video/', views.lesson_video, name='video'),

@@ -54,6 +54,38 @@
     selectTab(tabs[0]);
   }
 
+  document.querySelectorAll('[data-list-filter]').forEach(function (list) {
+    const controls = list.querySelector('[data-filter-controls]');
+    if (!controls) return;
+    const query = list.querySelector('[data-filter-query]');
+    const incomplete = list.querySelector('[data-filter-incomplete]');
+    const items = Array.from(list.querySelectorAll('[data-filter-item]'));
+    controls.hidden = false;
+    function filter() {
+      const value = query.value.trim().normalize('NFC').toLocaleLowerCase();
+      let count = 0;
+      items.forEach(function (item) {
+        const matched = item.dataset.title.normalize('NFC').toLocaleLowerCase().includes(value)
+          && (!incomplete.checked || item.dataset.completed !== 'true');
+        item.hidden = !matched;
+        if (matched) count += 1;
+      });
+      list.querySelector('[data-filter-count]').textContent = count + '개 차시 / 전체 ' + items.length + '개';
+      list.querySelector('[data-filter-empty]').hidden = count !== 0 || items.length === 0;
+    }
+    query.addEventListener('input', filter);
+    incomplete.addEventListener('change', filter);
+    window.addEventListener('onedu:progress-save', function (event) {
+      const video = document.getElementById('lessonVideo');
+      if (!video || event.detail.key !== video.dataset.progressKey || event.detail.state !== 'saved') return;
+      items.filter(item => item.dataset.current === 'true').forEach(item => {
+        item.dataset.completed = String(event.detail.data.is_completed);
+      });
+      filter();
+    });
+    filter();
+  });
+
   function fullscreenChanged() {
     document.body.classList.toggle('is-player-fullscreen', Boolean(document.fullscreenElement || document.webkitFullscreenElement));
   }

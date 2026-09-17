@@ -7,7 +7,12 @@
     <h2 class="h5">{{ recent_learning.lesson.title }}</h2>
     <p class="small mb-3">저장 위치 {{ recent_learning.last_position_seconds|duration_hms }} · 진도 {{ recent_learning.progress_percent }}%</p>
     <div class="d-flex flex-wrap gap-2">
-      <a class="btn btn-primary" href="{{ recent_learning.lesson.get_absolute_url }}">이어서 학습하기</a>
+      {% if recent_learning.reached_end %}
+        {% if recent_learning.next_lesson %}<a class="btn btn-primary" href="{{ recent_learning.next_lesson.get_absolute_url }}">다음 차시 학습</a>{% endif %}
+        <a class="btn btn-outline-primary" href="{{ recent_learning.lesson.get_absolute_url }}?replay=1">처음부터 복습</a>
+      {% else %}
+        <a class="btn btn-primary" href="{{ recent_learning.lesson.get_absolute_url }}">이어서 학습하기</a>
+      {% endif %}
       <a class="btn btn-outline-primary" href="{% url 'enrollments:classroom' %}">내 강의실</a>
     </div>
   </div>

@@ -5,9 +5,9 @@
   }
 
   const progressUrl = video.dataset.progressUrl;
-  const hlsUrl = video.dataset.hlsUrl;
   const saveInterval = Number(video.dataset.saveInterval || 12000);
   const startPosition = Number(video.dataset.startPosition || 0);
+  const replayRequested = new URLSearchParams(location.search).get('replay') === '1';
   const playerShell = document.getElementById('videoPlayerShell');
   const watermark = document.getElementById('videoWatermark');
   const fullscreenButton = document.getElementById('videoFullscreenButton');
@@ -60,29 +60,6 @@
     'wm-pos-bottom-left',
     'wm-pos-bottom-right',
   ];
-
-  function setupHlsPlayback() {
-    if (!hlsUrl) {
-      return;
-    }
-    if (window.Hls && window.Hls.isSupported()) {
-      const hls = new window.Hls({
-        enableWorker: true,
-        lowLatencyMode: false,
-      });
-      hls.loadSource(hlsUrl);
-      hls.attachMedia(video);
-      hls.on(window.Hls.Events.ERROR, function (_event, data) {
-        if (data && data.fatal) {
-          setStatus('영상 스트리밍 오류');
-        }
-      });
-      return;
-    }
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = hlsUrl;
-    }
-  }
 
   function setStatus(message) {
     if (statusEl) {
@@ -400,26 +377,32 @@
         saving: '진도 저장 중...',
         retry: '연결되면 진도를 자동으로 다시 저장합니다.',
         'retry-memory': '진도 저장을 재시도합니다. 저장될 때까지 이 화면을 유지해 주세요.',
-        access: '진도를 저장하려면 로그인 상태와 수강 기간을 확인해 주세요.',
+        access: '진도 저장이 중단되었습니다. 위의 이용 안내를 확인해 주세요.',
       };
       setStatus(messages[result.state] || '진도 저장 대기 중');
     }
   });
 
-  setupHlsPlayback();
   updateTimeUI({
     duration_seconds: durationText ? durationText.dataset.seconds : 0,
     last_position_seconds: lastPositionText ? lastPositionText.dataset.seconds : 0,
     total_watched_seconds: totalWatchedText ? totalWatchedText.dataset.seconds : 0,
   });
 
-  video.addEventListener('loadedmetadata', function () {
+  function restoreSavedPosition() {
     if (Number.isFinite(video.duration) && video.duration > 0) {
       setTimeText(durationText, video.duration);
     }
     const pending = sync && sync.resume(progressKey);
     const pendingIsNewer = pending && (!video.dataset.positionRecordedAt || Date.parse(pending.payload.recorded_at) > Date.parse(video.dataset.positionRecordedAt));
-    const position = pendingIsNewer ? pending.payload.position_seconds : startPosition;
+    const position = replayRequested ? 0 : pendingIsNewer ? pending.payload.position_seconds : startPosition;
+    if (!hasRestoredPosition && replayRequested) {
+      video.currentTime = 0;
+      hasRestoredPosition = true;
+      const url = new URL(location.href);
+      url.searchParams.delete('replay');
+      history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    }
     if (!hasRestoredPosition && position > 0 && Number.isFinite(video.duration)) {
       const restorePosition = Math.min(position, Math.max(video.duration - 2, 0));
       if (restorePosition > 0) {
@@ -427,7 +410,10 @@
       }
       hasRestoredPosition = true;
     }
-  });
+  }
+  video.addEventListener('loadedmetadata', restoreSavedPosition);
+  if (video.readyState >= 1) restoreSavedPosition();
+  video.addEventListener('onedu:playback-recovering', function () { hasRestoredPosition = true; playbackRunning = false; });
 
   video.addEventListener('play', function () {
     hasPlayed = true;
@@ -447,6 +433,7 @@
     setControlsHidden(false);
     saveProgress({ completed: true });
     playbackRunning = false;
+    document.getElementById('lessonEndActions').hidden = false;
   });
 
   video.addEventListener('timeupdate', samplePlayback);

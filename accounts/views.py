@@ -65,6 +65,9 @@ class LMSLoginView(LoginView):
         return initial
 
     def get_success_url(self):
+        next_url = self.get_redirect_url()
+        if next_url:
+            return next_url
         user = self.request.user
         if user.is_staff or getattr(user, 'role', None) == User.Role.ADMIN:
             return reverse('admin:index')

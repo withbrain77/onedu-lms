@@ -3,7 +3,7 @@
   'use strict';
   const pending = new Map();
   const resumeSnapshots = new Map();
-  const blocked = new Set();
+  const blocked = new Map();
   let prefix = '';
   let busy = false;
   let storageAvailable = true;
@@ -49,9 +49,11 @@
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': decodeURIComponent(token.slice(10)) },
         body: JSON.stringify(item.payload),
       });
-      if (response.redirected || [400, 403, 409].includes(response.status)) {
-        blocked.add(item.key);
-        report(item, 'access');
+      if (response.redirected || [400, 401, 403, 404, 409].includes(response.status)) {
+        let data = response.redirected ? {code: 'login_required'} : null;
+        if (!data) { try { data = await response.json(); } catch (_) { /* CSRF errors may be HTML. */ } }
+        blocked.set(item.key, data);
+        report(item, 'access', data);
         return false;
       }
       if (!response.ok) throw new Error('Save failed');
@@ -82,6 +84,7 @@
       pending.set(item.payload.event_id, item);
       remember(item);
       persist(item);
+      if (blocked.has(item.key)) { report(item, 'access', blocked.get(item.key)); return; }
       if (!navigator.onLine) report(item, storageAvailable ? 'retry' : 'retry-memory');
       pump();
     },
@@ -90,6 +93,7 @@
         .sort((a, b) => b.payload.recorded_at.localeCompare(a.payload.recorded_at))[0];
     },
     resume(key) { return resumeSnapshots.get(key); },
+    accessFailure(key) { return blocked.has(key) ? {data: blocked.get(key)} : null; },
     flush(key) {
       const item = this.latest(key);
       // Send the final position even when an earlier heartbeat is still in flight.

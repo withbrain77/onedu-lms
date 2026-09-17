@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from core.services.access import can_access_course, get_latest_enrollment
 from core.services.completion import evaluate_enrollment_completion
+from core.services.learning import continue_lesson
 from core.models import Notice
 from enrollments.models import Enrollment
 from enrollments.notifications import notify_enrollment_request
@@ -79,8 +80,10 @@ def _status_for(enrollment, access_result=None):
     return enrollment.get_status_display(), 'text-bg-success'
 
 
-def _period_text(enrollment):
+def _period_text(enrollment, course=None):
     if not enrollment:
+        if course and course.is_free:
+            return f'신청 즉시 {course.default_enrollment_days}일'
         return '관리자 승인 후 배정'
     if enrollment.start_date and enrollment.end_date:
         return f'{enrollment.start_date} ~ {enrollment.end_date}'
@@ -115,7 +118,8 @@ def _course_card(course, enrollment, request):
         'access': access_result,
         'status_label': status_label,
         'status_class': status_class,
-        'period_text': _period_text(enrollment),
+        'period_text': _period_text(enrollment, course),
+        'continue_lesson': continue_lesson(enrollment) if enrollment and access_result and access_result.allowed else None,
         'remaining_text': _remaining_text(enrollment, access_result),
         'progress_percent': progress_percent,
     }
@@ -138,13 +142,17 @@ def _latest_enrollments(user, courses):
 
 
 def course_list(request):
-    courses = list(_visible_course_queryset(request.user).prefetch_related('lessons'))
+    query = request.GET.get('q', '').strip()[:100]
+    queryset = _visible_course_queryset(request.user)
+    if query:
+        queryset = queryset.filter(title__icontains=query)
+    courses = list(queryset.prefetch_related('lessons'))
     latest = _latest_enrollments(request.user, courses)
     course_cards = [
         _course_card(course, latest.get(course.pk), request)
         for course in courses
     ]
-    return render(request, 'courses/course_list.html', {'course_cards': course_cards})
+    return render(request, 'courses/course_list.html', {'course_cards': course_cards, 'search_query': query})
 
 
 def course_detail(request, slug):
@@ -196,7 +204,7 @@ def course_detail(request, slug):
             'progress_percent': progress_percent,
             'status_label': status_label,
             'status_class': status_class,
-            'period_text': _period_text(enrollment),
+            'period_text': _period_text(enrollment, course),
             'remaining_text': _remaining_text(enrollment, access_result),
             'quiz_items': get_course_quiz_items(request.user, course) if access_result and access_result.allowed else [],
             'completion_status': completion_status,

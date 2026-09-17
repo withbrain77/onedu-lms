@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}로그인 | Onedu LMS{% endblock %}
+{% block title %}로그인 | 위드브레인연구소 아카데미{% endblock %}
 
 {% block page_header %}
 <div class="page-header">
@@ -16,6 +16,7 @@
       <div class="card-body p-4">
         <form method="post" novalidate>
           {% csrf_token %}
+          {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
           {% if form.non_field_errors %}
             <div class="alert alert-danger">{{ form.non_field_errors }}</div>
           {% endif %}

@@ -102,6 +102,15 @@ def classroom(request):
         else:
             other_cards.append(card)
 
+    groups = {'active': active_cards, 'waiting': waiting_cards, 'ended': ended_cards, 'other': other_cards}
+    labels = {'active': '수강 중', 'waiting': '승인 대기', 'ended': '종료', 'other': '기타 신청'}
+    selected = request.GET.get('status', '')
+    if selected not in groups:
+        selected = next((key for key, cards in groups.items() if cards), 'active')
+    query = request.GET.get('q', '').strip()[:100]
+    visible_cards = [card for card in groups[selected] if query.casefold() in card['course'].title.casefold()]
+    tabs = [{'key': key, 'label': labels[key], 'count': len(cards)} for key, cards in groups.items() if key != 'other' or cards]
+
     return render(
         request,
         'classroom/index.html',
@@ -111,6 +120,11 @@ def classroom(request):
             'waiting_cards': waiting_cards,
             'ended_cards': ended_cards,
             'other_cards': other_cards,
+            'classroom_tabs': tabs,
+            'selected_status': selected,
+            'selected_label': labels[selected],
+            'visible_cards': visible_cards,
+            'search_query': query,
         },
     )
 

@@ -1,7 +1,6 @@
 import json
 from uuid import UUID
 
-from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -34,9 +33,10 @@ def _json_body(request):
     return request.POST
 
 
-@login_required
 @require_POST
 def save_lesson_progress(request, lesson_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'code': 'login_required'}, status=401)
     lesson = get_object_or_404(
         Lesson.objects.select_related('course'),
         pk=lesson_id,

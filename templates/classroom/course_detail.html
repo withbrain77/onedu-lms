@@ -22,7 +22,7 @@
 {% endif %}
 <div class="row g-4">
   <div class="col-12 col-lg-8">
-    <div class="timeline-panel">
+    <div class="timeline-panel" data-list-filter>
       <div class="timeline-panel-head">
         <div>
           <span>학습 여정</span>
@@ -30,10 +30,11 @@
         </div>
         <strong>{{ progress_percent }}%</strong>
       </div>
+        {% include "includes/lesson_filter.html" %}
         {% if lesson_items %}
           <div class="learning-timeline">
             {% for item in lesson_items %}
-              <a class="timeline-step {% if item.progress and item.progress.is_completed %}done{% elif item.progress and item.progress.progress_percent %}active{% endif %}" href="{{ item.lesson.get_absolute_url }}">
+              <a data-filter-item data-title="{{ item.lesson.title }}" data-completed="{{ item.progress.is_completed|yesno:'true,false' }}" class="timeline-step {% if item.progress and item.progress.is_completed %}done{% elif item.progress and item.progress.progress_percent %}active{% endif %}" href="{{ item.lesson.get_absolute_url }}">
                 <span class="timeline-step-number">{{ item.lesson.order }}</span>
                 <div class="timeline-step-body">
                   <div class="timeline-step-title">{{ item.lesson.title }}</div>

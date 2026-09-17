@@ -4,14 +4,17 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET
 
 from accounts.models import AccessLog
 from accounts.services import get_client_ip, record_access_log, summarize_user_agent
 from core.services.access import can_access_lesson
+from core.services.learning import lesson_reached_end
 from progress.models import WatchProgress
 
 from .models import Lesson, LessonAttachment, LessonAttachmentDownload
@@ -191,9 +194,22 @@ def lesson_detail(request, pk):
             'course_lesson_items': course_lesson_items,
             'attachments': attachments,
             'next_lesson': next_lesson,
+            'lesson_reached_end': lesson_reached_end(progress) and request.GET.get('replay') != '1',
             'watermark_text': _watermark_text(request.user),
         },
     )
+
+
+@never_cache
+@require_GET
+def lesson_access_status(request, pk):
+    if not request.user.is_authenticated:
+        return JsonResponse({'ok': False, 'code': 'login_required'}, status=401)
+    lesson = _lesson_queryset().filter(pk=pk).first()
+    if lesson is None:
+        return JsonResponse({'ok': False, 'code': 'unavailable'}, status=404)
+    access = can_access_lesson(request.user, lesson)
+    return JsonResponse({'ok': access.allowed, 'code': access.code, 'message': access.message}, status=200 if access.allowed else 403)
 
 
 @login_required

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}강의 목록 | Onedu LMS{% endblock %}
+{% block title %}강의 목록 | 위드브레인연구소 아카데미{% endblock %}
 
 {% block page_header %}
 <div class="page-header student-hero d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
@@ -16,6 +16,15 @@
 {% endblock %}
 
 {% block content %}
+<form method="get" class="catalog-search mb-4" role="search">
+  <label class="form-label" for="courseSearch">강의 제목 검색</label>
+  <div class="d-flex gap-2">
+    <input id="courseSearch" class="form-control" type="search" name="q" maxlength="100" value="{{ search_query }}" placeholder="강의 제목을 입력하세요">
+    <button class="btn btn-primary flex-shrink-0" type="submit">검색</button>
+    {% if search_query %}<a class="btn btn-outline-secondary flex-shrink-0" href="{% url 'courses:list' %}">초기화</a>{% endif %}
+  </div>
+  {% if search_query %}<p class="small mt-2 mb-0" role="status">검색 결과 {{ course_cards|length }}개</p>{% endif %}
+</form>
 {% if course_cards %}
   <div class="row g-4">
     {% for item in course_cards %}
@@ -59,7 +68,7 @@
             <div class="mt-auto course-card-actions">
               {% if user.is_authenticated %}
                 {% if item.access and item.access.allowed %}
-                  <a class="btn btn-primary" href="{% url 'enrollments:course_detail' item.course.id %}">이어보기</a>
+                  <a class="btn btn-primary" href="{% if item.continue_lesson %}{{ item.continue_lesson.get_absolute_url }}{% else %}{% url 'enrollments:course_detail' item.course.id %}{% endif %}">이어보기</a>
                   <a class="btn btn-outline-secondary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
                 {% elif item.access and item.access.code == 'not_started' %}
                   <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
@@ -74,7 +83,7 @@
                   </form>
                 {% endif %}
               {% else %}
-                <a class="btn btn-primary" href="{% url 'accounts:login' %}">로그인 후 신청</a>
+                <a class="btn btn-primary" href="{% url 'accounts:login' %}?next={{ item.course.get_absolute_url|urlencode }}">로그인 후 신청</a>
               {% endif %}
             </div>
           </div>
@@ -84,8 +93,7 @@
   </div>
 {% else %}
   <div class="empty-state">
-    <h2>공개된 강의가 없습니다.</h2>
-    <p>관리자가 강의를 공개하면 이곳에서 확인할 수 있습니다.</p>
+    {% if search_query %}<h2>검색 결과가 없습니다.</h2><p>다른 제목으로 검색하거나 검색 조건을 초기화해 주세요.</p>{% else %}<h2>공개된 강의가 없습니다.</h2><p>관리자가 강의를 공개하면 이곳에서 확인할 수 있습니다.</p>{% endif %}
     {% if user.is_staff %}
       <a class="btn btn-primary" href="{% url 'admin:index' %}">관리자에서 강의 등록</a>
     {% else %}

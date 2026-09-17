@@ -17,7 +17,7 @@ class LoginPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/">홈</a>')
-        self.assertContains(response, 'WITHBRAIN ONEDU TRAINING SYSTEM')
+        self.assertContains(response, 'WITHBRAIN ACADEMY')
 
     def test_login_page_shows_operator_support_information(self):
         response = self.client.get(reverse('accounts:login'))
