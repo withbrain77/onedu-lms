@@ -10,15 +10,10 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 
 from core.services.access import can_access_course, get_latest_enrollment
-from core.services.completion import evaluate_enrollment_completion
-from core.services.learning import continue_lesson
 from core.models import Notice
 from enrollments.models import Enrollment
 from enrollments.notifications import notify_enrollment_request
 from enrollments.services import renew_free_enrollment
-from progress.models import WatchProgress
-from progress.services import get_course_progress_percent
-from quizzes.services import get_course_quiz_items
 
 from .models import Course, CourseInvitation
 
@@ -80,78 +75,13 @@ def _status_for(enrollment, access_result=None):
     return enrollment.get_status_display(), 'text-bg-success'
 
 
-def _period_text(enrollment, course=None):
-    if not enrollment:
-        if course and course.is_free:
-            return f'신청 즉시 {course.default_enrollment_days}일'
-        return '관리자 승인 후 배정'
-    if enrollment.start_date and enrollment.end_date:
-        return f'{enrollment.start_date} ~ {enrollment.end_date}'
-    return '기간 미설정'
-
-
-def _remaining_text(enrollment, access_result=None):
-    if not enrollment:
-        return '-'
-    if access_result and access_result.code == 'not_started':
-        return f'{enrollment.start_date} 시작 예정'
-    if access_result and access_result.code == 'ended':
-        return '기간 만료'
-    if enrollment.days_remaining is None:
-        return '-'
-    if enrollment.days_remaining == 0:
-        return '오늘 종료'
-    return f'{enrollment.days_remaining}일 남음'
-
-
-def _course_card(course, enrollment, request):
-    access_result = None
-    if request.user.is_authenticated:
-        access_result = can_access_course(request.user, course)
-    status_label, status_class = _status_for(enrollment, access_result)
-    if enrollment is None and course.is_invite_only and request.user.is_authenticated:
-        status_label, status_class = '초대됨', 'text-bg-info'
-    progress_percent = get_course_progress_percent(enrollment) if enrollment else 0
-    return {
-        'course': course,
-        'enrollment': enrollment,
-        'access': access_result,
-        'status_label': status_label,
-        'status_class': status_class,
-        'period_text': _period_text(enrollment, course),
-        'continue_lesson': continue_lesson(enrollment) if enrollment and access_result and access_result.allowed else None,
-        'remaining_text': _remaining_text(enrollment, access_result),
-        'progress_percent': progress_percent,
-    }
-
-
-def _latest_enrollments(user, courses):
-    if not user.is_authenticated:
-        return {}
-    course_ids = [course.pk for course in courses]
-    enrollments = (
-        Enrollment.objects
-        .filter(user=user, course_id__in=course_ids)
-        .select_related('course')
-        .order_by('course_id', '-created_at')
-    )
-    latest = {}
-    for enrollment in enrollments:
-        latest.setdefault(enrollment.course_id, enrollment)
-    return latest
-
-
 def course_list(request):
     query = request.GET.get('q', '').strip()[:100]
     queryset = _visible_course_queryset(request.user)
     if query:
         queryset = queryset.filter(title__icontains=query)
     courses = list(queryset.prefetch_related('lessons'))
-    latest = _latest_enrollments(request.user, courses)
-    course_cards = [
-        _course_card(course, latest.get(course.pk), request)
-        for course in courses
-    ]
+    course_cards = [{'course': course} for course in courses]
     return render(request, 'courses/course_list.html', {'course_cards': course_cards, 'search_query': query})
 
 
@@ -162,27 +92,8 @@ def course_detail(request, slug):
     )
     enrollment = get_latest_enrollment(request.user, course) if request.user.is_authenticated else None
     access_result = can_access_course(request.user, course) if request.user.is_authenticated else None
-    progress_percent = get_course_progress_percent(enrollment) if enrollment else 0
     lessons = list(course.lessons.filter(is_public=True).order_by('order'))
-    progress_by_lesson = {}
-
-    if access_result and access_result.allowed and enrollment:
-        completion_status = evaluate_enrollment_completion(enrollment)
-        progress_percent = completion_status['progress_percent']
-        progress_by_lesson = {
-            progress.lesson_id: progress
-            for progress in WatchProgress.objects.filter(enrollment=enrollment, lesson__in=lessons)
-        }
-    else:
-        completion_status = None
-
-    lesson_items = [
-        {
-            'lesson': lesson,
-            'progress': progress_by_lesson.get(lesson.pk),
-        }
-        for lesson in lessons
-    ]
+    lesson_items = [{'lesson': lesson} for lesson in lessons]
 
     status_label, status_class = _status_for(enrollment, access_result)
     short_course_path = reverse('course_short_link', kwargs={'course_id': course.pk})
@@ -201,13 +112,8 @@ def course_detail(request, slug):
             'enrollment': enrollment,
             'access': access_result,
             'lesson_items': lesson_items,
-            'progress_percent': progress_percent,
             'status_label': status_label,
             'status_class': status_class,
-            'period_text': _period_text(enrollment, course),
-            'remaining_text': _remaining_text(enrollment, access_result),
-            'quiz_items': get_course_quiz_items(request.user, course) if access_result and access_result.allowed else [],
-            'completion_status': completion_status,
             'short_course_path': short_course_path,
             'short_course_url': _absolute_site_url(request, short_course_path),
             'notices': notices,

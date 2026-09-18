@@ -43,6 +43,38 @@ async function layoutIssues(page) {
   });
 }
 
+test('catalog leads through public conditions and login back to the classroom', async ({page}) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/courses/');
+  const card = page.locator('.catalog-card').filter({has: page.locator('a[href="/courses/browser-layout/"]')});
+  await expect(card).toContainText('영상 차시');
+  await expect(card).not.toContainText('이용료');
+  await expect(card).not.toContainText('진도율');
+  await expect(card.locator('form')).toHaveCount(0);
+  await card.getByRole('link', {name: '상세 보기'}).click();
+  await expect(page.locator('.detail-meta')).toContainText('이용료');
+  await expect(page.locator('.detail-meta')).toContainText('승인 방식');
+  await expect(page.locator('main')).not.toContainText('남은 기간');
+  await expect(page.locator('[data-filter-incomplete]')).toHaveCount(0);
+  await page.locator('#lessonSearch').fill('없는차시제목');
+  await expect(page.locator('[data-filter-empty]')).toBeVisible();
+  await page.locator('#lessonSearch').fill('');
+  await expect(page.locator('[data-filter-item]').first()).toBeVisible();
+  await page.getByRole('link', {name: '로그인 후 신청', exact: true}).click();
+  await page.locator('#id_username').fill('browserstudent');
+  await page.locator('#id_password').fill('Browser-only-2026!');
+  await Promise.all([
+    page.waitForURL('**/courses/browser-layout/'),
+    page.locator('button[type=submit]').click(),
+  ]);
+  await expect(page.locator('main')).not.toContainText('진도율');
+  await page.getByRole('link', {name: '내 강의실에서 보기', exact: true}).click();
+  await expect(page.locator('main')).toContainText('전체 진도율');
+  await expect(page.locator('main')).toContainText('남은 기간');
+  expect(errors).toEqual([]);
+});
+
 for (const role of ['public', 'student', 'admin']) {
   for (const [width, height, scale] of [[320,740,100], [390,844,100], [412,915,100], [915,412,100], [390,844,200]]) {
     test(`${role} ${width}x${height} text ${scale}%`, async ({page}) => {

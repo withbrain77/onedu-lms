@@ -1,7 +1,7 @@
-<article class="portal-program-card">
+<article class="portal-program-card catalog-card">
   <div class="portal-program-media">
     {% if course.thumbnail %}
-      <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}">
+      <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" loading="lazy">
     {% else %}
       <div class="portal-program-placeholder">
         <span>WITHBRAIN</span>
@@ -10,11 +10,8 @@
     {% endif %}
   </div>
   <div class="portal-program-body">
-    <div class="portal-program-head">
-      <span>TRAINING PROGRAM</span>
-      <span class="badge text-bg-light border">신청 가능</span>
-    </div>
-    <h3>{{ course.title }}</h3>
+    {% if course.is_private %}<span class="badge text-bg-secondary align-self-start">비공개</span>{% elif course.is_invite_only %}<span class="badge text-bg-light border align-self-start">초대 전용</span>{% endif %}
+    {% if catalog_page %}<h2 class="catalog-card-title">{{ course.title }}</h2>{% else %}<h3 class="catalog-card-title">{{ course.title }}</h3>{% endif %}
     <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
     <dl class="portal-program-meta">
       <div><dt>영상 차시</dt><dd>{{ course.lesson_count }}개</dd></div>

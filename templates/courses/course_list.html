@@ -26,69 +26,9 @@
   {% if search_query %}<p class="small mt-2 mb-0" role="status">검색 결과 {{ course_cards|length }}개</p>{% endif %}
 </form>
 {% if course_cards %}
-  <div class="row g-4">
+  <div class="catalog-grid">
     {% for item in course_cards %}
-      <div class="col-12 col-md-6 col-xl-4">
-        <div class="card course-card h-100 shadow-sm">
-          {% if item.course.thumbnail %}
-            <img src="{{ item.course.thumbnail.url }}" class="card-img-top course-thumb" alt="{{ item.course.title }}">
-          {% else %}
-            <div class="course-thumb course-thumb-empty">
-              <span>TRAINING</span>
-            </div>
-          {% endif %}
-          <div class="card-body d-flex flex-column">
-            <div class="course-card-eyebrow">TRAINING PROGRAM</div>
-            <div class="d-flex justify-content-between gap-2 mb-2">
-              <h2 class="h5 card-title mb-0">{{ item.course.title }}</h2>
-              <span class="badge {{ item.status_class }} flex-shrink-0">{{ item.status_label }}</span>
-            </div>
-            <p class="card-text text-muted line-clamp">{{ item.course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
-            <dl class="course-meta small mb-3">
-              <div><dt>이용료</dt><dd>{{ item.course.price_label }}</dd></div>
-              {% if item.course.is_paid and item.enrollment %}
-                <div><dt>입금 상태</dt><dd>{{ item.enrollment.get_payment_status_display }}</dd></div>
-              {% endif %}
-              <div><dt>승인 방식</dt><dd>{{ item.course.approval_policy_label }}</dd></div>
-              {% if item.course.is_invite_only %}
-                <div><dt>공개 방식</dt><dd>초대 전용</dd></div>
-              {% endif %}
-              <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
-              <div><dt>남은 기간</dt><dd>{{ item.remaining_text }}</dd></div>
-            </dl>
-            <div class="mb-3">
-              <div class="d-flex justify-content-between small text-muted mb-1">
-                <span>진도율</span>
-                <span>{{ item.progress_percent }}%</span>
-              </div>
-              <div class="progress" role="progressbar" aria-valuenow="{{ item.progress_percent }}" aria-valuemin="0" aria-valuemax="100">
-                <div class="progress-bar" style="width: {{ item.progress_percent }}%"></div>
-              </div>
-            </div>
-            <div class="mt-auto course-card-actions">
-              {% if user.is_authenticated %}
-                {% if item.access and item.access.allowed %}
-                  <a class="btn btn-primary" href="{% if item.continue_lesson %}{{ item.continue_lesson.get_absolute_url }}{% else %}{% url 'enrollments:course_detail' item.course.id %}{% endif %}">이어보기</a>
-                  <a class="btn btn-outline-secondary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
-                {% elif item.access and item.access.code == 'not_started' %}
-                  <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
-                {% elif item.enrollment and item.enrollment.status == 'requested' %}
-                  <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
-                  <button class="btn btn-outline-secondary" type="button" disabled>승인 대기 중</button>
-                {% else %}
-                  <a class="btn btn-outline-primary" href="{{ item.course.get_absolute_url }}">상세 보기</a>
-                  <form method="post" action="{% url 'courses:apply' item.course.slug %}">
-                    {% csrf_token %}
-                    <button class="btn btn-primary w-100" type="submit">{% if item.course.is_free %}무료 수강 신청{% else %}수강 신청{% endif %}</button>
-                  </form>
-                {% endif %}
-              {% else %}
-                <a class="btn btn-primary" href="{% url 'accounts:login' %}?next={{ item.course.get_absolute_url|urlencode }}">로그인 후 신청</a>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </div>
+      {% include "core/_home_program_card.html" with course=item.course catalog_page=True only %}
     {% endfor %}
   </div>
 {% else %}

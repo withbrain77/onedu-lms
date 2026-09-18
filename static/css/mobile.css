@@ -1,4 +1,25 @@
 .mobile-bottom-nav, .mobile-classroom-shortcut { display: none; }
+/* The home and catalog share one compact discovery card. */
+.catalog-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.catalog-card { grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); }
+.catalog-card .portal-program-media, .catalog-card .portal-program-placeholder { min-height: 180px; }
+.catalog-card .portal-program-body { padding: 1rem; gap: .65rem; }
+.catalog-card .catalog-card-title { color: var(--onedu-ink); font-size: 1.25rem; font-weight: 900; line-height: 1.35; margin: 0; overflow-wrap: anywhere; }
+.catalog-card .portal-program-body > p { -webkit-line-clamp: 2; margin: 0; overflow-wrap: anywhere; }
+.catalog-card .portal-program-meta { margin: .2rem 0; gap: .35rem; }
+.catalog-card .portal-program-meta > div { align-items: start; gap: .75rem; }
+.catalog-card .portal-program-meta dt { flex-shrink: 0; }
+.catalog-card .portal-program-meta dd { min-width: 0; overflow-wrap: anywhere; }
+.course-share-box { margin-top: 1rem; }
+@media (min-width: 1200px) {
+  .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 575px) {
+  .catalog-card { grid-template-columns: minmax(0, 1fr); }
+  .catalog-card .portal-program-media { height: clamp(120px, 40vw, 180px); min-height: 0; }
+  .catalog-card .portal-program-placeholder { min-height: 0; padding: 1rem; }
+  .catalog-card .portal-program-placeholder strong { font-size: 1.2rem; }
+}
 .brand-bulb { object-fit: contain; flex-shrink: 0; }
 .academy-brand-name { font-size: 1rem; line-height: 1.3; }
 .academy-brand-name > span { display: block; }

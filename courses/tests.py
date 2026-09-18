@@ -52,6 +52,11 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(response, 'course_thumbnails/test-thumb.png')
         self.assertContains(response, '세미나 안내')
         self.assertContains(response, reverse('accounts:login'))
+        self.assertContains(response, '30,000원')
+        self.assertContains(response, '운영자 확인 후 승인')
+        self.assertNotContains(response, '남은 기간')
+        self.assertNotContains(response, '진도율')
+        self.assertNotContains(response, '미완료')
 
     def test_paid_course_detail_shows_deposit_notice_to_logged_in_student(self):
         self.login_student()
@@ -176,7 +181,7 @@ class MVPFlowViewTests(TestCase):
         apply_response = self.client.post(reverse('courses:apply', kwargs={'slug': invite_course.slug}))
 
         self.assertContains(list_response, 'Invite Only Free Program')
-        self.assertContains(list_response, '초대됨')
+        self.assertContains(list_response, '초대 전용')
         self.assertEqual(detail_response.status_code, 200)
         enrollment = Enrollment.objects.get(user=self.student, course=invite_course)
         self.assertEqual(enrollment.status, Enrollment.Status.APPROVED)
@@ -231,10 +236,13 @@ class MVPFlowViewTests(TestCase):
         response = self.client.get(reverse('courses:list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.course.title)
-        self.assertContains(response, '이용료')
-        self.assertContains(response, '30,000원')
-        self.assertContains(response, '운영자 확인 후 승인')
-        self.assertContains(response, '수강 신청')
+        self.assertContains(response, '영상 차시')
+        self.assertContains(response, '수강 기간')
+        self.assertContains(response, '상세 보기')
+        self.assertNotContains(response, '이용료')
+        self.assertNotContains(response, '진도율')
+        self.assertNotContains(response, '남은 기간')
+        self.assertNotContains(response, f'action="{reverse("courses:apply", args=[self.course.slug])}"')
 
     def test_course_list_classroom_cta_is_visible_for_students(self):
         self.login_student()
@@ -266,8 +274,9 @@ class MVPFlowViewTests(TestCase):
         course_list = self.client.get(reverse('courses:list'))
         self.assertContains(course_list, self.course.get_absolute_url())
         self.assertContains(course_list, '상세 보기')
-        self.assertContains(course_list, '승인 대기 중')
-        self.assertContains(course_list, '입금 대기')
+        self.assertNotContains(course_list, '승인 대기 중')
+        self.assertNotContains(course_list, '입금 대기')
+        self.assertContains(classroom, '입금 대기')
 
     @override_settings(
         EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
@@ -479,7 +488,9 @@ class MVPFlowViewTests(TestCase):
         detail_response = self.client.get(free_course.get_absolute_url())
 
         self.assertContains(list_response, '무료')
-        self.assertContains(list_response, '신청 즉시 수강 가능')
+        self.assertContains(list_response, '신청 즉시 30일')
+        self.assertNotContains(list_response, '승인 방식')
+        self.assertContains(detail_response, '신청 즉시 수강 가능')
         self.assertContains(detail_response, '무료 프로그램입니다.')
         self.assertContains(detail_response, '무료 수강 신청')
         self.assertNotContains(detail_response, '700101-01-323177')

@@ -80,7 +80,7 @@
       let count = 0;
       items.forEach(function (item) {
         const matched = item.dataset.title.normalize('NFC').toLocaleLowerCase().includes(value)
-          && (!incomplete.checked || item.dataset.completed !== 'true');
+          && (!incomplete || !incomplete.checked || item.dataset.completed !== 'true');
         item.hidden = !matched;
         if (matched) count += 1;
       });
@@ -88,7 +88,7 @@
       list.querySelector('[data-filter-empty]').hidden = count !== 0 || items.length === 0;
     }
     query.addEventListener('input', filter);
-    incomplete.addEventListener('change', filter);
+    if (incomplete) incomplete.addEventListener('change', filter);
     window.addEventListener('onedu:progress-save', function (event) {
       const video = document.getElementById('lessonVideo');
       if (!video || event.detail.key !== video.dataset.progressKey || event.detail.state !== 'saved') return;
