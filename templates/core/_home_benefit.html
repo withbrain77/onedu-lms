@@ -1,0 +1,11 @@
+{% load static %}
+<button class="portal-benefit" type="button" aria-label="{{ title }}" aria-describedby="benefit-{{ icon }}" aria-pressed="false">
+  <span class="benefit-face benefit-front" aria-hidden="true">
+    <span class="portal-mini-icon"><svg class="portal-svg-icon" focusable="false"><use href="{% static 'img/home-icons.svg' %}#icon-{{ icon }}"></use></svg></span>
+    <strong>{{ title }}</strong>
+  </span>
+  <span class="benefit-face benefit-back" aria-hidden="true">
+    <span class="portal-mini-icon"><svg class="portal-svg-icon" focusable="false"><use href="{% static 'img/home-icons.svg' %}#icon-{{ icon }}"></use></svg></span>
+    <span class="benefit-description" id="benefit-{{ icon }}">{{ description }}</span>
+  </span>
+</button>

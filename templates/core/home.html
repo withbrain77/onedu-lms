@@ -236,50 +236,10 @@
   </section>
 
   <section class="portal-shell portal-benefit-strip" aria-label="운영 장점">
-    <details class="portal-benefit">
-      <summary>
-      <span class="portal-mini-icon" aria-hidden="true">
-        <svg class="portal-svg-icon" focusable="false"><use href="{% static 'img/home-icons.svg' %}#icon-lock"></use></svg>
-      </span>
-      <strong>안전한 학습 환경</strong>
-      <span class="benefit-teaser">수강 권한과 이용 기간에 맞춘 학습 공간</span>
-      <span class="benefit-hint">자세히 보기</span>
-      </summary>
-      <p>수강 권한과 이용 기간을 확인해 콘텐츠를 제공합니다. 개인 학습 기록은 다른 수강생에게 공개되지 않습니다.</p>
-    </details>
-    <details class="portal-benefit">
-      <summary>
-      <span class="portal-mini-icon" aria-hidden="true">
-        <svg class="portal-svg-icon" focusable="false"><use href="{% static 'img/home-icons.svg' %}#icon-devices"></use></svg>
-      </span>
-      <strong>어디서나 학습</strong>
-      <span class="benefit-teaser">PC와 모바일에서 이어가는 학습</span>
-      <span class="benefit-hint">자세히 보기</span>
-      </summary>
-      <p>PC와 스마트폰에서 저장된 위치부터 이어 보세요. 홈 화면 바로가기로 내 강의실에 편리하게 접속할 수 있습니다.</p>
-    </details>
-    <details class="portal-benefit">
-      <summary>
-      <span class="portal-mini-icon" aria-hidden="true">
-        <svg class="portal-svg-icon" focusable="false"><use href="{% static 'img/home-icons.svg' %}#icon-chart"></use></svg>
-      </span>
-      <strong>학습 현황 관리</strong>
-      <span class="benefit-teaser">진도와 남은 수강 기간을 한눈에 확인</span>
-      <span class="benefit-hint">자세히 보기</span>
-      </summary>
-      <p>진도와 남은 수강 기간을 한눈에 확인하세요. 과정별 시험·수료 현황 확인과 발급된 수료증 다운로드도 지원합니다.</p>
-    </details>
-    <details class="portal-benefit">
-      <summary>
-      <span class="portal-mini-icon" aria-hidden="true">
-        <svg class="portal-svg-icon" focusable="false"><use href="{% static 'img/home-icons.svg' %}#icon-verified"></use></svg>
-      </span>
-      <strong>신뢰할 수 있는 콘텐츠</strong>
-      <span class="benefit-teaser">위드브레인연구소가 제공하는 교육 콘텐츠</span>
-      <span class="benefit-hint">자세히 보기</span>
-      </summary>
-      <p>위드브레인연구소의 교육·세미나 영상을 제공합니다. 강의 구성을 미리 살펴보고 과정별 학습 자료도 활용하세요.</p>
-    </details>
+    {% include "core/_home_benefit.html" with icon="lock" title="안전한 학습 환경" description="수강 권한과 이용 기간을 확인해 콘텐츠를 제공합니다. 개인 학습 기록은 다른 수강생에게 공개되지 않습니다." only %}
+    {% include "core/_home_benefit.html" with icon="devices" title="어디서나 학습" description="PC와 스마트폰에서 저장된 위치부터 이어 보세요. 홈 화면 바로가기로 내 강의실에 편리하게 접속할 수 있습니다." only %}
+    {% include "core/_home_benefit.html" with icon="chart" title="학습 현황 관리" description="진도와 남은 수강 기간을 한눈에 확인하세요. 과정별 시험·수료 현황 확인과 발급된 수료증 다운로드도 지원합니다." only %}
+    {% include "core/_home_benefit.html" with icon="verified" title="신뢰할 수 있는 콘텐츠" description="위드브레인연구소의 교육·세미나 영상을 제공합니다. 강의 구성을 미리 살펴보고 과정별 학습 자료도 활용하세요." only %}
   </section>
 
   <footer class="portal-footer">

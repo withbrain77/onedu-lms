@@ -43,25 +43,36 @@ async function layoutIssues(page) {
   });
 }
 
-test('home benefits open on touch and keyboard; account copy reports success and failure', async ({page, browser}) => {
+test('home benefits crossfade in place on touch, keyboard and hover; account copy reports success and failure', async ({page, browser}) => {
   await page.goto('/');
   const benefit = page.locator('.portal-benefit').first();
-  await benefit.locator('summary').tap();
-  await expect(benefit.locator('p')).toBeVisible();
+  const before = await benefit.boundingBox();
+  await benefit.tap();
+  await expect(benefit).toHaveAttribute('aria-pressed', 'true');
+  await expect(benefit.locator('.benefit-back')).toHaveCSS('opacity', '1');
+  expect((await benefit.boundingBox()).height).toBe(before.height);
   expect(await layoutIssues(page)).toEqual([]);
-  await benefit.locator('summary').press('Escape');
-  await expect(benefit).not.toHaveAttribute('open');
-  await benefit.locator('summary').press('Enter');
-  await expect(benefit.locator('p')).toBeVisible();
+  await benefit.press('Escape');
+  await expect(benefit).toHaveAttribute('aria-pressed', 'false');
+  await benefit.press('Enter');
+  await expect(benefit.locator('.benefit-back')).toHaveCSS('opacity', '1');
+  await benefit.tap();
+  await expect(benefit.locator('.benefit-front')).toHaveCSS('opacity', '1');
   const desktop = await browser.newContext({viewport: {width: 1280, height: 900}, isMobile: false, hasTouch: false});
   try {
     const mousePage = await desktop.newPage();
     await mousePage.goto('http://127.0.0.1:8766/');
     const card = mousePage.locator('.portal-benefit').first();
+    const originalHeight = (await card.boundingBox()).height;
     await card.hover();
-    await expect(card.locator('p')).toBeVisible();
+    await expect(card.locator('.benefit-back')).toHaveCSS('opacity', '1');
+    await expect(card.locator('.benefit-front')).toHaveCSS('opacity', '0');
+    expect((await card.boundingBox()).height).toBe(originalHeight);
+    expect(await card.locator('.benefit-back').evaluate(el => parseFloat(getComputedStyle(el).transitionDuration))).toBeGreaterThan(0);
     await mousePage.mouse.move(0, 0);
-    await expect(card).not.toHaveAttribute('open');
+    await expect(card.locator('.benefit-front')).toHaveCSS('opacity', '1');
+    await mousePage.emulateMedia({reducedMotion: 'reduce'});
+    await expect(card.locator('.benefit-back')).toHaveCSS('transition-duration', '0s');
   } finally { await desktop.close(); }
   await login(page, 'student');
   await page.goto('/courses/browser-paid/');

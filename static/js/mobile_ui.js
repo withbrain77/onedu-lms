@@ -29,25 +29,23 @@
   });
 
   document.querySelectorAll('.portal-benefit').forEach(function (card) {
-    let openedByHover = false;
-    card.addEventListener('toggle', function () {
-      card.querySelector('.benefit-hint').textContent = card.open ? '설명 접기' : '자세히 보기';
-    });
+    let pointerType = '';
+    function reveal(value) { card.setAttribute('aria-pressed', String(value)); }
+    card.dataset.ready = 'true';
     card.addEventListener('pointerenter', function (event) {
-      if (event.pointerType !== 'mouse' || !window.matchMedia('(hover: hover)').matches || card.open) return;
-      card.open = true;
-      openedByHover = true;
+      if (event.pointerType === 'mouse' && window.matchMedia('(hover: hover)').matches) reveal(true);
     });
-    card.addEventListener('pointerleave', function () {
-      if (openedByHover && !card.contains(document.activeElement)) card.open = false;
-      openedByHover = false;
+    card.addEventListener('pointerleave', function (event) {
+      if (event.pointerType === 'mouse') reveal(false);
+    });
+    card.addEventListener('pointerdown', function (event) { pointerType = event.pointerType; });
+    card.addEventListener('click', function (event) {
+      // A mouse click during hover keeps the description visible; touch and
+      // native keyboard clicks toggle the two faces.
+      if (event.detail === 0 || pointerType !== 'mouse') reveal(card.getAttribute('aria-pressed') !== 'true');
     });
     card.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') {
-        card.open = false;
-        openedByHover = false;
-        card.querySelector('summary').focus({preventScroll: true});
-      }
+      if (event.key === 'Escape') reveal(false);
     });
   });
 

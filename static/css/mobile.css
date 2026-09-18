@@ -1,11 +1,18 @@
 .mobile-bottom-nav, .mobile-classroom-shortcut { display: none; }
-.portal-benefit { overflow-wrap: anywhere; }
-.portal-benefit summary { cursor: pointer; list-style: none; border-radius: 8px; }
-.portal-benefit summary::-webkit-details-marker { display: none; }
-.portal-benefit summary:focus-visible { outline: 3px solid var(--onedu-primary, #08756f); outline-offset: 5px; }
-.portal-benefit .benefit-teaser { display: block; color: #586b7d; margin-top: .5rem; }
-.portal-benefit .benefit-hint { display: inline-block; color: #08756f; font-size: .8rem; margin-top: .5rem; text-decoration: underline; }
-.portal-benefit-strip .portal-benefit > p { margin: .85rem 0 0; padding-top: .85rem; border-top: 1px solid #dbe9eb; line-height: 1.65; text-align: left; }
+.portal-benefit-strip > .portal-benefit { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-height: 9rem; padding: 1rem; font: inherit; color: inherit; cursor: pointer; overflow-wrap: anywhere; appearance: none; }
+.portal-benefit:focus-visible { outline: 3px solid #08756f; outline-offset: 3px; }
+.benefit-face { grid-area: 1 / 1; min-width: 0; align-self: center; transition: opacity 320ms ease, transform 320ms ease; pointer-events: none; }
+.benefit-front { opacity: 1; transform: translateY(0); }
+.benefit-back { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: .7rem; text-align: left; opacity: 0; transform: translateY(6px); }
+.portal-benefit-strip .benefit-back .portal-mini-icon { width: 42px; height: 42px; margin: 0; }
+.benefit-description { color: var(--onedu-muted); font-size: .83rem; line-height: 1.65; }
+.portal-benefit[aria-pressed="true"] .benefit-front,
+.portal-benefit:not([data-ready]) .benefit-front { opacity: 0; transform: translateY(-6px); }
+.portal-benefit[aria-pressed="true"] .benefit-back,
+.portal-benefit:not([data-ready]) .benefit-back { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .portal-benefit-strip > .portal-benefit, .benefit-face { transition: none; }
+}
 /* The home and catalog share one compact discovery card. */
 .catalog-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .catalog-card { grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); }
