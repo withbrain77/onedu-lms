@@ -45,7 +45,6 @@ class VideoProtectionAndWatermarkTests(TestCase):
         text = PdfReader(BytesIO(self.response_body(response))).pages[0].extract_text()
         self.assertIn(self.student.display_name, text)
         self.assertContains(self.client.get(self.watch_url), attachment.get_view_url())
-        response.close()
 
     def test_pdf_preview_enforces_enrollment_and_publication(self):
         attachment = self.create_attachment()
@@ -137,6 +136,8 @@ class VideoProtectionAndWatermarkTests(TestCase):
 
     def response_body(self, response):
         if getattr(response, 'streaming', False):
+            # Django's client wrapper closes the file while preserving the
+            # TestCase transaction. Calling response.close() again breaks PG.
             return b''.join(response.streaming_content)
         return response.content
 
@@ -211,7 +212,7 @@ class VideoProtectionAndWatermarkTests(TestCase):
                 lesson_title=self.lesson.title,
             ).exists()
         )
-        file_response.close()
+        self.assertEqual(self.response_body(file_response), b'test video bytes')
 
     def test_lesson_access_log_marks_recent_other_environment_as_suspicious(self):
         self.approve()
@@ -320,7 +321,7 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertEqual(download.filename, '강의자료.pdf')
         self.assertEqual(download.ip_address, '203.0.113.21')
         self.assertEqual(download.device_summary, 'Windows PC / Chrome')
-        response.close()
+        self.assertTrue(self.response_body(response).startswith(b'%PDF-'))
 
     @override_settings(USE_X_ACCEL_REDIRECT=True, X_ACCEL_REDIRECT_PREFIX='/protected-media/')
     def test_non_pdf_attachment_download_uses_x_accel_redirect_when_enabled(self):
@@ -355,7 +356,6 @@ class VideoProtectionAndWatermarkTests(TestCase):
         self.assertIn('WITHBRAIN', text)
         self.assertIn('Student One', text)
         self.assertIn('ONEDU LMS', text)
-        response.close()
 
     def test_requested_student_cannot_download_lesson_attachment(self):
         attachment = self.create_attachment()

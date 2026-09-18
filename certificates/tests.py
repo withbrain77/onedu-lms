@@ -184,7 +184,9 @@ class CompletionAndCertificateTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
-        response.close()
+        # The client stream wrapper closes files without closing the surrounding
+        # PostgreSQL TestCase transaction; do not close the response a second time.
+        self.assertTrue(b''.join(response.streaming_content).startswith(b'%PDF-'))
 
     def test_certificate_pdf_uses_uploaded_private_design_assets(self):
         enrollment = self.enrollment()
