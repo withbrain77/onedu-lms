@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import django
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
@@ -24,6 +25,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        self.stdout.write(f'Django version: {django.get_version()}')
         warnings = []
         errors = []
         now = timezone.now()

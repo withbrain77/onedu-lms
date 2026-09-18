@@ -46,7 +46,7 @@ def _student_account_status_badge(user):
     if not user:
         return '-'
     if not user.is_active:
-        return format_html('<span class="onedu-admin-badge is-danger">비활성</span>')
+        return format_html('<span class="onedu-admin-badge is-danger">{}</span>', '비활성')
 
     withdrawal_request = (
         AccountWithdrawalRequest.objects
@@ -55,10 +55,10 @@ def _student_account_status_badge(user):
         .first()
     )
     if not withdrawal_request:
-        return format_html('<span class="onedu-admin-badge is-success">정상</span>')
+        return format_html('<span class="onedu-admin-badge is-success">{}</span>', '정상')
     if withdrawal_request.status == AccountWithdrawalRequest.Status.COMPLETED:
-        return format_html('<span class="onedu-admin-badge is-danger">탈퇴 완료</span>')
-    return format_html('<span class="onedu-admin-badge is-warning">탈퇴 요청</span>')
+        return format_html('<span class="onedu-admin-badge is-danger">{}</span>', '탈퇴 완료')
+    return format_html('<span class="onedu-admin-badge is-warning">{}</span>', '탈퇴 요청')
 
 
 class EnrollmentAdminForm(forms.ModelForm):

@@ -1,4 +1,4 @@
-Django>=4.2,<5.0
+Django==5.2.17
 celery[redis]>=5.4,<6.0
 dj-database-url>=2.2,<3.0
 gunicorn>=22.0,<23.0

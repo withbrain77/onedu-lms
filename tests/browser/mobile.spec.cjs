@@ -16,6 +16,14 @@ async function layoutIssues(page) {
   return page.evaluate(() => {
     const issues = [];
     if (document.documentElement.scrollWidth > innerWidth + 1) issues.push('Document overflows');
+    const header = document.querySelector('body.onedu-admin-workspace #header');
+    if (header && header.getBoundingClientRect().height) {
+      const boundary = header.getBoundingClientRect();
+      for (const child of header.querySelectorAll('#site-name, #user-tools')) {
+        const rect = child.getBoundingClientRect();
+        if (rect.bottom > boundary.bottom + 2 || rect.right > innerWidth + 2) issues.push('Admin header clipped: ' + child.id);
+      }
+    }
     const cards = document.querySelector('#result_list.onedu-card-list');
     if (cards && cards.closest('.results').scrollWidth > cards.closest('.results').clientWidth + 1) issues.push('Card view requires horizontal scrolling');
     const root = document.querySelector('main') || document.querySelector('#content');
@@ -173,7 +181,7 @@ test('permission chooser changes are protected and touchable', async ({page}) =>
   test.setTimeout(30000);
   await login(page, 'admin');
   await page.goto('/admin/auth/group/add/');
-  const chooser = page.locator('#id_permissions_add_link');
+  const chooser = page.locator('.selector-chooser .selector-add');
   const box = await chooser.boundingBox();
   expect(box.width).toBeGreaterThanOrEqual(44);
   expect(box.height).toBeGreaterThanOrEqual(44);

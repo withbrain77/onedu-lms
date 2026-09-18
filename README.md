@@ -22,6 +22,23 @@
 - Optional interaction: HTMX 또는 Vanilla JavaScript
 - Deployment: Docker Compose on Synology NAS
 
+## 개발 및 검증 환경
+
+운영 서버와 검증 환경은 Python 3.12, Django 5.2 LTS를 사용한다.
+배포 버전은 `requirements.txt`에 고정하며, Python 3.8 환경은 지원하지 않는다.
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python manage.py test --noinput
+npm ci
+npx playwright install chromium webkit
+npm run test:mobile
+```
+
+버전 전환 검증 및 복구 절차: [Django 5.2 전환 기록](docs/19-django52-upgrade.md).
+
 ## 설계 문서
 
 - [전체 아키텍처](docs/01-architecture.md)

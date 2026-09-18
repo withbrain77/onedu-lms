@@ -2,6 +2,8 @@
    turns the workspace into a flex row, even on phones. */
 body.onedu-admin-login { padding: 0; }
 body.onedu-admin-login #container { box-sizing: border-box; margin: 0; max-width: none; }
+body.onedu-admin-workspace #header { flex-shrink: 0; }
+body.onedu-admin-workspace #logout-form button { font-size: inherit; line-height: inherit; }
 body.onedu-admin-workspace #container > .main {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
@@ -21,6 +23,10 @@ body.onedu-admin-workspace #content h1,
 body.onedu-admin-workspace #content h2,
 .onedu-admin-activity p,
 .onedu-admin-activity p > * { overflow-wrap: anywhere; min-width: 0; }
+/* Django 5.2 wraps password hashes in bdi elements inside a read-only widget. */
+.aligned .field-password #id_password,
+.aligned .field-password #id_password p,
+.aligned .field-password #id_password bdi { overflow-wrap: anywhere; min-width: 0; max-width: 100%; }
 /* Keep metadata out of the badge column: its text used to widen that column
    until names and document titles had almost no space left. */
 .onedu-admin-ops-list > a {
@@ -207,7 +213,7 @@ body.onedu-admin-workspace #content h2,
   .related-widget-wrapper > a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
   .selector ul.selector-chooser { width: auto; display: flex; flex-wrap: wrap; gap: 8px; }
   .selector ul.selector-chooser li { padding: 0; }
-  .selector-chooser a.selector-add, .selector-chooser a.selector-remove { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; background: none; text-indent: 0; font-size: 0; border: 1px solid #9acac6; border-radius: 8px; }
+  .selector-chooser .selector-add, .selector-chooser .selector-remove { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; padding: 0; background: none; text-indent: 0; font-size: 0; border: 1px solid #9acac6; border-radius: 8px; }
   .selector-chooser .selector-add::before { content: '↓'; font-size: 22px; }
   .selector-chooser .selector-remove::before { content: '↑'; font-size: 22px; }
 }

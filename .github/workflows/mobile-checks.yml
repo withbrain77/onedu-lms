@@ -3,6 +3,52 @@ on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
+  upgrade-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: onedu_upgrade
+          POSTGRES_USER: rehearsal
+          POSTGRES_PASSWORD: isolated-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rehearsal -d onedu_upgrade"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      UPGRADE_TEST_DATABASE_URL: postgres://rehearsal:isolated-ci-only@127.0.0.1:5432/onedu_upgrade
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: sudo apt-get install -y fonts-nanum
+      - name: Create representative data with Django 4.2
+        run: |
+          pip install Django==4.2.30
+          python tests/upgrade/rehearse.py baseline
+      - name: Verify intermediate versions against the same database
+        run: |
+          pip install 'Django>=5.0,<5.1'
+          python -Wa tests/upgrade/rehearse.py verify
+          pip install 'Django>=5.1,<5.2'
+          python -Wa tests/upgrade/rehearse.py verify
+      - name: Verify the target version and PostgreSQL behavior
+        run: |
+          pip install -r requirements.txt
+          python -Wa tests/upgrade/rehearse.py verify
+          python manage.py makemigrations --check --dry-run --settings=config.upgrade_test_settings
+          python -Wa manage.py test --noinput --settings=config.upgrade_test_settings
+      - name: Verify rollback without restoring old data
+        run: |
+          pip install Django==4.2.30
+          python tests/upgrade/rehearse.py verify
+          pip install -r requirements.txt
+          python tests/upgrade/rehearse.py verify
   mobile:
     runs-on: ubuntu-latest
     timeout-minutes: 30

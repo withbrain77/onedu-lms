@@ -106,6 +106,16 @@ function Test-MobileLayout {
         throw "Commit tracked source changes before running deployment checks."
     }
     Require-Command "npm.cmd"
+    Require-Command "python"
+    $djangoRequirement = Select-String -Path "requirements.txt" -Pattern '^Django==([^\s]+)$'
+    if (-not $djangoRequirement) {
+        throw "Pin Django to an exact version before deployment."
+    }
+    $expectedDjango = $djangoRequirement.Matches[0].Groups[1].Value
+    $installedDjango = & python -c "import django; print(django.get_version())"
+    if ($LASTEXITCODE -ne 0 -or "$installedDjango".Trim() -ne $expectedDjango) {
+        throw "Activate the Python 3.12 test environment with Django $expectedDjango before deployment."
+    }
     Write-Host "Checking mobile layouts before deployment..." -ForegroundColor Cyan
     Invoke-Native "npm.cmd" @("run", "test:mobile")
 }
