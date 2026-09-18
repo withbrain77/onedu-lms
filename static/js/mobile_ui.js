@@ -1,5 +1,56 @@
 (function () {
   'use strict';
+  document.querySelectorAll('[data-copy-account]').forEach(function (button) {
+    const account = button.dataset.copyAccount.trim();
+    if (!account) return;
+    button.hidden = false;
+    button.addEventListener('click', async function () {
+      const status = button.closest('.deposit-notice').querySelector('[data-copy-status]');
+      let copied = false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(account);
+          copied = true;
+        }
+      } catch (error) { /* Try the selection-based fallback. */ }
+      if (!copied) {
+        const input = document.createElement('textarea');
+        input.value = account;
+        input.readOnly = true;
+        input.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.append(input);
+        input.select();
+        try { copied = document.execCommand('copy'); } catch (error) { copied = false; }
+        input.remove();
+        button.focus({preventScroll: true});
+      }
+      status.textContent = copied ? '계좌번호가 복사되었습니다.' : '복사하지 못했습니다. 위 계좌번호를 길게 눌러 직접 복사해 주세요.';
+    });
+  });
+
+  document.querySelectorAll('.portal-benefit').forEach(function (card) {
+    let openedByHover = false;
+    card.addEventListener('toggle', function () {
+      card.querySelector('.benefit-hint').textContent = card.open ? '설명 접기' : '자세히 보기';
+    });
+    card.addEventListener('pointerenter', function (event) {
+      if (event.pointerType !== 'mouse' || !window.matchMedia('(hover: hover)').matches || card.open) return;
+      card.open = true;
+      openedByHover = true;
+    });
+    card.addEventListener('pointerleave', function () {
+      if (openedByHover && !card.contains(document.activeElement)) card.open = false;
+      openedByHover = false;
+    });
+    card.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        card.open = false;
+        openedByHover = false;
+        card.querySelector('summary').focus({preventScroll: true});
+      }
+    });
+  });
+
   const bottomNav = document.querySelector('.mobile-bottom-nav');
   if (bottomNav) {
     function updateNavHeight() {

@@ -14,6 +14,29 @@ from enrollments.models import EmailDeliveryLog, Enrollment
 from lessons.models import Lesson
 
 
+class CourseVideoTimeTests(TestCase):
+    def test_total_is_hidden_until_every_public_lesson_has_a_duration(self):
+        course = Course.objects.create(title='영상 시간 확인')
+        self.assertEqual(course.total_video_time_label, '')
+        Lesson.objects.create(course=course, title='첫 차시', order=1, duration_seconds=3599)
+        pending = Lesson.objects.create(course=course, title='미등록 길이', order=2)
+        self.assertEqual(course.total_video_time_label, '')
+        pending.duration_seconds = 2
+        pending.save()
+        Lesson.objects.create(course=course, title='비공개', order=3, is_public=False)
+        self.assertEqual(course.total_video_time_label, '약 1시간 1분')
+        response = self.client.get(course.get_absolute_url())
+        self.assertContains(response, '약 1시간 1분')
+
+    def test_prefetched_totals_do_not_query_per_card(self):
+        course = Course.objects.create(title='한 시간')
+        Lesson.objects.create(course=course, title='첫 차시', duration_seconds=3600)
+        course = Course.objects.prefetch_related('lessons').get(pk=course.pk)
+        with self.assertNumQueries(0):
+            self.assertEqual(course.lesson_count, 1)
+            self.assertEqual(course.total_video_time_label, '약 1시간')
+
+
 class MVPFlowViewTests(TestCase):
     def setUp(self):
         self.today = timezone.localdate()
@@ -50,7 +73,7 @@ class MVPFlowViewTests(TestCase):
         self.assertContains(response, 'course-detail-intro')
         self.assertContains(response, 'course-detail-thumb')
         self.assertContains(response, 'course_thumbnails/test-thumb.png')
-        self.assertContains(response, '세미나 안내')
+        self.assertContains(response, '강의 소개')
         self.assertContains(response, reverse('accounts:login'))
         self.assertContains(response, '30,000원')
         self.assertContains(response, '운영자 확인 후 승인')

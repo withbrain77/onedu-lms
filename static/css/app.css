@@ -3107,7 +3107,7 @@ body {
   padding: 1rem;
 }
 
-.portal-benefit-strip div {
+.portal-benefit-strip > details {
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(8, 117, 111, 0.1);
   border-radius: 14px;
@@ -3117,7 +3117,7 @@ body {
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
-.portal-benefit-strip div:hover {
+.portal-benefit-strip > details:hover {
   border-color: rgba(8, 117, 111, 0.26);
   box-shadow: 0 18px 34px rgba(6, 27, 42, 0.08);
   transform: translateY(-2px);

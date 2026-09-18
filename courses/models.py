@@ -81,7 +81,21 @@ class Course(models.Model):
 
     @property
     def lesson_count(self):
-        return self.lessons.filter(is_public=True).count()
+        return len(self.public_lessons)
+
+    @property
+    def public_lessons(self):
+        return [lesson for lesson in self.lessons.all() if lesson.is_public]
+
+    @property
+    def total_video_time_label(self):
+        lessons = self.public_lessons
+        if not lessons or any(not lesson.duration_seconds for lesson in lessons):
+            return ''
+        # Round up only after summing, and do not present incomplete totals.
+        minutes = (sum(lesson.duration_seconds for lesson in lessons) + 59) // 60
+        hours, minutes = divmod(minutes, 60)
+        return '약 ' + ' '.join(part for part in [f'{hours}시간' if hours else '', f'{minutes}분' if minutes else ''] if part)
 
     @property
     def is_free(self):

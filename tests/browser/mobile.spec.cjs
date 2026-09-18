@@ -43,6 +43,43 @@ async function layoutIssues(page) {
   });
 }
 
+test('home benefits open on touch and keyboard; account copy reports success and failure', async ({page, browser}) => {
+  await page.goto('/');
+  const benefit = page.locator('.portal-benefit').first();
+  await benefit.locator('summary').tap();
+  await expect(benefit.locator('p')).toBeVisible();
+  expect(await layoutIssues(page)).toEqual([]);
+  await benefit.locator('summary').press('Escape');
+  await expect(benefit).not.toHaveAttribute('open');
+  await benefit.locator('summary').press('Enter');
+  await expect(benefit.locator('p')).toBeVisible();
+  const desktop = await browser.newContext({viewport: {width: 1280, height: 900}, isMobile: false, hasTouch: false});
+  try {
+    const mousePage = await desktop.newPage();
+    await mousePage.goto('http://127.0.0.1:8766/');
+    const card = mousePage.locator('.portal-benefit').first();
+    await card.hover();
+    await expect(card.locator('p')).toBeVisible();
+    await mousePage.mouse.move(0, 0);
+    await expect(card).not.toHaveAttribute('open');
+  } finally { await desktop.close(); }
+  await login(page, 'student');
+  await page.goto('/courses/browser-paid/');
+  const copy = page.locator('[data-copy-account]');
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {configurable: true, value: {writeText: async text => {window.copiedAccount = text;}}}));
+  await copy.click();
+  await expect(page.locator('[data-copy-status]')).toHaveText('계좌번호가 복사되었습니다.');
+  expect(await page.evaluate(() => window.copiedAccount)).toBe(await copy.getAttribute('data-copy-account'));
+  await page.evaluate(() => {
+    navigator.clipboard.writeText = async () => {throw Error('Denied');};
+    document.execCommand = () => false;
+  });
+  await copy.click();
+  await expect(page.locator('[data-copy-status]')).toContainText('복사하지 못했습니다.');
+  await expect(copy).toBeFocused();
+  expect(await layoutIssues(page)).toEqual([]);
+});
+
 test('catalog leads through public conditions and login back to the classroom', async ({page}) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

@@ -15,6 +15,7 @@
     <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
     <dl class="portal-program-meta">
       <div><dt>영상 차시</dt><dd>{{ course.lesson_count }}개</dd></div>
+      {% with video_time=course.total_video_time_label %}{% if video_time %}<div><dt>총 영상 시간</dt><dd>{{ video_time }}</dd></div>{% endif %}{% endwith %}
       <div><dt>수강 기간</dt><dd>{{ course.access_period_label }}</dd></div>
     </dl>
     <div class="portal-program-actions">

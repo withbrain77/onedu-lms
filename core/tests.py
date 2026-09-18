@@ -35,7 +35,7 @@ class HomePageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '위드브레인연구소 아카데미')
-        self.assertContains(response, '승인된 수강생에게 교육 영상과 세미나 영상을 제공')
+        self.assertContains(response, '수강 신청 회원에게 과정별 이용 조건에 따라 교육 영상과 세미나 영상을 제공')
         self.assertContains(response, '제한 공개')
         self.assertContains(response, 'archive-console')
         self.assertContains(response, 'portal-category-card')

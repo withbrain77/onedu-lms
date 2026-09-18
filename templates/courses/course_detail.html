@@ -30,11 +30,11 @@
     {% endif %}
   </div>
   <div class="course-detail-guide">
-    <div class="learning-card-label">PROGRAM GUIDE</div>
-    <h2 id="courseIntroTitle">세미나 안내</h2>
+    <h2 id="courseIntroTitle">강의 소개</h2>
     <p>{{ course.description|default:"강의 설명이 아직 등록되지 않았습니다." }}</p>
     <dl class="course-detail-guide-meta">
       <div><dt>영상 차시</dt><dd>{{ lesson_items|length }}개</dd></div>
+      {% with video_time=course.total_video_time_label %}{% if video_time %}<div><dt>총 영상 시간</dt><dd>{{ video_time }}</dd></div>{% endif %}{% endwith %}
     </dl>
   </div>
 </section>
@@ -103,7 +103,6 @@
   <div class="col-12 col-lg-4 order-first order-lg-last">
     <div class="card shadow-sm sticky-lg-top detail-side-card learning-summary-card">
       <div class="card-body">
-        <div class="learning-card-label">ENROLLMENT GUIDE</div>
         <h2 class="h5 mb-3">수강 신청 안내</h2>
         <dl class="detail-meta">
           <div><dt>이용료</dt><dd>{{ course.price_label }}</dd></div>

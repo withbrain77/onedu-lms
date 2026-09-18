@@ -24,6 +24,8 @@ def seed(root):
         user.save()
     course, _ = Course.objects.get_or_create(slug='browser-layout', defaults={
         'title': '뇌과학과 학습 관리 심화 세미나 및 실무 적용 과정 2026 — 긴 제목 점검'})
+    Course.objects.get_or_create(slug='browser-paid', defaults={
+        'title': '입금 안내 확인 과정', 'pricing_type': 'paid', 'price_krw': 30000})
     lesson, _ = Lesson.objects.get_or_create(course=course, order=1, defaults={
         'title': '뇌과학 교육 프로그램의 실무 적용과 긴 차시 제목 화면 점검', 'duration_seconds': 600})
     today = timezone.localdate()

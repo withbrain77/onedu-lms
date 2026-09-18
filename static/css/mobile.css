@@ -1,4 +1,11 @@
 .mobile-bottom-nav, .mobile-classroom-shortcut { display: none; }
+.portal-benefit { overflow-wrap: anywhere; }
+.portal-benefit summary { cursor: pointer; list-style: none; border-radius: 8px; }
+.portal-benefit summary::-webkit-details-marker { display: none; }
+.portal-benefit summary:focus-visible { outline: 3px solid var(--onedu-primary, #08756f); outline-offset: 5px; }
+.portal-benefit .benefit-teaser { display: block; color: #586b7d; margin-top: .5rem; }
+.portal-benefit .benefit-hint { display: inline-block; color: #08756f; font-size: .8rem; margin-top: .5rem; text-decoration: underline; }
+.portal-benefit-strip .portal-benefit > p { margin: .85rem 0 0; padding-top: .85rem; border-top: 1px solid #dbe9eb; line-height: 1.65; text-align: left; }
 /* The home and catalog share one compact discovery card. */
 .catalog-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .catalog-card { grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); }
