@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}도움말·문의 | 위드브레인연구소 아카데미{% endblock %}
+{% block page_header %}
+<div class="page-header student-hero">
+  <h1>도움말·문의</h1>
+  <p>궁금한 항목을 선택해 해결 방법을 확인하세요.</p>
+</div>
+{% endblock %}
+{% block content %}
+<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="도움말 항목">
+  <a class="btn btn-outline-primary" href="#playback">영상 재생</a>
+  <a class="btn btn-outline-primary" href="#payment">입금·승인</a>
+  <a class="btn btn-outline-primary" href="#access">기간 만료·재수강</a>
+  <a class="btn btn-outline-primary" href="#progress">진도·수료</a>
+  <a class="btn btn-outline-primary" href="#account">로그인</a>
+  <a class="btn btn-outline-primary" href="#shortcut">홈 화면 바로가기</a>
+</nav>
+<div class="d-grid gap-3 help-topics">
+  <section id="playback" class="card"><div class="card-body">
+    <h2 class="h5">영상이 나오지 않거나 멈춰요</h2>
+    <ol class="mb-2">
+      <li>인터넷 연결을 확인한 뒤 재생 화면의 ‘다시 재생’을 눌러 주세요.</li>
+      <li>로그인이나 수강 기간 안내가 나오면 해당 안내에 따라 로그인 또는 수강 상태를 확인해 주세요.</li>
+      <li>카카오톡 안에서 보고 있다면 휴대폰의 Chrome 또는 Safari로 사이트를 열어 다시 시도해 주세요.</li>
+    </ol>
+    <p class="mb-0">계속 재생되지 않으면 강의명·차시명, 사용 기기와 브라우저, 오류 문구를 알려주세요.</p>
+  </div></section>
+  <section id="payment" class="card"><div class="card-body">
+    <h2 class="h5">신청하거나 입금했는데 아직 볼 수 없어요</h2>
+    <p>무료 강의는 신청 즉시 수강할 수 있습니다. 유료 강의는 신청 후 운영자의 입금 확인·승인과 수강 기간 배정이 필요합니다.</p>
+    <p>해당 강의의 입금 안내에서 금액과 입금자명을 확인하세요. ‘계좌번호 복사’를 누르면 은행 앱에 붙여넣을 수 있습니다. 복사만으로 입금이나 신청이 완료되지는 않습니다.</p>
+    <p class="mb-0">이미 입금했다면 다시 입금하지 마시고 <a href="{% url 'enrollments:classroom' %}">내 강의실</a>에서 상태를 확인해 주세요. 확인이 필요하면 강의명, 입금자명, 입금 일시·금액을 운영자에게 알려주세요.</p>
+  </div></section>
+  <section id="access" class="card"><div class="card-body">
+    <h2 class="h5">수강 기간이 끝났거나 강의가 보이지 않아요</h2>
+    <p>내 강의실에서 수강 시작일·종료일을 확인하세요. 시작 전에는 시작일까지 기다려 주세요. 초대 전용 강의는 초대받은 계정으로 로그인해야 목록에 표시됩니다.</p>
+    <p class="mb-0">기간이 끝난 무료 강의는 ‘무료 재수강 신청’을 누르면 별도 승인 없이 다시 이용할 수 있습니다. 새 수강 기간은 신청 화면의 안내를 확인하세요. 유료 강의는 ‘재수강 신청’ 후 운영자의 확인을 기다려 주세요.</p>
+  </div></section>
+  <section id="progress" class="card"><div class="card-body">
+    <h2 class="h5">진도가 반영되지 않거나 수료증이 보이지 않아요</h2>
+    <p>시청 중 진도는 주기적으로 저장됩니다. ‘연결되면 진도를 자동으로 다시 저장합니다’ 등의 안내가 보이면 인터넷 연결을 확인하고 저장 상태를 확인해 주세요.</p>
+    <p class="mb-0">내 강의실의 ‘수료 조건’에서 필요한 진도와 시험 조건을 확인하세요. 수료증을 제공하는 과정에서 조건 충족 후 발급되면 ‘수료증 다운로드’ 버튼이 표시됩니다. 영상이 끝났다는 사실만으로 수료가 확정되지는 않습니다.</p>
+  </div></section>
+  <section id="account" class="card"><div class="card-body">
+    <h2 class="h5">아이디·비밀번호가 기억나지 않아요</h2>
+    <p><a href="{% url 'accounts:find_username' %}">아이디 찾기</a> 또는 <a href="{% url 'accounts:password_reset' %}">비밀번호 재설정</a>을 이용하세요. 재설정 메일이 보이지 않으면 가입한 이메일 주소와 스팸함을 확인해 주세요.</p>
+    <p class="mb-0">새 아이디는 영문과 숫자를 모두 포함해 최대 20자로 만듭니다. 한글·공백·특수문자는 사용할 수 없습니다. ‘아이디 기억하기’는 로그인 상태 유지 기능이 아닙니다.</p>
+  </div></section>
+  <section id="shortcut" class="card"><div class="card-body">
+    <h2 class="h5">다음에 강의 사이트를 쉽게 열고 싶어요</h2>
+    <p>휴대폰 홈 화면에 전구 모양의 ‘위드브레인’ 아이콘을 추가하세요. 카카오톡 안에서는 추가가 제한될 수 있으니 휴대폰 브라우저에서 열어 주세요. 영상 시청에는 인터넷 연결이 필요합니다.</p>
+    <a class="btn btn-outline-primary" href="{% url 'install' %}">홈 화면에 추가하는 방법</a>
+  </div></section>
+</div>
+{% include "includes/support_contact.html" with support_page=True %}
+<div class="card mt-3"><div class="card-body d-flex flex-wrap gap-3 align-items-center justify-content-between">
+  <div><h2 class="h5">아카데미 이용 가이드</h2><p class="mb-0">회원가입부터 신청·시청·재수강까지 한 번에 확인하세요. 2026년 9월 21일 개정본.</p></div>
+  <a class="btn btn-primary" href="{% static 'docs/onedu-student-user-manual.pdf' %}?v=20260921" download="위드브레인_아카데미_이용_가이드.pdf">이용 가이드 PDF 다운로드</a>
+</div></div>
+{% endblock %}

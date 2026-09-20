@@ -43,6 +43,25 @@ async function layoutIssues(page) {
   });
 }
 
+test('help anchors, contact links and current PDF are reachable without login', async ({page}) => {
+  await page.goto('/help/');
+  await expect(page.getByRole('heading', {name: '도움말·문의', exact: true})).toBeVisible();
+  await page.getByRole('link', {name: '입금·승인', exact: true}).click();
+  await expect(page).toHaveURL(/#payment$/);
+  await expect(page.locator('#payment')).toBeInViewport();
+  expect(await page.locator('#payment').evaluate(el => el.getBoundingClientRect().top >= document.querySelector('.onedu-navbar').getBoundingClientRect().bottom)).toBe(true);
+  await expect(page.getByRole('link', {name: '전화 문의 · 02-569-7308'})).toHaveAttribute('href', 'tel:025697308');
+  await expect(page.getByRole('link', {name: '이메일 문의', exact: true})).toHaveAttribute('href', 'mailto:withbrain77@daum.net');
+  const pdf = await page.getByRole('link', {name: '이용 가이드 PDF 다운로드'}).getAttribute('href');
+  const response = await page.request.get(pdf);
+  expect(response.ok()).toBe(true);
+  expect((await response.body()).subarray(0, 5).toString()).toBe('%PDF-');
+  await login(page, 'student');
+  await page.goto('/courses/browser-paid/');
+  await page.getByRole('link', {name: '입금·승인 도움말 및 문의'}).click();
+  await expect(page).toHaveURL(/\/help\/#payment$/);
+});
+
 test('home benefits crossfade in place on touch, keyboard and hover; account copy reports success and failure', async ({page, browser}) => {
   await page.goto('/');
   const benefit = page.locator('.portal-benefit').first();

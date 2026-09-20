@@ -14,6 +14,7 @@ admin.site.index_template = 'admin/onedu_index.html'
 urlpatterns = [
     path('manifest.webmanifest', manifest, name='pwa_manifest'),
     path('install/', TemplateView.as_view(template_name='core/install.html'), name='install'),
+    path('help/', TemplateView.as_view(template_name='core/help.html'), name='help'),
     path('', home, name='home'),
     path('notices/', notice_list, name='notice_list'),
     path('notices/<int:notice_id>/', notice_detail, name='notice_detail'),

@@ -24,6 +24,28 @@ from progress.models import WatchProgress
 
 
 class HomePageTests(TestCase):
+    def test_expired_course_and_lesson_provide_contact_links(self):
+        user = User.objects.create_user(username='help123', password='TestPass123!')
+        course = Course.objects.create(title='기간 만료 도움말')
+        lesson = Lesson.objects.create(course=course, title='차시')
+        today = timezone.localdate()
+        Enrollment.objects.create(user=user, course=course, status='approved', start_date=today-timedelta(days=40), end_date=today-timedelta(days=1))
+        self.client.force_login(user)
+        for url in [reverse('enrollments:course_detail', args=[course.pk]), lesson.get_absolute_url()]:
+            response = self.client.get(url)
+            self.assertContains(response, 'tel:025697308', status_code=response.status_code)
+            self.assertContains(response, 'mailto:withbrain77@daum.net', status_code=response.status_code)
+            self.assertContains(response, reverse('help'), status_code=response.status_code)
+
+    def test_help_and_contacts_are_available_without_login(self):
+        response = self.client.get(reverse('help'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'tel:025697308')
+        self.assertContains(response, 'mailto:withbrain77@daum.net')
+        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260921')
+        for section in ['playback', 'payment', 'access', 'progress', 'account', 'shortcut']:
+            self.assertContains(response, f'id="{section}"')
+
     def test_anonymous_user_sees_polished_home_page(self):
         Course.objects.create(
             title='IM 마스터스 세미나 2026',
@@ -44,7 +66,7 @@ class HomePageTests(TestCase):
         self.assertContains(response, '아카데미 이용 가이드')
         self.assertContains(response, '<span>이용 가이드</span>', html=True)
         self.assertContains(response, '<span>다운로드</span>', html=True)
-        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260720-1739')
+        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260921')
         self.assertContains(response, '위드브레인_아카데미_이용_가이드.pdf')
         self.assertNotContains(response, 'portal-manual-mark')
         self.assertContains(response, 'WITHBRAIN')

@@ -78,6 +78,7 @@
       <p id="playbackNoticeText" role="status" aria-live="polite"></p>
       <button id="videoRetryButton" class="btn btn-primary" type="button">다시 재생</button>
       <a id="playbackAccessLink" class="btn btn-primary" hidden></a>
+      <a class="btn btn-outline-primary" href="{% url 'help' %}#playback">재생 도움말·문의</a>
     </div>
     <div class="player-learning-actions">
       <p id="progressSaveStatus" role="status" aria-live="polite">{% if access.enrollment %}진도 저장 대기 중{% else %}관리자 미리보기{% endif %}</p>

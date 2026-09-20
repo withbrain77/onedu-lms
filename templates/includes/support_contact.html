@@ -1,0 +1,12 @@
+<aside class="card mt-4 support-contact" aria-label="운영 문의">
+  <div class="card-body">
+    <h2 class="h5">해결되지 않았나요?</h2>
+    <p class="small text-muted">운영 문의: 평일 09:00–18:00. 아이디, 강의명, 문제가 발생한 시간과 화면의 안내 문구를 알려주시면 확인에 도움이 됩니다. 비밀번호는 보내지 마세요.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-primary" href="tel:025697308">전화 문의 · 02-569-7308</a>
+      <a class="btn btn-outline-primary" href="mailto:withbrain77@daum.net">이메일 문의</a>
+      {% if not support_page %}<a class="btn btn-primary" href="{% url 'help' %}">도움말 보기</a>{% endif %}
+    </div>
+    <p class="small text-muted mt-2 mb-0">전화·이메일 버튼은 기기의 통화·메일 앱을 엽니다. 이메일 주소: <span class="text-break">withbrain77@daum.net</span></p>
+  </div>
+</aside>

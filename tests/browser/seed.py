@@ -48,7 +48,7 @@ def seed(root):
         'type': 'multiple_choice', 'text': '학습 내용을 확인하고 올바른 보기를 선택하세요. ' * 5})
     AnswerChoice.objects.get_or_create(question=question, order=1, defaults={'text': '긴 시험 보기 화면 확인 ' * 8, 'is_correct': True})
     routes = {
-        'public': ['/', '/courses/', course.get_absolute_url(), '/notices/', reverse('notice_detail', args=[notice.pk]),
+        'public': ['/', '/help/', '/courses/', course.get_absolute_url(), '/notices/', reverse('notice_detail', args=[notice.pk]),
                    '/privacy/', '/install/', '/accounts/login/', '/accounts/signup/', '/accounts/find-username/',
                    '/accounts/password-reset/', '/certificates/verify/', '/admin/login/'],
         'student': ['/', '/classroom/', '/classroom/?status=ended', f'/classroom/{course.pk}/',

@@ -1,4 +1,7 @@
 .mobile-bottom-nav, .mobile-classroom-shortcut { display: none; }
+.help-topics > section { scroll-margin-top: 10rem; }
+.help-topics li + li { margin-top: .5rem; }
+.support-contact .btn { white-space: normal; overflow-wrap: anywhere; }
 .portal-benefit-strip > .portal-benefit { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-height: 9rem; padding: 1rem; font: inherit; color: inherit; cursor: pointer; overflow-wrap: anywhere; appearance: none; }
 .portal-benefit:focus-visible { outline: 3px solid #08756f; outline-offset: 3px; }
 .benefit-face { grid-area: 1 / 1; min-width: 0; align-self: center; transition: opacity 320ms ease, transform 320ms ease; pointer-events: none; }
