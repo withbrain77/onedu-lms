@@ -42,7 +42,7 @@ class HomePageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'tel:025697308')
         self.assertContains(response, 'mailto:withbrain77@daum.net')
-        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260921')
+        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260922')
         for section in ['playback', 'payment', 'access', 'progress', 'account', 'shortcut']:
             self.assertContains(response, f'id="{section}"')
 
@@ -66,7 +66,7 @@ class HomePageTests(TestCase):
         self.assertContains(response, '아카데미 이용 가이드')
         self.assertContains(response, '<span>이용 가이드</span>', html=True)
         self.assertContains(response, '<span>다운로드</span>', html=True)
-        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260921')
+        self.assertContains(response, 'docs/onedu-student-user-manual.pdf?v=20260922')
         self.assertContains(response, '위드브레인_아카데미_이용_가이드.pdf')
         self.assertNotContains(response, 'portal-manual-mark')
         self.assertContains(response, 'WITHBRAIN')

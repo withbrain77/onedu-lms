@@ -48,6 +48,20 @@
 .catalog-search input { min-width: 0; }
 .filter-checkbox { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
 .filter-checkbox input { margin-top: 0; }
+.lesson-filter:not([hidden]) { display: grid; gap: .5rem; margin-bottom: 1rem; }
+.lesson-filter .form-label { margin: 0; line-height: 1.5; }
+.lesson-filter [data-filter-count] { line-height: 1.5; }
+.timeline-panel > .lesson-filter { margin: 0; padding: 1rem 1.25rem .75rem; }
+.timeline-panel > [data-filter-empty] { margin: 0; padding: .5rem 1.25rem 1rem; line-height: 1.6; }
+.timeline-panel .learning-timeline { padding: 0 1.25rem 1rem; }
+.timeline-panel .timeline-step { padding: .875rem 0; row-gap: .75rem; }
+.timeline-panel .timeline-step:not(:last-child)::after { top: 3.875rem; bottom: -.875rem; }
+.timeline-step-title { line-height: 1.5; }
+.timeline-step-desc { margin-top: .25rem; line-height: 1.6; overflow-wrap: anywhere; }
+.timeline-step-action:empty { display: none; }
+@media (max-width: 575.98px) {
+  .timeline-panel .timeline-step:not(:last-child)::after { left: 1.225rem; top: 3.425rem; }
+}
 [data-filter-item][hidden], #playbackNotice[hidden], #lessonEndActions[hidden] { display: none !important; }
 .recent-learning { border-color: #a9d9d6; background: #f4fbfa; }
 .page-header .btn-outline-primary, .page-header .btn-outline-secondary { color: #075e5a; border-color: #97c8c4; background: white; }
