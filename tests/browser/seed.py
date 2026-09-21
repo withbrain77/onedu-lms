@@ -16,6 +16,7 @@ from progress.models import WatchProgress
 
 
 def seed(root):
+    User.objects.get_or_create(username='signupfixture1', defaults={'email': 'signup.fixture@example.invalid'})
     staff, _ = User.objects.get_or_create(username='browseradmin', defaults={'is_staff': True, 'is_superuser': True})
     student, _ = User.objects.get_or_create(username='browserstudent', defaults={
         'name': '모바일 긴 이름 점검 수강생', 'email': 'mobile.long.name.for.layout@example.invalid'})

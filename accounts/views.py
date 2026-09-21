@@ -46,6 +46,25 @@ class SignUpView(CreateView):
     template_name = 'accounts/signup.html'
     success_url = reverse_lazy('accounts:login')
 
+    def form_invalid(self, form):
+        first_error = True
+        for bound_field in form:
+            attrs = bound_field.field.widget.attrs
+            attrs.pop('autofocus', None)
+            if bound_field.errors:
+                attrs['class'] = attrs.get('class', '') + ' is-invalid'
+                attrs['data-server-invalid'] = 'true'
+                attrs['aria-invalid'] = 'true'
+                described_by = attrs.get('aria-describedby', '').split()
+                if bound_field.help_text and bound_field.name != 'password1':
+                    described_by.append(f'{bound_field.auto_id}_help')
+                described_by.append(f'{bound_field.auto_id}_errors')
+                attrs['aria-describedby'] = ' '.join(dict.fromkeys(described_by))
+                if first_error:
+                    attrs['autofocus'] = True
+                    first_error = False
+        return super().form_invalid(form)
+
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, '회원가입이 완료되었습니다. 로그인 후 수강 신청을 진행해 주세요.')

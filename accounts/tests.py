@@ -198,6 +198,25 @@ class SignupPageTests(TestCase):
         self.assertIn('username', response.context['form'].errors)
         self.assertEqual(User.objects.filter(username='brain123').count(), 1)
 
+    def test_signup_focuses_first_actual_server_error(self):
+        User.objects.create_user(username='taken123', email='taken@example.com')
+        for changes, expected in (
+            ({'email': 'TAKEN@example.com'}, 'email'),
+            ({'username': 'taken123', 'email': 'taken@example.com'}, 'username'),
+            ({'password2': 'DifferentPass123!'}, 'password2'),
+            ({'email': 'taken@example.com', 'privacy_agreement': ''}, 'email'),
+        ):
+            with self.subTest(expected=expected, changes=changes):
+                data = self.signup_data('available123')
+                data.update(changes)
+                response = self.client.post(reverse('accounts:signup'), data)
+                form = response.context['form']
+                focused = [name for name, field in form.fields.items() if field.widget.attrs.get('autofocus')]
+                self.assertEqual(focused, [expected])
+                self.assertEqual(form.fields[expected].widget.attrs['aria-invalid'], 'true')
+                self.assertContains(response, f'id="id_{expected}_errors"')
+                self.assertFalse(User.objects.filter(username='available123').exists())
+
     def test_existing_username_outside_new_rules_can_still_log_in(self):
         username = '기존회원_' + 'a' * 21
         user = User.objects.create_user(username=username, password='ExistingPass123!')

@@ -276,6 +276,59 @@ test('cancelled validation does not lock a form', async ({page}) => {
   await expect(page.locator('form[aria-busy=true]')).toHaveCount(0);
 });
 
+test('signup password controls remain separate and conditions follow confirmation', async ({page}) => {
+  await page.goto('/accounts/signup/');
+  for (const width of [320, 390, 915, 1280]) {
+    await page.setViewportSize({width, height: 900});
+    for (const value of ['short', 'Unique-Learning-482!']) {
+      await page.locator('#id_password1').fill(value);
+      await page.locator('#id_password2').fill(value);
+      for (const id of ['id_password1', 'id_password2']) {
+        const input = page.locator('#' + id);
+        await expect(input).toHaveCSS('background-image', 'none');
+        const geometry = await input.evaluate(el => {
+          const button = el.parentElement.querySelector('button').getBoundingClientRect();
+          const box = el.getBoundingClientRect();
+          return {textRight: box.right - parseFloat(getComputedStyle(el).paddingRight), buttonLeft: button.left, right: box.right, buttonRight: button.right};
+        });
+        expect(geometry.textRight).toBeLessThanOrEqual(geometry.buttonLeft);
+        expect(geometry.buttonRight).toBeLessThanOrEqual(geometry.right);
+      }
+    }
+    const positions = await page.evaluate(() => ['#id_password1', '#id_password2', '[data-password-feedback]'].map(s => {
+      const r = document.querySelector(s).getBoundingClientRect(); return {top: r.top, bottom: r.bottom};
+    }));
+    expect(positions[0].bottom).toBeLessThan(positions[1].top);
+    expect(positions[1].bottom).toBeLessThan(positions[2].top);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  }
+  const toggle = page.locator('#id_password1').locator('..').getByRole('button');
+  await toggle.click();
+  await expect(page.locator('#id_password1')).toHaveAttribute('type', 'text');
+  await toggle.click();
+  await expect(page.locator('#id_password1')).toHaveAttribute('type', 'password');
+});
+
+test('signup focuses duplicate username, duplicate email and password mismatch errors', async ({page}) => {
+  for (const [username, email, confirmation, target] of [
+    ['signupfixture1', 'unused@example.invalid', 'Unique-Learning-482!', 'username'],
+    ['available123', 'SIGNUP.FIXTURE@example.invalid', 'Unique-Learning-482!', 'email'],
+    ['available123', 'unused@example.invalid', 'Different-Learning-482!', 'password2'],
+  ]) {
+    await page.goto('/accounts/signup/');
+    await page.locator('#id_username').fill(username);
+    await page.locator('#id_name').fill('가입 점검');
+    await page.locator('#id_email').fill(email);
+    await page.locator('#id_password1').fill('Unique-Learning-482!');
+    await page.locator('#id_password2').fill(confirmation);
+    await page.locator('#id_privacy_agreement').check();
+    await Promise.all([page.waitForResponse(r => r.url().includes('/accounts/signup/') && r.request().method() === 'POST'), page.getByRole('button', {name: '회원가입', exact: true}).click()]);
+    await expect(page.locator('#id_' + target)).toBeFocused();
+    await expect(page.locator('#id_' + target)).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#id_' + target + '_errors')).toBeVisible();
+  }
+});
+
 test('permission chooser changes are protected and touchable', async ({page}) => {
   test.setTimeout(30000);
   await login(page, 'admin');

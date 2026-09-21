@@ -87,6 +87,7 @@
   }
 
   function updateInputState(input, isTouched, isValid) {
+    if (input.dataset.serverInvalid === 'true') return;
     if (!isTouched) {
       input.classList.remove('is-valid', 'is-invalid');
       return;
@@ -183,7 +184,13 @@
 
   [usernameInput, nameInput, emailInput, passwordInput, confirmInput].forEach((input) => {
     if (input) {
-      input.addEventListener('input', evaluate);
+      input.addEventListener('input', () => {
+        if (input === passwordInput || input === confirmInput) {
+          delete input.dataset.serverInvalid;
+          input.removeAttribute('aria-invalid');
+        }
+        evaluate();
+      });
       input.addEventListener('blur', evaluate);
     }
   });
@@ -203,6 +210,8 @@
   });
   evaluate();
   if (privacyBox && privacyBox.classList.contains('privacy-consent-box-invalid')) {
-    showPrivacyError(true);
+    showPrivacyError(false);
   }
+  const firstServerError = form.querySelector('[data-server-invalid="true"]');
+  if (firstServerError) firstServerError.focus();
 })();
