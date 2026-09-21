@@ -50,6 +50,7 @@ class StudentSignUpForm(BootstrapFormMixin, UserCreationForm):
         error_messages={
             'invalid': '아이디는 영문과 숫자를 모두 포함해야 하며, 한글·공백·특수문자는 사용할 수 없습니다.',
             'max_length': '아이디는 최대 20자까지 입력할 수 있습니다.',
+            'unique': '이미 사용 중인 아이디입니다. 다른 아이디를 입력해 주세요.',
         },
         widget=forms.TextInput(attrs={
             'autocapitalize': 'none',
