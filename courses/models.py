@@ -59,6 +59,7 @@ class Course(models.Model):
         null=True,
         blank=True,
         related_name='created_courses',
+        limit_choices_to={'is_staff': True},
     )
     created_at = models.DateTimeField('생성일', auto_now_add=True)
     updated_at = models.DateTimeField('수정일', auto_now=True)
@@ -188,6 +189,7 @@ class CourseInvitation(models.Model):
         null=True,
         blank=True,
         related_name='created_course_invitations',
+        limit_choices_to={'is_staff': True},
     )
     created_at = models.DateTimeField('초대일시', auto_now_add=True)
 

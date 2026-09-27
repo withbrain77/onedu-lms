@@ -64,6 +64,7 @@ class Enrollment(models.Model):
         null=True,
         blank=True,
         related_name='approved_enrollments',
+        limit_choices_to={'is_staff': True},
     )
     approved_at = models.DateTimeField('승인일시', null=True, blank=True)
     rejected_reason = models.TextField('반려 사유', blank=True)
@@ -174,6 +175,7 @@ class ReEnrollmentRequest(models.Model):
         null=True,
         blank=True,
         related_name='processed_reenrollment_requests',
+        limit_choices_to={'is_staff': True},
     )
     admin_note = models.TextField('관리자 메모', blank=True)
     extension_start_date = models.DateField('연장 시작일', null=True, blank=True)
