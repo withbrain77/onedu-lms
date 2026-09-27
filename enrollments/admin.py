@@ -12,6 +12,7 @@ from .notifications import (
     notify_enrollment_approved,
     notify_enrollment_expiry_7d,
     notify_enrollment_request,
+    notify_reenrollment,
 )
 
 
@@ -330,13 +331,15 @@ class ReEnrollmentRequestAdmin(admin.ModelAdmin):
     )
     list_editable = ('status', 'extension_start_date', 'extension_end_date')
     autocomplete_fields = ('user', 'course', 'enrollment', 'processed_by')
-    readonly_fields = ('requested_at', 'processed_at')
+    readonly_fields = ('requested_at', 'processed_at', 'price_krw', 'duration_days')
     date_hierarchy = 'requested_at'
     ordering = ('-requested_at',)
     list_select_related = ('user', 'course', 'enrollment', 'processed_by')
     list_per_page = 50
     fieldsets = (
         ('신청 정보', {'fields': ('user', 'course', 'enrollment', 'reason', 'status')}),
+        ('신청 시 재수강 조건', {'fields': ('price_krw', 'duration_days'),
+                             'description': '신청 당시 조건입니다. 빈 값은 운영자 문의 대상이며, 현재 강의 요금으로 자동 대체하지 않습니다.'}),
         ('연장 기간', {'fields': ('extension_start_date', 'extension_end_date')}),
         ('처리 정보', {'fields': ('processed_by', 'processed_at', 'admin_note')}),
         ('기록', {'fields': ('requested_at',)}),
@@ -391,6 +394,7 @@ class EmailDeliveryLogAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         'enrollment',
+        'reenrollment_request',
         'kind',
         'status',
         'recipient_email',
@@ -405,7 +409,7 @@ class EmailDeliveryLogAdmin(admin.ModelAdmin):
     )
     fieldsets = (
         ('메일 정보', {'fields': ('kind', 'status', 'recipient_email', 'subject')}),
-        ('관련 수강', {'fields': ('enrollment', 'user_id_value', 'user_label', 'course_id_value', 'course_title')}),
+        ('관련 수강', {'fields': ('enrollment', 'reenrollment_request', 'user_id_value', 'user_label', 'course_id_value', 'course_title')}),
         ('결과', {'fields': ('sent_at', 'error_detail')}),
         ('기록', {'fields': ('created_at',)}),
     )
@@ -427,6 +431,18 @@ class EmailDeliveryLogAdmin(admin.ModelAdmin):
                 continue
             if not log.enrollment_id:
                 skipped += 1
+                continue
+
+            reenrollment_statuses = {
+                EmailDeliveryLog.Kind.REENROLLMENT_REQUEST: ReEnrollmentRequest.Status.PENDING,
+                EmailDeliveryLog.Kind.REENROLLMENT_APPROVAL: ReEnrollmentRequest.Status.APPROVED,
+                EmailDeliveryLog.Kind.REENROLLMENT_REJECTION: ReEnrollmentRequest.Status.REJECTED,
+            }
+            if log.kind in reenrollment_statuses:
+                if log.reenrollment_request_id and notify_reenrollment(log.reenrollment_request_id, reenrollment_statuses[log.kind]):
+                    retried += 1
+                else:
+                    skipped += 1
                 continue
 
             if log.kind == EmailDeliveryLog.Kind.ENROLLMENT_REQUEST:

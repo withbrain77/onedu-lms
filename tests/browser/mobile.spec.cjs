@@ -329,6 +329,60 @@ test('signup focuses duplicate username, duplicate email and password mismatch e
   }
 });
 
+test('username availability follows edits and recovers from network failure', async ({page}) => {
+  await page.goto('/accounts/signup/');
+  const input = page.locator('#id_username');
+  const status = page.locator('#usernameAvailability');
+  await input.fill('signupfixture1');
+  await expect(status).toContainText('이미 사용 중인 아이디');
+  await input.fill('available987');
+  await expect(status).toContainText('사용 가능한 아이디');
+  await expect(input).not.toHaveClass(/is-invalid/);
+  await input.fill('잘못된아이디');
+  await expect(status).toContainText('영문과 숫자');
+  await page.route('**/signup/check-username/**', route => route.abort());
+  await input.fill('network987');
+  await expect(status).toContainText('회원가입 시 다시 확인');
+  await expect(page.getByRole('button', {name:'회원가입', exact:true})).toBeEnabled();
+  await page.unroute('**/signup/check-username/**');
+  await input.blur();
+  await expect(status).toContainText('사용 가능한 아이디');
+  await input.fill('');
+  await expect(status).toBeHidden();
+});
+
+test('an older availability response cannot overwrite the current username', async ({page}) => {
+  await page.goto('/accounts/signup/');
+  const input = page.locator('#id_username');
+  const status = page.locator('#usernameAvailability');
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  await page.route('**/signup/check-username/**', async route => {
+    if (new URL(route.request().url()).searchParams.get('username') === 'oldvalue1') {
+      await pending;
+      await route.fulfill({json:{available:false, message:'오래된 결과'}}).catch(() => {});
+    } else await route.continue();
+  });
+  const oldRequest = page.waitForRequest(r => r.url().includes('username=oldvalue1'));
+  await input.fill('oldvalue1');
+  await oldRequest;
+  await input.fill('available987');
+  await expect(status).toContainText('사용 가능한 아이디');
+  release();
+  await expect(status).not.toContainText('오래된 결과');
+});
+
+test('expired paid course shows renewal terms and bank details on mobile', async ({page}) => {
+  await login(page, 'student');
+  await page.goto('/courses/browser-renewal/');
+  await expect(page.locator('.reenrollment-notice')).toContainText('12,000원');
+  await expect(page.locator('.reenrollment-notice')).toContainText('승인 후 14일');
+  await expect(page.getByRole('button', {name:'계좌번호 복사'})).toBeVisible();
+  await page.getByRole('link', {name:'재수강 신청',exact:true}).click();
+  await expect(page.locator('.reenrollment-notice')).toContainText('12,000원');
+  await expect(page.getByRole('button', {name:'계좌번호 복사'})).toBeVisible();
+});
+
 test('permission chooser changes are protected and touchable', async ({page}) => {
   test.setTimeout(30000);
   await login(page, 'admin');

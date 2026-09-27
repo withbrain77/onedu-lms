@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -161,6 +161,8 @@ class ReEnrollmentRequest(models.Model):
         related_name='reenrollment_requests',
     )
     reason = models.TextField('신청 사유')
+    price_krw = models.PositiveIntegerField('신청 시 재수강 이용료(원)', null=True, blank=True)
+    duration_days = models.PositiveSmallIntegerField('신청 시 재수강 기간(일)', null=True, blank=True)
     status = models.CharField('상태', max_length=20, choices=Status.choices, default=Status.PENDING)
     requested_at = models.DateTimeField('요청일시', auto_now_add=True)
     processed_at = models.DateTimeField('처리일시', null=True, blank=True)
@@ -213,7 +215,12 @@ class ReEnrollmentRequest(models.Model):
         if not self.extension_start_date:
             self.extension_start_date = timezone.localdate()
         if not self.extension_end_date:
-            self.extension_end_date = self.extension_start_date + timedelta(days=self.DEFAULT_EXTENSION_DAYS)
+            self.extension_end_date = self.extension_start_date + timedelta(days=self.duration_days or self.DEFAULT_EXTENSION_DAYS)
+
+    @property
+    def terms(self):
+        from courses.models import reenrollment_terms
+        return reenrollment_terms(self.price_krw, self.duration_days, free=self.course.is_free)
 
     def apply_extension_to_enrollment(self):
         enrollment = self.enrollment
@@ -223,16 +230,38 @@ class ReEnrollmentRequest(models.Model):
         if self.processed_by_id:
             enrollment.approved_by = self.processed_by
         enrollment.approved_at = self.processed_at or timezone.now()
-        enrollment.save(update_fields=['status', 'start_date', 'end_date', 'approved_by', 'approved_at', 'updated_at'])
+        enrollment.expiry_notice_7d_sent_at = None
+        enrollment.save(update_fields=['status', 'start_date', 'end_date', 'approved_by', 'approved_at', 'expiry_notice_7d_sent_at', 'updated_at'])
 
+    @transaction.atomic
     def save(self, *args, **kwargs):
+        previous = None
+        if self.pk:
+            previous = type(self).objects.select_for_update().filter(pk=self.pk).values('status', 'extension_start_date', 'extension_end_date').first()
+        if previous is None:
+            self.price_krw = 0 if self.course.is_free else self.course.reenrollment_price_krw
+            self.duration_days = self.course.default_enrollment_days if self.course.is_free else self.course.reenrollment_days
+        update_fields = kwargs.get('update_fields')
+        status_saved = update_fields is None or 'status' in update_fields
+        changed_status = status_saved and (previous is None or previous['status'] != self.status)
         if self.status == self.Status.APPROVED:
             self.set_default_extension_dates()
-        if self.status in (self.Status.APPROVED, self.Status.REJECTED) and self.processed_at is None:
+        if changed_status and self.status in (self.Status.APPROVED, self.Status.REJECTED):
             self.processed_at = timezone.now()
+        if update_fields is not None and status_saved:
+            kwargs['update_fields'] = set(update_fields) | {'processed_at', 'extension_start_date', 'extension_end_date'}
         super().save(*args, **kwargs)
-        if self.status == self.Status.APPROVED:
+        dates_changed = previous and any(
+            (update_fields is None or field in kwargs['update_fields']) and previous[field] != getattr(self, field)
+            for field in ('extension_start_date', 'extension_end_date')
+        )
+        saved_status = self.status if status_saved or previous is None else previous['status']
+        if saved_status == self.Status.APPROVED and (changed_status or dates_changed):
             self.apply_extension_to_enrollment()
+        if changed_status and self.course.is_paid:
+            from .notifications import notify_reenrollment
+            request_id, status = self.pk, self.status
+            transaction.on_commit(lambda: notify_reenrollment(request_id, status), robust=True)
 
 
 class EmailDeliveryLog(models.Model):
@@ -241,6 +270,9 @@ class EmailDeliveryLog(models.Model):
         ENROLLMENT_APPROVAL = 'enrollment_approval', '수강 승인 수강생 알림'
         ENROLLMENT_EXPIRY_7D = 'enrollment_expiry_7d', '수강 종료 7일 전 알림'
         ACCOUNT_WITHDRAWAL_REQUEST = 'account_withdrawal_request', '계정 탈퇴 요청 관리자 알림'
+        REENROLLMENT_REQUEST = 'reenrollment_request', '재수강 신청 관리자 알림'
+        REENROLLMENT_APPROVAL = 'reenrollment_approval', '재수강 승인 수강생 알림'
+        REENROLLMENT_REJECTION = 'reenrollment_rejection', '재수강 반려 수강생 알림'
 
     class Status(models.TextChoices):
         QUEUED = 'queued', '발송 대기'
@@ -257,6 +289,10 @@ class EmailDeliveryLog(models.Model):
         related_name='email_logs',
     )
     kind = models.CharField('메일 유형', max_length=40, choices=Kind.choices)
+    reenrollment_request = models.ForeignKey(
+        ReEnrollmentRequest, verbose_name='재수강 신청', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='email_logs',
+    )
     status = models.CharField('상태', max_length=20, choices=Status.choices)
     recipient_email = models.CharField('수신자', max_length=500, blank=True)
     subject = models.CharField('제목', max_length=255, blank=True)

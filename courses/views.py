@@ -92,6 +92,7 @@ def course_detail(request, slug):
     )
     enrollment = get_latest_enrollment(request.user, course) if request.user.is_authenticated else None
     access_result = can_access_course(request.user, course) if request.user.is_authenticated else None
+    pending_reenrollment = enrollment.reenrollment_requests.filter(status='pending').first() if enrollment and enrollment.has_ended and course.is_paid else None
     lessons = list(course.lessons.filter(is_public=True).order_by('order'))
     lesson_items = [{'lesson': lesson} for lesson in lessons]
 
@@ -110,6 +111,7 @@ def course_detail(request, slug):
         {
             'course': course,
             'enrollment': enrollment,
+            'pending_reenrollment': pending_reenrollment,
             'access': access_result,
             'lesson_items': lesson_items,
             'status_label': status_label,

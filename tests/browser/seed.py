@@ -37,6 +37,11 @@ def seed(root):
     old, _ = Enrollment.objects.update_or_create(user=student, course=expired, defaults={
         'status': 'approved', 'start_date': today-timedelta(days=40), 'end_date': today-timedelta(days=10)})
     ReEnrollmentRequest.objects.get_or_create(enrollment=old, user=student, course=expired, status='pending')
+    renewal_course, _ = Course.objects.get_or_create(slug='browser-renewal', defaults={
+        'title': '유료 재수강 안내 과정', 'pricing_type': 'paid', 'price_krw': 30000,
+        'reenrollment_price_krw': 12000, 'reenrollment_days': 14})
+    renewal_enrollment, _ = Enrollment.objects.update_or_create(user=student, course=renewal_course, defaults={
+        'status': 'approved', 'start_date': today-timedelta(days=40), 'end_date': today-timedelta(days=10)})
     AccessLog.objects.get_or_create(user=student, event_type='login_success', ip_address='2001:db8:1234:5678:abcd:1234:5678:9012', defaults={
         'is_suspicious': True, 'device_summary': 'Android Phone / Chrome'})
     attachment, _ = LessonAttachment.objects.get_or_create(lesson=lesson, title='긴 제목 교육 자료 — 실무 적용 사례 PDF 교재', defaults={'file': 'lesson_attachments/layout.pdf'})
@@ -53,6 +58,7 @@ def seed(root):
                    '/privacy/', '/install/', '/accounts/login/', '/accounts/signup/', '/accounts/find-username/',
                    '/accounts/password-reset/', '/certificates/verify/', '/admin/login/'],
         'student': ['/', '/classroom/', '/classroom/?status=ended', f'/classroom/{course.pk}/',
+                    renewal_course.get_absolute_url(), reverse('enrollments:request_reenrollment', args=[renewal_enrollment.pk]),
                     '/accounts/profile/', '/accounts/password-change/', '/accounts/withdrawal-request/',
                     lesson.get_absolute_url(), reverse('quizzes:take', args=[quiz.pk])],
         'admin': ['/admin/', '/admin/ops/mobile/', '/admin/password_change/'],

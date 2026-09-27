@@ -16,10 +16,13 @@ from django.contrib.auth.views import (
     PasswordResetView,
 )
 from django.core.mail import BadHeaderError
+from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, FormView, UpdateView
 
 from .forms import (
@@ -39,6 +42,19 @@ from .services import record_access_log
 
 REMEMBER_USERNAME_COOKIE = 'onedu_remembered_username'
 REMEMBER_USERNAME_MAX_AGE = 60 * 60 * 24 * 180
+
+
+@never_cache
+@require_GET
+def username_availability(request):
+    field = StudentSignUpForm.base_fields['username']
+    try:
+        username = field.clean(request.GET.get('username', ''))
+    except ValidationError as exc:
+        return JsonResponse({'available': False, 'message': exc.messages[0]})
+    if User.objects.filter(username__iexact=username).exists():
+        return JsonResponse({'available': False, 'message': field.error_messages['unique']})
+    return JsonResponse({'available': True, 'message': '사용 가능한 아이디입니다.'})
 
 
 class SignUpView(CreateView):

@@ -8,7 +8,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import EmailDeliveryLog, Enrollment
+from .models import EmailDeliveryLog, Enrollment, ReEnrollmentRequest
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ def _price_label(course):
     return f'{course.price_krw:,}원'
 
 
-def _record_email_log(kind, enrollment, recipients, subject, status, error_message='', *, user=None, course=None):
+def _record_email_log(kind, enrollment, recipients, subject, status, error_message='', *, user=None, course=None, reenrollment_request=None):
     recipients = recipients or []
     if isinstance(recipients, str):
         recipient_label = recipients
@@ -55,6 +55,7 @@ def _record_email_log(kind, enrollment, recipients, subject, status, error_messa
     try:
         return EmailDeliveryLog.objects.create(
             enrollment=enrollment,
+            reenrollment_request=reenrollment_request,
             kind=kind,
             status=status,
             recipient_email=recipient_label[:500],
@@ -184,7 +185,7 @@ def _enqueue_email_log(log, subject, message, recipients):
         transaction.on_commit(publish)
 
 
-def deliver_or_queue_email(kind, recipients, subject, message, *, enrollment=None, user=None, course=None):
+def deliver_or_queue_email(kind, recipients, subject, message, *, enrollment=None, user=None, course=None, reenrollment_request=None):
     if getattr(settings, 'ONEDU_EMAIL_ASYNC', False):
         log = _record_email_log(
             kind,
@@ -193,6 +194,7 @@ def deliver_or_queue_email(kind, recipients, subject, message, *, enrollment=Non
             subject,
             EmailDeliveryLog.Status.QUEUED,
             '작업 큐에 등록되어 발송 대기 중입니다.',
+            reenrollment_request=reenrollment_request,
             user=user,
             course=course,
         )
@@ -216,6 +218,7 @@ def deliver_or_queue_email(kind, recipients, subject, message, *, enrollment=Non
             subject,
             EmailDeliveryLog.Status.FAILED,
             _email_error_message(attempts, exc),
+            reenrollment_request=reenrollment_request,
             user=user,
             course=course,
         )
@@ -227,6 +230,7 @@ def deliver_or_queue_email(kind, recipients, subject, message, *, enrollment=Non
         recipients,
         subject,
         EmailDeliveryLog.Status.SENT,
+        reenrollment_request=reenrollment_request,
         user=user,
         course=course,
     )
@@ -235,6 +239,39 @@ def deliver_or_queue_email(kind, recipients, subject, message, *, enrollment=Non
 
 def _deliver_or_queue_email(kind, enrollment, recipients, subject, message):
     return deliver_or_queue_email(kind, recipients, subject, message, enrollment=enrollment)
+
+
+def notify_reenrollment(request_id, expected_status):
+    renewal = ReEnrollmentRequest.objects.select_related('enrollment', 'user', 'course').filter(pk=request_id).first()
+    if not renewal or renewal.status != expected_status or renewal.course.is_free:
+        return False
+    pending = renewal.status == ReEnrollmentRequest.Status.PENDING
+    if not getattr(settings, 'ONEDU_NOTIFY_ENROLLMENT_REQUEST' if pending else 'ONEDU_NOTIFY_ENROLLMENT_APPROVAL', True):
+        return False
+    kinds = {
+        ReEnrollmentRequest.Status.PENDING: EmailDeliveryLog.Kind.REENROLLMENT_REQUEST,
+        ReEnrollmentRequest.Status.APPROVED: EmailDeliveryLog.Kind.REENROLLMENT_APPROVAL,
+        ReEnrollmentRequest.Status.REJECTED: EmailDeliveryLog.Kind.REENROLLMENT_REJECTION,
+    }
+    subject = f'[ONEDU] 재수강 신청 {renewal.get_status_display()} 안내'
+    recipients = _notification_recipients() if pending else [renewal.user.email.strip()] if renewal.user.email.strip() else []
+    if not recipients:
+        _record_email_log(kinds[renewal.status], renewal.enrollment, [], subject, EmailDeliveryLog.Status.SKIPPED,
+                          '알림 수신자 이메일이 설정되어 있지 않습니다.', reenrollment_request=renewal)
+        return False
+    message = f'강의: {renewal.course.title}\n수강생: {renewal.user.display_name} ({renewal.user.username})\n\n'
+    if pending:
+        admin_url = _site_url(reverse('admin:enrollments_reenrollmentrequest_change', args=[renewal.pk]))
+        message += f'재수강 신청이 접수되었습니다.\n신청 사유: {renewal.reason}\n\n관리자에서 확인하기:\n{admin_url}\n'
+    elif renewal.status == ReEnrollmentRequest.Status.APPROVED:
+        course_url = _site_url(reverse('enrollments:course_detail', args=[renewal.course_id]))
+        message += (f'재수강 신청이 승인되었습니다.\n수강 기간: {renewal.extension_start_date} ~ {renewal.extension_end_date}\n'
+                    f'기존 학습 기록은 유지됩니다.\n\n강의 바로가기: {course_url}\n')
+    else:
+        message += f'재수강 신청이 반려되었습니다.\n안내: {renewal.admin_note or "자세한 내용은 운영자에게 문의해 주세요."}\n'
+        message += f'내 강의실: {_site_url(reverse("enrollments:classroom"))}\n'
+    return deliver_or_queue_email(kinds[renewal.status], recipients, subject, message,
+                                 enrollment=renewal.enrollment, reenrollment_request=renewal)
 
 
 def notify_enrollment_request(enrollment):

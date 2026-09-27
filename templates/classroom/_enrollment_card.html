@@ -28,7 +28,7 @@
         <div><dt>수강 기간</dt><dd>{{ item.period_text }}</dd></div>
         <div><dt>남은 기간</dt><dd>{{ item.remaining_text }}</dd></div>
         {% if item.course.is_paid %}
-          <div><dt>입금 상태</dt><dd>{{ item.enrollment.get_payment_status_display }}</dd></div>
+          <div><dt>{% if item.access.code == 'ended' %}기존 수강 입금{% else %}입금 상태{% endif %}</dt><dd>{{ item.enrollment.get_payment_status_display }}</dd></div>
         {% endif %}
       </dl>
       <div class="mb-3">
@@ -60,6 +60,13 @@
       {% endif %}
       {% if item.enrollment.status == 'requested' and item.course.is_paid %}
         {% include "includes/deposit_notice.html" with course=item.course compact=True %}
+      {% endif %}
+      {% if item.access.code == 'ended' and item.course.is_paid %}
+        {% if item.has_pending_reenrollment %}
+          {% include "includes/reenrollment_notice.html" with course=item.course terms=item.reenrollment_request.terms %}
+        {% else %}
+          {% include "includes/reenrollment_notice.html" with course=item.course terms=item.course.reenrollment_terms %}
+        {% endif %}
       {% endif %}
       <div class="learning-card-actions mt-auto">
         {% if item.enrollment.is_completed and item.enrollment.certificate %}

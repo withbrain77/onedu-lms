@@ -5,6 +5,16 @@ from django.urls import reverse
 from django.utils.text import slugify
 
 
+def reenrollment_terms(price, days, *, free=False):
+    known = price is not None and days is not None
+    return {
+        'price_label': '무료' if price == 0 else f'{price:,}원' if price is not None else '운영자 문의',
+        'period_label': f'{"신청 즉시" if free else "승인 후"} {days}일' if days else '운영자 확인 후 배정',
+        'requires_deposit': known and price > 0,
+        'known': known,
+    }
+
+
 class Course(models.Model):
     class PricingType(models.TextChoices):
         FREE = 'free', '무료'
@@ -35,6 +45,10 @@ class Course(models.Model):
     )
     price_krw = models.PositiveIntegerField('이용료(원)', default=0)
     default_enrollment_days = models.PositiveSmallIntegerField('기본 수강 기간(일)', default=30)
+    reenrollment_price_krw = models.PositiveIntegerField('재수강 이용료(원)', null=True, blank=True,
+        help_text='유료 강의 재수강 비용입니다. 0원은 무료 연장, 비워 두면 운영자 문의로 안내합니다.')
+    reenrollment_days = models.PositiveSmallIntegerField('재수강 기간(일)', null=True, blank=True,
+        help_text='재수강 이용료와 함께 설정해 주세요. 미설정 시 운영자가 기간을 배정합니다.')
     required_progress_percent = models.PositiveSmallIntegerField('수료 진도 기준(%)', default=90)
     require_quiz_pass = models.BooleanField('시험 합격 필요', default=True)
     certificate_enabled = models.BooleanField('수료증 발급 사용', default=True)
@@ -64,6 +78,10 @@ class Course(models.Model):
             raise ValidationError({'price_krw': '유료 강의는 이용료를 1원 이상 입력해 주세요.'})
         if self.default_enrollment_days <= 0:
             raise ValidationError({'default_enrollment_days': '기본 수강 기간은 1일 이상이어야 합니다.'})
+        if self.reenrollment_days is not None and self.reenrollment_days <= 0:
+            raise ValidationError({'reenrollment_days': '재수강 기간은 1일 이상이어야 합니다.'})
+        if (self.reenrollment_price_krw is None) != (self.reenrollment_days is None):
+            raise ValidationError('재수강 이용료와 재수강 기간을 함께 입력하거나 모두 비워 주세요.')
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -126,6 +144,12 @@ class Course(models.Model):
         if self.is_free:
             return '무료'
         return f'{self.price_krw:,}원'
+
+    @property
+    def reenrollment_terms(self):
+        if self.is_free:
+            return reenrollment_terms(0, self.default_enrollment_days, free=True)
+        return reenrollment_terms(self.reenrollment_price_krw, self.reenrollment_days)
 
     @property
     def approval_policy_label(self):

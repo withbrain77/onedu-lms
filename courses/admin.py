@@ -77,6 +77,8 @@ class CourseAdmin(admin.ModelAdmin):
     fieldsets = (
         ('기본 정보', {'fields': ('title', 'slug', 'description', 'thumbnail', 'is_public', 'visibility')}),
         ('이용료/승인 정책', {'fields': ('pricing_type', 'price_krw', 'default_enrollment_days')}),
+        ('유료 강의 재수강 정책', {'fields': ('reenrollment_price_krw', 'reenrollment_days'),
+                              'description': '무료 강의는 기존 기본 수강 기간을 사용합니다. 유료 강의만 별도 재수강 비용과 기간을 설정합니다.'}),
         ('수료 정책', {'fields': ('required_progress_percent', 'require_quiz_pass', 'certificate_enabled')}),
         ('기록', {'fields': ('created_by',)}),
     )

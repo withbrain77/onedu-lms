@@ -13,12 +13,14 @@ from .views import (
     SignUpView,
     UsernameLookupView,
     logout_view,
+    username_availability,
 )
 
 app_name = 'accounts'
 
 urlpatterns = [
     path('signup/', SignUpView.as_view(), name='signup'),
+    path('signup/check-username/', username_availability, name='username_availability'),
     path('login/', LMSLoginView.as_view(), name='login'),
     path('profile/', ProfileUpdateView.as_view(), name='profile'),
     path('withdrawal-request/', AccountWithdrawalRequestView.as_view(), name='withdrawal_request'),

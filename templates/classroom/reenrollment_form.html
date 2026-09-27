@@ -38,6 +38,7 @@
         {% else %}
           <div class="alert alert-info small mb-0">승인 시 기존 진도, 시험 결과, 수료 상태는 유지되고 수강 기간만 연장됩니다.</div>
         {% endif %}
+        {% if course.is_paid %}{% include "includes/reenrollment_notice.html" with terms=course.reenrollment_terms %}{% endif %}
       </div>
     </div>
 

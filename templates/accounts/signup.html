@@ -37,6 +37,7 @@
                 <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.help_text and field.name != 'password1' %}<div class="form-text" id="{{ field.id_for_label }}_help">{{ field.help_text }}</div>{% endif %}
+                {% if field.name == 'username' %}<div class="form-text" id="usernameAvailability" data-username-availability="{% url 'accounts:username_availability' %}" role="status" aria-live="polite" hidden></div>{% endif %}
                 {% if field.name == 'password2' %}
                   <div class="password-match-hint form-text" data-password-match-message aria-live="polite">
                     비밀번호 확인값을 입력해 주세요.
@@ -97,5 +98,6 @@
 
 {% block scripts %}
 {{ block.super }}
-<script src="{% static 'js/signup_password_feedback.js' %}?v=20260922-signup-errors" defer></script>
+<script src="{% static 'js/signup_password_feedback.js' %}?v=20260927-username" defer></script>
+<script src="{% static 'js/signup_username.js' %}?v=20260927" defer></script>
 {% endblock %}

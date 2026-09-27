@@ -1,7 +1,9 @@
 <div class="deposit-notice{% if compact %} deposit-notice-compact{% endif %}">
   <div class="deposit-notice-head">
     <span>입금 안내</span>
-    {% if course and course.price_label %}
+    {% if deposit_amount_label %}
+      <strong>{{ deposit_amount_label }}</strong>
+    {% elif course and course.price_label %}
       <strong>{{ course.price_label }}</strong>
     {% endif %}
   </div>

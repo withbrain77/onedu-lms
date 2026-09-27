@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -228,11 +229,19 @@ def request_reenrollment(request, enrollment_id):
             return redirect('enrollments:course_detail', course_id=enrollment.course_id)
         form = ReEnrollmentRequestForm(request.POST)
         if form.is_valid():
-            reenrollment_request = form.save(commit=False)
-            reenrollment_request.user = request.user
-            reenrollment_request.course = enrollment.course
-            reenrollment_request.enrollment = enrollment
-            reenrollment_request.save()
+            with transaction.atomic():
+                enrollment = Enrollment.objects.select_for_update().get(pk=enrollment.pk)
+                if not enrollment.has_ended:
+                    messages.info(request, '이미 수강 기간이 연장되었습니다. 내 강의실에서 확인해 주세요.')
+                    return redirect('enrollments:classroom')
+                if enrollment.reenrollment_requests.filter(status=ReEnrollmentRequest.Status.PENDING).exists():
+                    messages.info(request, '이미 재수강 신청이 접수되어 관리자 승인을 기다리고 있습니다.')
+                    return redirect('enrollments:classroom')
+                reenrollment_request = form.save(commit=False)
+                reenrollment_request.user = request.user
+                reenrollment_request.course = enrollment.course
+                reenrollment_request.enrollment = enrollment
+                reenrollment_request.save()
             messages.success(request, '재수강 신청이 접수되었습니다. 관리자가 승인하면 수강 기간이 연장됩니다.')
             return redirect('enrollments:classroom')
     else:

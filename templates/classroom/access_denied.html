@@ -29,6 +29,9 @@
     {% endif %}
   {% endif %}
   <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+    {% if access.code == 'ended' and course.is_paid %}
+      <a class="btn btn-outline-primary" href="{{ course.get_absolute_url }}">재수강 비용·입금 안내</a>
+    {% endif %}
     {% if access.code == 'ended' and enrollment %}
       {% if course.is_free %}
         <form method="post" action="{% url 'enrollments:request_reenrollment' enrollment.id %}">

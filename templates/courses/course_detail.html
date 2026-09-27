@@ -103,7 +103,8 @@
   <div class="col-12 col-lg-4 order-first order-lg-last">
     <div class="card shadow-sm sticky-lg-top detail-side-card learning-summary-card">
       <div class="card-body">
-        <h2 class="h5 mb-3">수강 신청 안내</h2>
+        <h2 class="h5 mb-3">{% if access.code == 'ended' and course.is_paid %}재수강 신청 안내{% else %}수강 신청 안내{% endif %}</h2>
+        {% if access.code != 'ended' or not course.is_paid %}
         <dl class="detail-meta">
           <div><dt>이용료</dt><dd>{{ course.price_label }}</dd></div>
           <div><dt>승인 방식</dt><dd>{{ course.approval_policy_label }}</dd></div>
@@ -112,6 +113,7 @@
           {% endif %}
           <div><dt>수강 기간</dt><dd>{{ course.access_period_label }}</dd></div>
         </dl>
+        {% endif %}
         {% if access and access.allowed %}
           {% if enrollment and enrollment.is_completed and enrollment.certificate %}
             <a class="btn btn-success w-100 mb-2" href="{% url 'certificates:download' enrollment.certificate.id %}">수료증 다운로드</a>
@@ -134,7 +136,14 @@
                   <button class="btn btn-primary w-100" type="submit">무료 재수강 신청</button>
                 </form>
               {% else %}
-                <a class="btn btn-primary w-100" href="{% url 'enrollments:request_reenrollment' enrollment.id %}">재수강 신청</a>
+                {% if pending_reenrollment %}
+                  {% include "includes/reenrollment_notice.html" with terms=pending_reenrollment.terms %}
+                  <div class="alert alert-info small">재수강 신청이 접수되어 관리자 승인을 기다리고 있습니다.</div>
+                  <a class="btn btn-outline-primary w-100" href="{% url 'enrollments:classroom' %}">내 강의실에서 확인</a>
+                {% else %}
+                  {% include "includes/reenrollment_notice.html" with terms=course.reenrollment_terms %}
+                  <a class="btn btn-primary w-100" href="{% url 'enrollments:request_reenrollment' enrollment.id %}">재수강 신청</a>
+                {% endif %}
               {% endif %}
             {% endif %}
           {% endif %}
