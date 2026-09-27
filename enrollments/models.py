@@ -52,6 +52,7 @@ class Enrollment(models.Model):
         null=True,
         blank=True,
         related_name='payment_confirmed_enrollments',
+        limit_choices_to={'is_staff': True},
     )
     payment_note = models.TextField('입금 메모', blank=True)
     start_date = models.DateField('수강 시작일', null=True, blank=True)
