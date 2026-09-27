@@ -4,6 +4,7 @@ body.onedu-admin-login { padding: 0; }
 body.onedu-admin-login #container { box-sizing: border-box; margin: 0; max-width: none; }
 body.onedu-admin-workspace #header { flex-shrink: 0; }
 body.onedu-admin-workspace #logout-form button { font-size: inherit; line-height: inherit; }
+body.onedu-admin-workspace #changelist .paginator { flex-wrap: wrap; row-gap: 8px; white-space: normal; }
 body.onedu-admin-workspace #container > .main {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);

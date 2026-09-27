@@ -44,6 +44,13 @@ def seed(root):
         'status': 'approved', 'start_date': today-timedelta(days=40), 'end_date': today-timedelta(days=10)})
     AccessLog.objects.get_or_create(user=student, event_type='login_success', ip_address='2001:db8:1234:5678:abcd:1234:5678:9012', defaults={
         'is_suspicious': True, 'device_summary': 'Android Phone / Chrome'})
+    # Exercise pagination with enough pages even on a fresh test database.
+    existing_pages = set(AccessLog.objects.filter(user=student, path__startswith='/browser-pagination/').values_list('path', flat=True))
+    AccessLog.objects.bulk_create([
+        AccessLog(user=student, event_type='login_success', ip_address='192.0.2.40',
+                  device_summary='Browser pagination test', path=f'/browser-pagination/{index}/')
+        for index in range(400) if f'/browser-pagination/{index}/' not in existing_pages
+    ])
     attachment, _ = LessonAttachment.objects.get_or_create(lesson=lesson, title='긴 제목 교육 자료 — 실무 적용 사례 PDF 교재', defaults={'file': 'lesson_attachments/layout.pdf'})
     LessonAttachmentDownload.objects.get_or_create(user=student, attachment=attachment, defaults={
         'lesson': lesson, 'course': course, 'attachment_title': attachment.title})
