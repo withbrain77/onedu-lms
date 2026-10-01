@@ -68,6 +68,20 @@ async function time(page, expected) {
   await expect.poll(() => page.locator('video').evaluate(v => v.currentTime)).toBeCloseTo(expected, 0);
 }
 
+async function startPlayback(page) {
+  const before = await page.locator('video').evaluate(v => v.currentTime);
+  // WebKit/GStreamer can resolve a repeated play() promise only at the end of
+  // this silent clip after seeks. Verify the media clock, rather than waiting
+  // for that promise and accidentally letting the clip finish before tapping.
+  await page.locator('video').evaluate(v => {
+    window.seekTestPlayError = null;
+    v.play().catch(error => { window.seekTestPlayError = error.name; });
+  });
+  await expect(page.locator('video')).toHaveJSProperty('paused', false);
+  await expect.poll(() => page.locator('video').evaluate(v => v.currentTime)).toBeGreaterThan(before);
+  expect(await page.evaluate(() => window.seekTestPlayError)).toBeNull();
+}
+
 test('video side double taps seek exactly ten seconds, repeat and clamp at boundaries', async ({page}) => {
   await player(page);
   let p = await points(page);
@@ -85,7 +99,7 @@ test('video side double taps seek exactly ten seconds, repeat and clamp at bound
   await expect(page.locator('video')).toHaveJSProperty('paused', true);
   await page.screenshot({path: test.info().outputPath('seek-landscape.png')});
   await position(page, 25);
-  await page.locator('video').evaluate(v => v.play());
+  await startPlayback(page);
   await tapPair(page, p.right);
   await expect(page.locator('video')).toHaveJSProperty('paused', false);
   expect(await page.locator('video').evaluate(v => v.currentTime)).toBeGreaterThanOrEqual(35);
@@ -101,7 +115,7 @@ test('desktop double clicks seek without fullscreen or zoom and preserve playing
   await page.mouse.dblclick(p.left.x, p.left.y); await time(page, 25);
   expect(await page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
   await expect(page.locator('#videoZoomReset')).toHaveText('100%');
-  await page.locator('video').evaluate(v => v.play());
+  await startPlayback(page);
   await page.mouse.dblclick(p.right.x, p.right.y);
   await expect(page.locator('video')).toHaveJSProperty('paused', false);
   expect(await page.locator('video').evaluate(v => v.currentTime)).toBeGreaterThanOrEqual(35);
