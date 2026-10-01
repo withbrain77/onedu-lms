@@ -48,7 +48,10 @@
               현재 브라우저에서 HTML5 video를 지원하지 않습니다.
             </video>
             </div>
+            <div class="video-seek-zone video-seek-zone-left" aria-hidden="true"></div>
+            <div class="video-seek-zone video-seek-zone-right" aria-hidden="true"></div>
             <div id="videoWatermark" class="video-watermark wm-pos-center" aria-hidden="true">{{ watermark_text }}</div>
+            <div id="videoSeekFeedback" class="video-seek-feedback" role="status" aria-live="polite" aria-atomic="true"></div>
             <div id="videoZoomMenu" class="video-zoom-menu">
               <button
                 id="videoZoomToggle"
@@ -66,6 +69,7 @@
             </div>
             <button id="videoFullscreenButton" class="btn btn-light btn-sm video-fullscreen-button" type="button">전체화면</button>
           </div>
+          <p class="small text-muted mt-2 mb-0">영상 왼쪽을 두 번 누르면 10초 뒤로, 오른쪽을 두 번 누르면 10초 앞으로 이동합니다. PC에서는 더블클릭하세요.</p>
         {% else %}
           <div class="empty-state video-empty">
             <h2>등록된 영상이 없습니다.</h2>
@@ -225,6 +229,6 @@
   {% if lesson.has_hls %}
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.min.js"></script>
   {% endif %}
-  <script src="{% static 'js/video_progress.js' %}?v=20260917-learning2"></script>
+  <script src="{% static 'js/video_progress.js' %}?v=20261001-seek"></script>
   <script src="{% static 'js/video_recovery.js' %}?v=20260917-learning3"></script>
 {% endblock %}

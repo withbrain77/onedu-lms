@@ -16,6 +16,7 @@
   const zoomToggle = document.getElementById('videoZoomToggle');
   const zoomControls = document.getElementById('videoZoomControls');
   const zoomResetButton = document.getElementById('videoZoomReset');
+  const seekFeedback = document.getElementById('videoSeekFeedback');
   const statusEl = document.getElementById('progressSaveStatus');
   const percentEl = document.getElementById('progressPercentText');
   const progressBar = document.getElementById('lessonProgressBar');
@@ -34,6 +35,7 @@
   let zoomX = 0;
   let zoomY = 0;
   let activePointerId = null;
+  let lastDragAt = 0;
   let dragStartX = 0;
   let dragStartY = 0;
   let dragStartZoomX = 0;
@@ -44,6 +46,10 @@
   let lastTapAt = 0;
   let lastTapX = 0;
   let lastTapY = 0;
+  let lastTapSide = 0;
+  let lastTouchAt = 0;
+  let touchStartedAt = 0;
+  let seekFeedbackTimer = null;
   let touchStartX = 0;
   let touchStartY = 0;
   let touchMoved = false;
@@ -276,7 +282,7 @@
   }
 
   function isNativeControlArea(clientY) {
-    const rect = video.getBoundingClientRect();
+    const rect = playerShell.getBoundingClientRect();
     const controlHeight = Math.min(84, Math.max(46, rect.height * 0.22));
     return clientY >= rect.bottom - controlHeight;
   }
@@ -287,8 +293,31 @@
     return Math.sqrt((dx * dx) + (dy * dy));
   }
 
-  function toggleTapZoom() {
-    setZoom(zoomScale > 1 ? 1 : 1.5);
+  function seekSide(clientX) {
+    const rect = playerShell.getBoundingClientRect();
+    const x = (clientX - rect.left) / rect.width;
+    // Keep the central play button clear of the side gestures.
+    return x >= 0 && x < 0.4 ? -1 : x > 0.6 && x <= 1 ? 1 : 0;
+  }
+
+  function seekTenSeconds(side) {
+    if (!side || video.readyState < 1 || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    samplePlayback();
+    // A seek must never count the skipped interval as watched time.
+    playbackRunning = false;
+    video.currentTime = clamp(video.currentTime + side * 10, 0, video.duration);
+    samplePosition = video.currentTime;
+    sampleAt = performance.now();
+    revealCustomControls();
+    if (seekFeedback) {
+      seekFeedback.textContent = side < 0 ? '10초 뒤로' : '10초 앞으로';
+      seekFeedback.dataset.side = side < 0 ? 'left' : 'right';
+      seekFeedback.classList.add('is-visible');
+      window.clearTimeout(seekFeedbackTimer);
+      seekFeedbackTimer = window.setTimeout(function () {
+        seekFeedback.classList.remove('is-visible');
+      }, 800);
+    }
   }
 
   function currentFullscreenElement() {
@@ -549,13 +578,16 @@
   }
 
   if (playerShell && zoomLayer) {
-    video.addEventListener('dblclick', function (event) {
+    playerShell.addEventListener('dblclick', function (event) {
       if (isZoomControlTarget(event.target) || isNativeControlArea(event.clientY)) {
         return;
       }
+      const side = seekSide(event.clientX);
+      if (!side) return;
       event.preventDefault();
-      toggleTapZoom();
-    });
+      // Touch browsers can synthesize dblclick after touchend; do not seek twice.
+      if (Date.now() - lastTouchAt > 700 && Date.now() - lastDragAt > 400) seekTenSeconds(side);
+    }, true);
 
     playerShell.addEventListener('pointerdown', function (event) {
       if (
@@ -586,6 +618,7 @@
       if (activePointerId === null || event.pointerId !== activePointerId) {
         return;
       }
+      if (Math.hypot(event.clientX - dragStartX, event.clientY - dragStartY) > 14) lastDragAt = Date.now();
       zoomX = dragStartZoomX + (event.clientX - dragStartX);
       zoomY = dragStartZoomY + (event.clientY - dragStartY);
       applyZoom();
@@ -612,10 +645,13 @@
     playerShell.addEventListener('pointerleave', stopZoomDrag);
 
     playerShell.addEventListener('touchstart', function (event) {
+      lastTouchAt = Date.now();
       if (isZoomControlTarget(event.target)) {
+        lastTapAt = 0;
         return;
       }
-      if (event.touches.length === 2) {
+      if (event.touches.length >= 2) {
+        lastTapAt = 0;
         pinchActive = true;
         pinchStartDistance = touchDistance(event.touches);
         pinchStartScale = zoomScale;
@@ -624,6 +660,7 @@
         return;
       }
       if (event.touches.length === 1) {
+        touchStartedAt = Date.now();
         touchStartX = event.touches[0].clientX;
         touchStartY = event.touches[0].clientY;
         touchMoved = false;
@@ -645,6 +682,7 @@
     }, { passive: false });
 
     playerShell.addEventListener('touchend', function (event) {
+      lastTouchAt = Date.now();
       if (pinchActive && event.touches.length < 2) {
         pinchActive = false;
         zoomLayer.classList.remove('is-dragging');
@@ -653,27 +691,39 @@
         }, 280);
         return;
       }
-      if (ignoreNextTap || event.touches.length > 0 || event.changedTouches.length !== 1) {
+      if (isZoomControlTarget(event.target) || ignoreNextTap || event.touches.length > 0 || event.changedTouches.length !== 1) {
+        lastTapAt = 0;
         return;
       }
       const touch = event.changedTouches[0];
-      if (touchMoved || isNativeControlArea(touch.clientY)) {
+      const side = seekSide(touch.clientX);
+      if (!side || touchMoved || Date.now() - touchStartedAt > 300 || isNativeControlArea(touch.clientY)) {
+        lastTapAt = 0;
         return;
       }
       const now = Date.now();
       const dx = touch.clientX - lastTapX;
       const dy = touch.clientY - lastTapY;
-      const isDoubleTap = now - lastTapAt < 320 && Math.sqrt((dx * dx) + (dy * dy)) < 44;
+      const isDoubleTap = lastTapAt > 0 && side === lastTapSide && now - lastTapAt < 320 && Math.sqrt((dx * dx) + (dy * dy)) < 44;
       if (isDoubleTap) {
         event.preventDefault();
-        toggleTapZoom();
+        seekTenSeconds(side);
         lastTapAt = 0;
       } else {
         lastTapAt = now;
         lastTapX = touch.clientX;
         lastTapY = touch.clientY;
+        lastTapSide = side;
       }
     }, { passive: false });
+
+    playerShell.addEventListener('touchcancel', function () {
+      lastTapAt = 0;
+      pinchActive = false;
+      ignoreNextTap = false;
+      touchMoved = true;
+      zoomLayer.classList.remove('is-dragging');
+    });
 
     window.addEventListener('resize', applyZoom);
     window.addEventListener('orientationchange', function () {
@@ -681,6 +731,9 @@
     });
 
     applyZoom();
+    // Side layers keep native video double-tap seeking from also firing.
+    // The central play area and bottom media controls remain uncovered.
+    playerShell.classList.add('has-seek-gestures');
   }
 
   moveWatermark();
