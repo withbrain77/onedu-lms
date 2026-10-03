@@ -11,7 +11,7 @@ from .services import advance_earnings, post_refund, post_revenue
 
 @admin.register(TeachingAssignment)
 class TeachingAssignmentAdmin(admin.ModelAdmin):
-    list_display = ('instructor', 'course', 'lesson', 'terms_label', 'starts_on', 'ends_on')
+    list_display = ('instructor', 'course', 'lesson', 'terms_display', 'starts_on', 'ends_on')
     list_filter = ('method', 'applies_to_renewals', 'course')
     search_fields = ('instructor__username', 'instructor__name', 'course__title', 'lesson__title')
     autocomplete_fields = ('instructor', 'course', 'lesson')
@@ -27,6 +27,10 @@ class TeachingAssignmentAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         Course.objects.select_for_update().get(pk=obj.course_id)
         super().save_model(request, obj, form, change)
+
+    @admin.display(description='지급 기준')
+    def terms_display(self, obj):
+        return obj.terms_label
 
 
 class PostedRecordAdmin(admin.ModelAdmin):

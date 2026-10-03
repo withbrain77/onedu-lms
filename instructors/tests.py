@@ -288,6 +288,7 @@ class ConcurrentSettlementTests(TransactionTestCase):
             results = list(pool.map(lambda pk: run(post_revenue, pk), [record.pk, record.pk]))
         self.assertCountEqual(results, [True, False])
         self.assertEqual(record.earnings.count(), 1)
+        record.refresh_from_db()
         refunds = [RefundRecord.objects.create(revenue=record, amount=20000, reason='동시 부분 환불') for _ in range(2)]
         with ThreadPoolExecutor(max_workers=2) as pool:
             results = list(pool.map(lambda pk: run(post_refund, pk), [r.pk for r in refunds]))
