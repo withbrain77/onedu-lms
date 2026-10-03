@@ -265,6 +265,28 @@ from django.test import TransactionTestCase, skipUnlessDBFeature
 
 class ConcurrentSettlementTests(TransactionTestCase):
     @skipUnlessDBFeature('has_select_for_update')
+    def test_concurrent_payment_confirmations_create_one_draft_transaction(self):
+        from threading import Barrier
+        student = User.objects.create_user(username='confirmstudent1')
+        course = Course.objects.create(title='동시 입금 확인', pricing_type='paid', price_krw=30000)
+        enrollment = Enrollment.objects.create(user=student, course=course, payment_status='pending')
+        barrier = Barrier(4)
+
+        def confirm(_):
+            try:
+                source = Enrollment.objects.get(pk=enrollment.pk)
+                barrier.wait(timeout=15)
+                source.payment_status = 'confirmed'
+                source.save(update_fields=['payment_status', 'payment_confirmed_at'])
+            finally:
+                connections.close_all()
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            list(pool.map(confirm, range(4)))
+        self.assertEqual(RevenueRecord.objects.filter(enrollment=enrollment).count(), 1)
+        self.assertIsNone(RevenueRecord.objects.get(enrollment=enrollment).amount)
+
+    @skipUnlessDBFeature('has_select_for_update')
     def test_concurrent_posting_and_refund_limits(self):
         operator = User.objects.create_user(username='staff1', is_staff=True)
         teacher = User.objects.create_user(username='teacher1', is_instructor=True)

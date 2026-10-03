@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import timedelta
 
 from django.contrib import admin
@@ -77,6 +78,18 @@ def seed(root):
         revenue.amount = 30000
         revenue.save()
         post_revenue(revenue.pk, staff)
+    workflows = {}
+    for project in ('android-chromium', 'iphone-webkit'):
+        token = uuid.uuid4().hex[:10]
+        teacher = User.objects.create_user(username=f'flow{token}', password='Browser-only-2026!')
+        program = Course.objects.create(title=f'가상 강사 정산 점검 {token}', slug=f'flow-{token}',
+            pricing_type='paid', price_krw=30000, visibility='private', is_public=False)
+        unit = Lesson.objects.create(course=program, title='정산 점검 차시', order=1)
+        application = Enrollment.objects.create(user=student, course=program, status='approved',
+            payment_status='confirmed', start_date=today, end_date=today+timedelta(days=30))
+        workflows[project] = {'teacher_id': teacher.pk, 'username': teacher.username, 'course_id': program.pk,
+            'lesson_id': unit.pk, 'revenue_id': application.revenue_record.pk, 'today': today.isoformat()}
+    (root / '.browser-tests/instructor-workflows.json').write_text(json.dumps(workflows), encoding='utf-8')
     routes = {
         'public': ['/', '/help/', '/courses/', course.get_absolute_url(), '/notices/', reverse('notice_detail', args=[notice.pk]),
                    '/privacy/', '/install/', '/accounts/login/', '/accounts/signup/', '/accounts/find-username/',

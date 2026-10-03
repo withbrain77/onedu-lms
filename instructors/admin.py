@@ -1,6 +1,9 @@
+from django import forms
 from django.contrib import admin, messages
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -9,8 +12,22 @@ from .models import InstructorEarning, RefundRecord, RevenueRecord, TeachingAssi
 from .services import advance_earnings, post_refund, post_revenue
 
 
+class TeachingAssignmentAdminForm(forms.ModelForm):
+    class Meta:
+        model = TeachingAssignment
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and 'instructor' in self.fields:
+            original_id = TeachingAssignment.objects.filter(pk=self.instance.pk).values_list('instructor_id', flat=True).first()
+            self.fields['instructor'].queryset = get_user_model().objects.filter(
+                Q(is_instructor=True) | Q(pk=original_id))
+
+
 @admin.register(TeachingAssignment)
 class TeachingAssignmentAdmin(admin.ModelAdmin):
+    form = TeachingAssignmentAdminForm
     list_display = ('instructor', 'course', 'lesson', 'terms_display', 'starts_on', 'ends_on')
     list_filter = ('method', 'applies_to_renewals', 'course')
     search_fields = ('instructor__username', 'instructor__name', 'course__title', 'lesson__title')
@@ -31,6 +48,12 @@ class TeachingAssignmentAdmin(admin.ModelAdmin):
     @admin.display(description='지급 기준')
     def terms_display(self, obj):
         return obj.terms_label
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.earnings.exists():
+            return ('instructor', 'course', 'lesson', 'method', 'fixed_amount', 'allocation_percent',
+                    'royalty_percent', 'applies_to_renewals', 'starts_on')
+        return ()
 
 
 class PostedRecordAdmin(admin.ModelAdmin):

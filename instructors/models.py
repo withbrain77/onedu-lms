@@ -49,6 +49,15 @@ class TeachingAssignment(models.Model):
             return f'{scope} 1건당 {self.fixed_amount:,}원'
         return f'{scope} 입금액 × 배분 {self.allocation_percent}% × 지급률 {self.royalty_percent}%'
 
+    def clean_fields(self, exclude=None):
+        exclude = set(exclude or [])
+        # Revoking portal access must not prevent closing an existing agreement.
+        # New assignments and replacement instructors still use limit_choices_to.
+        if self.pk and type(self).objects.filter(pk=self.pk, instructor_id=self.instructor_id,
+                                                course_id=self.course_id, lesson_id=self.lesson_id).exists():
+            exclude.add('instructor')
+        super().clean_fields(exclude=exclude)
+
     def clean(self):
         if self.lesson_id and self.course_id and self.lesson.course_id != self.course_id:
             raise ValidationError({'lesson': '선택한 강의에 속한 차시를 지정해 주세요.'})

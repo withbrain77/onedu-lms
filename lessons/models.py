@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 
@@ -41,6 +42,14 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f'{self.course.title} - {self.order}. {self.title}'
+
+    def clean(self):
+        super().clean()
+        if self.pk and self.course_id:
+            from instructors.models import TeachingAssignment
+            if TeachingAssignment.objects.filter(lesson_id=self.pk).exclude(course_id=self.course_id).exists():
+                raise ValidationError({'course': '담당 강사·정산 기준이 연결된 차시는 다른 강의로 옮길 수 없습니다. '
+                                                '기존 정산 이력을 유지하고 새 강의에 차시를 별도로 등록해 주세요.'})
 
     def get_absolute_url(self):
         return reverse('lessons:detail', kwargs={'pk': self.pk})

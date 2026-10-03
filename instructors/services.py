@@ -46,6 +46,8 @@ def post_revenue(record_id, operator):
         raise ValidationError('입금 확인일에 적용할 담당 강사·정산 기준이 없습니다. 기준을 먼저 등록해 주세요.')
     earnings = []
     for assignment in assignments:
+        if assignment.lesson_id and assignment.lesson.course_id != record.course_id:
+            raise ValidationError('담당 차시와 정산 기준의 강의가 일치하지 않습니다. 담당 강사·정산 기준을 확인해 주세요.')
         if not record.amount:
             amount = 0
         elif assignment.method == TeachingAssignment.Method.FIXED:
