@@ -16,18 +16,19 @@ class UserAdmin(BaseUserAdmin):
         'display_name_column',
         'email',
         'role',
+        'is_instructor',
         'is_active',
         'is_staff',
         'last_login',
         'learning_report_link',
     )
-    list_filter = ('role', 'is_active', 'is_staff', 'is_superuser')
+    list_filter = ('role', 'is_instructor', 'is_active', 'is_staff', 'is_superuser')
     search_fields = ('username', 'name', 'email', 'phone')
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('LMS 정보', {'fields': ('name', 'phone', 'role')}),
+        ('LMS 정보', {'fields': ('name', 'phone', 'role', 'is_instructor')}),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('LMS 정보', {'fields': ('name', 'phone', 'role')}),
+        ('LMS 정보', {'fields': ('name', 'phone', 'role', 'is_instructor')}),
     )
 
     @admin.display(description='이름')

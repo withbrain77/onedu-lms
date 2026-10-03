@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}강사실 | 위드브레인연구소 아카데미{% endblock %}
+{% block extra_head %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/instructors.css' %}?v=20261003">{% endblock %}
+{% block page_header %}
+<div class="page-header"><h1>강사실</h1><p>담당 강의의 수강 실적과 강사료 정산 내역을 확인하세요.</p>
+<a class="btn btn-outline-primary" href="{% url 'enrollments:classroom' %}">수강 중인 내 강의실</a></div>
+{% endblock %}
+{% block content %}
+<div class="instructor-dashboard">
+  <section class="card mb-4"><div class="card-body p-3 p-md-4">
+    <h2 class="h5">기간별 수강료·정산</h2>
+    <p class="small text-muted">수강료는 입금 확인일, 환불은 환불 확인일 기준입니다. 같은 수강생의 반복 시청은 결제 건수에 추가되지 않습니다.</p>
+    <form method="get" class="instructor-period">
+      {% for field in form %}<div><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<p class="text-danger" role="alert">{{ error }}</p>{% endfor %}</div>{% endfor %}
+      <button class="btn btn-primary" type="submit">조회</button>
+    </form>
+    {% if rows %}<a class="btn btn-outline-primary mt-3" href="?start={{ start }}&amp;end={{ end }}&amp;download=csv">정산 내역 내려받기 (CSV·엑셀용)</a>{% endif %}
+  </div></section>
+  {% if totals %}
+  <div class="instructor-metrics mb-4">
+    <div class="card"><div class="card-body"><span>확인된 유료 신규 수강</span><strong>{{ new_count }}건</strong></div></div>
+    <div class="card"><div class="card-body"><span>확인된 유료 재수강</span><strong>{{ renewal_count }}건</strong></div></div>
+    <div class="card"><div class="card-body"><span>해당 거래 입금액</span><strong>{{ gross|floatformat:"0g" }}원</strong></div></div>
+    <div class="card"><div class="card-body"><span>해당 기간 환불액</span><strong>{{ refund_total|floatformat:"0g" }}원</strong></div></div>
+  </div>
+  {% if pending_count or undated_count %}<p class="alert alert-warning">운영자 확인이 필요한 거래가 있습니다. 기간 내 금액 확인 필요 {{ pending_count }}건 · 입금일 확인 필요 {{ undated_count }}건(기간 미분류). 이 거래는 위 금액과 강사료에 아직 포함되지 않습니다.</p>{% endif %}
+  <div class="instructor-metrics mb-3">
+    <div class="card"><div class="card-body"><span>정산 대기 강사료</span><strong>{{ totals.pending|floatformat:"0g" }}원</strong></div></div>
+    <div class="card"><div class="card-body"><span>정산 확정·지급 대기</span><strong>{{ totals.confirmed|floatformat:"0g" }}원</strong></div></div>
+    <div class="card"><div class="card-body"><span>지급 완료 처리</span><strong>{{ totals.paid|floatformat:"0g" }}원</strong></div></div>
+  </div>
+  <p class="small text-muted">세금·공제 전 약정 강사료입니다. 환불 차감은 음수로 표시합니다. 지급 완료는 운영자가 실제 송금 후 기록한 상태입니다. 위 합계는 선택한 기간에 발생한 내역의 현재 처리 상태를 나타냅니다.</p>
+  <section class="mb-4"><h2 class="h4">강사료 내역</h2>
+    <div class="instructor-ledger">
+    {% for row in rows %}
+      <article class="card"><div class="card-body p-3 p-md-4">
+        <div class="instructor-row-head"><h3 class="h6">{{ row.course_title }}</h3><strong>{{ row.amount|floatformat:"0g" }}원</strong></div>
+        <p>{{ row.lesson_title }}</p>
+        <dl class="instructor-facts">
+          <div><dt>발생일</dt><dd>{{ row.occurred_on|date:"Y-m-d" }}</dd></div>
+          <div><dt>구분</dt><dd>{% if row.refund_id %}환불 차감{% else %}{{ row.revenue.kind_label }}{% endif %} · 거래 #{{ row.revenue_id }}</dd></div>
+          <div><dt>적용 기준</dt><dd>{{ row.terms }}</dd></div>
+          <div><dt>상태</dt><dd>{{ row.get_status_display }}</dd></div>
+          {% if row.paid_at %}<div><dt>지급 완료 처리일</dt><dd>{{ row.paid_at|date:"Y-m-d" }}</dd></div>{% endif %}
+        </dl>
+      </div></article>
+    {% empty %}<p class="card p-4">이 기간에 계산된 강사료 내역이 없습니다.</p>{% endfor %}
+    </div>
+    {% if rows.has_other_pages %}<nav class="d-flex flex-wrap gap-3 mt-3" aria-label="정산 내역 페이지">
+      {% if rows.has_previous %}<a href="?start={{ start }}&amp;end={{ end }}&amp;page={{ rows.previous_page_number }}">이전</a>{% endif %}
+      <span>{{ rows.number }} / {{ rows.paginator.num_pages }}</span>
+      {% if rows.has_next %}<a href="?start={{ start }}&amp;end={{ end }}&amp;page={{ rows.next_page_number }}">다음</a>{% endif %}
+    </nav>{% endif %}
+  </section>
+  {% endif %}
+  <section><h2 class="h4">담당 강의·정산 기준</h2>
+    <p class="text-muted small">학습 실적은 현재까지의 누적 현황이며 위 조회 기간과 별개입니다. 차시 담당자의 시청 인원은 담당 차시를 시청한 인원입니다. 강의 담당 지정만으로 영상 수강 권한이 생기지는 않습니다.</p>
+    {% for card in cards %}
+      <article class="card mb-3"><div class="card-body p-3 p-md-4">
+        <h3 class="h5">{{ card.course.title }}</h3>
+        <p>누적 승인 수강생 {{ card.students }}명 · 담당 영상 시청 {{ card.viewers }}명 · 강의 수료 {{ card.completed }}명</p>
+        {% for assignment in card.assignments %}
+          <div class="instructor-contract"><strong>{{ assignment.lesson.title|default:"강의 전체" }}</strong><p>{{ assignment.terms_label }}</p>
+          <small>{{ assignment.starts_on|date:"Y-m-d" }}부터 {% if assignment.ends_on %}{{ assignment.ends_on|date:"Y-m-d" }}까지{% else %}적용{% endif %}</small></div>
+        {% endfor %}
+      </div></article>
+    {% empty %}<p class="card p-4">아직 배정된 강의가 없습니다. 운영자가 담당 강의와 정산 기준을 등록하면 여기에 표시됩니다.</p>{% endfor %}
+  </section>
+</div>
+{% endblock %}

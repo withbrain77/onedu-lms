@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.urls import reverse
+from django.utils.html import format_html
 
 from lessons.forms import LessonAdminForm
 from lessons.models import Lesson
@@ -53,6 +55,15 @@ class CourseInvitationInline(admin.TabularInline):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
+    readonly_fields = ('instructor_terms_link',)
+
+    @admin.display(description='담당 강사·정산 기준')
+    def instructor_terms_link(self, obj):
+        if not obj.pk:
+            return '강의를 저장한 후 담당 강사를 연결할 수 있습니다.'
+        return format_html('<a href="{}?course__id__exact={}">담당 강사·정산 기준 관리</a>',
+            reverse('admin:instructors_teachingassignment_changelist'), obj.pk)
+
     list_display = (
         'title',
         'is_public',
@@ -81,6 +92,7 @@ class CourseAdmin(admin.ModelAdmin):
                               'description': '무료 강의는 기존 기본 수강 기간을 사용합니다. 유료 강의만 별도 재수강 비용과 기간을 설정합니다.'}),
         ('수료 정책', {'fields': ('required_progress_percent', 'require_quiz_pass', 'certificate_enabled')}),
         ('기록', {'fields': ('created_by',)}),
+        ('강사·정산', {'fields': ('instructor_terms_link',)}),
     )
 
     def get_queryset(self, request):

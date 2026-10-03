@@ -36,6 +36,13 @@
     </div>
   </div>
   <div class="col-12 col-lg-4">
+    {% if user.is_instructor %}
+    <div class="card shadow-sm mb-4"><div class="card-body p-4">
+      <h2 class="h5">강사실</h2>
+      <p>담당 강의의 수강 실적과 정산 내역을 확인하세요.</p>
+      <a class="btn btn-primary w-100" href="{% url 'instructors:dashboard' %}">강사실 보기</a>
+    </div></div>
+    {% endif %}
     <div class="card shadow-sm account-side-card">
       <div class="card-body p-4">
         <div class="learning-card-label">ACCOUNT SECURITY</div>

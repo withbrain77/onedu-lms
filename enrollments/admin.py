@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django import forms
 from django.contrib import admin
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
@@ -21,6 +22,15 @@ BLOCKING_WITHDRAWAL_STATUSES = (
     AccountWithdrawalRequest.Status.PROCESSING,
     AccountWithdrawalRequest.Status.COMPLETED,
 )
+
+
+@admin.display(description='수강료·강사료 계산')
+def revenue_record_link(obj):
+    record = getattr(obj, 'revenue_record', None) if obj and obj.pk else None
+    if not record:
+        return '입금 확인 또는 유료 재수강 승인 후 수강료 거래가 생성됩니다.'
+    return format_html('<a href="{}">{}</a>', reverse('admin:instructors_revenuerecord_change', args=[record.pk]),
+                       '수강료 거래 보기' if record.posted_at else '실제 입금액 확인·입력 필요')
 
 
 def _approval_block_reason_for_user(user, object_label='수강 신청'):
@@ -122,6 +132,7 @@ class ReEnrollmentRequestAdminForm(forms.ModelForm):
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.ModelAdmin):
+    revenue_record_link = staticmethod(revenue_record_link)
     form = EnrollmentAdminForm
     actions = ('confirm_selected_payments', 'approve_selected_with_default_period')
     list_display = (
@@ -153,6 +164,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
     list_editable = ('status', 'payment_status', 'start_date', 'end_date')
     autocomplete_fields = ('user', 'course', 'approved_by', 'payment_confirmed_by')
     readonly_fields = (
+        'revenue_record_link',
         'approved_at',
         'payment_confirmed_at',
         'created_at',
@@ -168,6 +180,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
         ('신청 정보', {'fields': ('user', 'course', 'status')}),
         ('입금 확인', {'fields': ('payment_status', 'payment_confirmed_by', 'payment_confirmed_at', 'payment_note')}),
         ('수강 기간', {'fields': ('start_date', 'end_date')}),
+        ('강사료 정산', {'fields': ('revenue_record_link',)}),
         ('승인/반려', {'fields': ('approved_by', 'approved_at', 'rejected_reason')}),
         ('수료', {'fields': ('is_completed', 'completed_at', 'completion_progress_percent', 'completion_note')}),
         ('알림', {'fields': ('expiry_notice_7d_sent_at',)}),
@@ -299,6 +312,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
 
 @admin.register(ReEnrollmentRequest)
 class ReEnrollmentRequestAdmin(admin.ModelAdmin):
+    revenue_record_link = staticmethod(revenue_record_link)
     form = ReEnrollmentRequestAdminForm
     list_display = (
         'student_username',
@@ -331,7 +345,7 @@ class ReEnrollmentRequestAdmin(admin.ModelAdmin):
     )
     list_editable = ('status', 'extension_start_date', 'extension_end_date')
     autocomplete_fields = ('user', 'course', 'enrollment', 'processed_by')
-    readonly_fields = ('requested_at', 'processed_at', 'price_krw', 'duration_days')
+    readonly_fields = ('requested_at', 'processed_at', 'price_krw', 'duration_days', 'revenue_record_link')
     date_hierarchy = 'requested_at'
     ordering = ('-requested_at',)
     list_select_related = ('user', 'course', 'enrollment', 'processed_by')
@@ -341,6 +355,7 @@ class ReEnrollmentRequestAdmin(admin.ModelAdmin):
         ('신청 시 재수강 조건', {'fields': ('price_krw', 'duration_days'),
                              'description': '신청 당시 조건입니다. 빈 값은 운영자 문의 대상이며, 현재 강의 요금으로 자동 대체하지 않습니다.'}),
         ('연장 기간', {'fields': ('extension_start_date', 'extension_end_date')}),
+        ('강사료 정산', {'fields': ('revenue_record_link',)}),
         ('처리 정보', {'fields': ('processed_by', 'processed_at', 'admin_note')}),
         ('기록', {'fields': ('requested_at',)}),
     )

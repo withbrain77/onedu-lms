@@ -11,6 +11,10 @@ class User(AbstractUser):
 
     name = models.CharField('이름', max_length=100, blank=True)
     phone = models.CharField('연락처', max_length=30, blank=True)
+    is_instructor = models.BooleanField(
+        '강사 권한', default=False,
+        help_text='담당 강의의 실적·정산을 조회합니다. 수강생 기능은 유지되며 관리자 권한은 부여되지 않습니다.',
+    )
     role = models.CharField(
         '역할',
         max_length=20,

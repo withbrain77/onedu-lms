@@ -1,0 +1,18 @@
+.instructor-dashboard { min-width: 0; overflow-wrap: anywhere; }
+.instructor-period { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.instructor-period > div { flex: 1 1 180px; min-width: 0; }
+.instructor-period input { width: 100%; min-width: 0; max-width: 100%; }
+.instructor-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 16px; }
+.instructor-metrics strong { display: block; font-size: 1.5rem; margin-top: 8px; }
+.instructor-ledger { display: grid; gap: 16px; }
+.instructor-row-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.instructor-row-head h3 { flex: 1 1 200px; min-width: 0; }
+.instructor-facts { margin: 0; }
+.instructor-facts > div { display: grid; grid-template-columns: minmax(0, 120px) minmax(0, 1fr); gap: 12px; margin-top: 8px; }
+.instructor-facts dd { margin: 0; }
+.instructor-contract { border-top: 1px solid #d7e7e9; padding-top: 16px; margin-top: 16px; }
+.instructor-contract p { margin: 8px 0; }
+@media (max-width: 420px) {
+  .instructor-period button { width: 100%; }
+  .instructor-facts > div { grid-template-columns: 1fr; gap: 4px; margin-top: 12px; }
+}

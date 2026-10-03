@@ -44,6 +44,12 @@ MODEL_LABELS = {
 
 MENU_GROUPS = [
     {
+        'title': '강사·정산 관리',
+        'icon': 'I',
+        'items': [('instructors', 'teachingassignment'), ('instructors', 'revenuerecord'),
+                  ('instructors', 'refundrecord'), ('instructors', 'instructorearning')],
+    },
+    {
         'title': '회원 관리',
         'icon': 'A',
         'items': [('accounts', 'user'), ('accounts', 'accountwithdrawalrequest'), ('accounts', 'accesslog'), ('auth', 'group')],

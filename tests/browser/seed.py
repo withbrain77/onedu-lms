@@ -13,6 +13,8 @@ from enrollments.models import Enrollment, ReEnrollmentRequest
 from core.models import Notice
 from quizzes.models import Quiz, Question, AnswerChoice
 from progress.models import WatchProgress
+from instructors.models import TeachingAssignment
+from instructors.services import post_revenue
 
 
 def seed(root):
@@ -60,6 +62,21 @@ def seed(root):
     question, _ = Question.objects.get_or_create(quiz=quiz, order=1, defaults={
         'type': 'multiple_choice', 'text': '학습 내용을 확인하고 올바른 보기를 선택하세요. ' * 5})
     AnswerChoice.objects.get_or_create(question=question, order=1, defaults={'text': '긴 시험 보기 화면 확인 ' * 8, 'is_correct': True})
+    instructor, _ = User.objects.get_or_create(username='browserinstructor', defaults={'is_instructor': True, 'name': '강사 화면 점검'})
+    instructor.set_password('Browser-only-2026!')
+    instructor.save()
+    TeachingAssignment.objects.get_or_create(instructor=instructor, course=course, defaults={
+        'fixed_amount': 10000, 'starts_on': today-timedelta(days=30)})
+    paid_course = Course.objects.get(slug='browser-paid')
+    TeachingAssignment.objects.get_or_create(instructor=instructor, course=paid_course, defaults={
+        'fixed_amount': 10000, 'starts_on': today-timedelta(days=30)})
+    paid_enrollment, _ = Enrollment.objects.get_or_create(user=instructor, course=paid_course, defaults={
+        'status': 'approved', 'payment_status': 'confirmed', 'start_date': today, 'end_date': today+timedelta(days=30)})
+    revenue = paid_enrollment.revenue_record
+    if not revenue.posted_at:
+        revenue.amount = 30000
+        revenue.save()
+        post_revenue(revenue.pk, staff)
     routes = {
         'public': ['/', '/help/', '/courses/', course.get_absolute_url(), '/notices/', reverse('notice_detail', args=[notice.pk]),
                    '/privacy/', '/install/', '/accounts/login/', '/accounts/signup/', '/accounts/find-username/',
