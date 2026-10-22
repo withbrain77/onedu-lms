@@ -9,6 +9,35 @@
 - 에이전트는 `docker compose down -v`, DB 볼륨 삭제, 영상 파일 삭제 같은 파괴적 명령을 실행하지 않는다.
 - 원격 진단은 기본적으로 읽기 전용 명령을 사용한다.
 
+## 502 오류와 Nginx 내부 주소 갱신
+
+2026-10-22 장애에서는 web과 DB가 실행 중이고 Django check도 통과했지만,
+Nginx 로그에 `upstream: http://127.0.53.53:8000/` 연결 거부가 반복됐다.
+NAS와 컨테이너가 10월 20일 재시작된 뒤 Nginx에 잘못 조회된 주소가 남아 있었으며,
+10월 22일 17:17 KST Nginx 재시작으로 외부 메인/로그인 페이지가 200으로 복구됐다.
+최초 DNS 응답이 잘못된 구체적 경위는 확인되지 않았다.
+
+같은 증상이 나타나면 먼저 상태, Django check, Nginx 로그를 확인한다.
+잘못된 upstream 주소가 유지되고 있다면 다음 명령으로 다시 조회하게 할 수 있다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\deploy\onedu-remote.ps1 restart-nginx
+```
+
+재발 방지를 위해 `deploy/nginx/default.conf`의 upstream에 shared zone과
+`resolver 127.0.0.11 valid=10s ipv6=off`, `server web:8000 resolve`를 적용했다.
+Docker 내부 DNS 주소를 주기적으로 갱신하므로 시작 시 주소 조회 실패나
+web 컨테이너 IP 변경 이후에도 Nginx 재시작 없이 연결을 회복할 수 있다.
+이 설정은 Nginx 1.27.3 이상이 필요하며, 적용 당시 운영 버전은 1.27.5다.
+
+검증: Nginx 1.27.5 문법 검사, 격리된 DNS 모의 환경에서 시작 시 조회 실패 후
+복구 및 백엔드 IP 변경 추적을 확인했다. 17:20 KST 운영 설정 반영 후 메인,
+로그인, 강의 목록, 관리자 로그인, CSS 응답을 확인했다.
+기존 운영 설정 백업은 NAS의 `deploy/nginx/default.conf.pre-dns-recovery-20261022-1719`에 있다.
+
+근거: [Nginx upstream resolve](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#resolve),
+[Docker 내부 DNS](https://docs.docker.com/engine/network/#dns-services).
+
 ## 사용자가 한 번만 준비할 것
 
 관리 PC 또는 Codex가 실행되는 환경에서 NAS SSH 별칭을 준비한다.
